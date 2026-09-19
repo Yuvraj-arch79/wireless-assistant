@@ -13,3 +13,18 @@ Users seeking wireless communication information face five related challenges:
 5. **Loss of context during follow-up questions:** Users may need to repeat previous information when an assistant fails to maintain relevant conversation context.
 
 Wireless Assistant aims to address all five challenges by helping users obtain accurate, relevant, understandable and verifiable answers while maintaining continuity across follow-up questions.
+
+## Intended Users and Their Needs
+
+Wireless Assistant is intended for people seeking to understand or apply wireless communication information.
+
+Users need:
+- Clear explanations with examples, comparisons or procedures appropriate to their question.
+- Relevant information without manually searching through lengthy specifications.
+- Answers supported by traceable evidence, presented at the end of the response.
+- Specific clarification questions when missing information would materially affect the answer.
+- Continuity across follow-up questions without repeatedly providing the same context.
+
+The assistant should interpret each request using the user's query, any clarification questions and answers, and relevant conversation history. It should use retrieved source context to support its response.
+
+Response depth and format should follow the user's expressed needs and available context rather than a fixed category such as student, engineer or researcher.
