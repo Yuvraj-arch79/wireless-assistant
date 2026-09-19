@@ -28,3 +28,21 @@ Users need:
 The assistant should interpret each request using the user's query, any clarification questions and answers, and relevant conversation history. It should use retrieved source context to support its response.
 
 Response depth and format should follow the user's expressed needs and available context rather than a fixed category such as student, engineer or researcher.
+
+## Project Goals
+
+1. **Improve understanding:** Help users understand wireless concepts and procedures through clear explanations, suitable examples and appropriate detail.
+
+2. **Reduce information-search effort:** Help users find relevant information from supported sources without manually navigating lengthy specifications.
+
+3. **Address the user's actual need:** Interpret the query together with clarification exchanges and relevant conversation history. Ask specific clarification questions when needed to provide a useful answer.
+
+4. **Provide accurate and verifiable answers:** Ground factual claims in relevant source material and present supporting references at the end. Clearly communicate insufficient evidence or uncertainty.
+
+5. **Maintain conversation continuity:** Automatically save conversation history and use relevant context to support follow-up questions without unnecessary repetition.
+
+6. **Combine useful contributions from multiple models:** Select and reconcile relevant, supported content from model responses to produce one coherent answer. Agreement between models alone must not be treated as proof of correctness.
+
+7. **Stay within the supported wireless scope:** Decline unrelated requests before source retrieval and multi-model answer generation, while allowing the minimal processing needed to assess relevance.
+
+8. **Operate efficiently on localhost:** Provide a usable local application while avoiding unnecessary model calls and repeated processing. Define measurable performance targets after evaluating the available hardware and model options.
