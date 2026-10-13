@@ -4,7 +4,9 @@ The SRS describes the agreed product and the proposed implementation baseline in
 
 - [Read the PDF](wireless-assistant-srs.pdf)
 - [Read or edit the Markdown source](wireless-assistant-srs.md)
-- [Related product brief review (PR #2)](https://github.com/Yuvraj-arch79/wireless-assistant/pull/2)
+- [Product brief](../product-brief.md)
+- [Decision register](../decisions.md)
+- [Baseline review work (issue #6)](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6)
 
 **Version:** 0.9.1, dated 13 October 2026. **Status:** review draft; no product approval or implementation test pass is implied.
 
@@ -12,7 +14,7 @@ The document covers the user problems and goals, cellular scope, domain checks, 
 
 There are 94 identified requirements, each with a check, and 30 acceptance scenarios. CONFIRMED requirements reflect the agreed design. PROPOSED requirements and numerical quality targets require baseline review. Exact source coverage, API/model choices and operating limits are intentionally left as explicit decisions.
 
-The existing product brief remains a separate draft. A gathers context, B writes and revises, C judges, and backend code delivers the eligible B answer. C's actionable findings go to B first. B revises using the existing context when sufficient; A is called only for specific missing information requested by B. T14 and T15 check both correction routes.
+The product brief states the user problem and goals; this SRS provides the detailed requirements. A gathers context, B writes and revises, C judges, and backend code delivers the eligible B answer. C's actionable findings go to B first. B revises using the existing context when sufficient; A is called only for specific missing information requested by B. T14 and T15 check both correction routes.
 
 ## Rebuild the PDF
 
@@ -41,3 +43,4 @@ The workflow's PDF drawing is implemented in `build_srs.py`; keep it aligned wit
 4. Commit the matching Markdown and PDF in the same pull request.
 
 Document verification is different from application testing. The acceptance scenarios describe tests to run during implementation; they have not been claimed as passed by this documentation change.
+
