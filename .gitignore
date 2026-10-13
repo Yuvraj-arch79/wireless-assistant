@@ -216,3 +216,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Wireless Assistant local data and generated working files
+.env.*
+!.env.example
+!.env.*.example
+/data/
+/artifacts/
+/tmp/
+/output/
+*.sqlite
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+
