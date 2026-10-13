@@ -1,6 +1,12 @@
 # Wireless Assistant — Product Brief
 
-**Status:** Draft
+**Document status:** Complete product brief for planning; unresolved choices are listed below.  
+**Updated:** 13 October 2026  
+**Detailed requirements:** [SRS v0.9.1](requirements/wireless-assistant-srs.md)
+
+## Objective
+
+Define the problem Wireless Assistant will solve, who it will serve, and the outcomes it should achieve.
 
 ## Problem Statement
 
@@ -16,33 +22,93 @@ Wireless Assistant aims to address all five challenges by helping users obtain a
 
 ## Intended Users and Their Needs
 
-Wireless Assistant is intended for people seeking to understand or apply wireless communication information.
+The intended audience is people seeking to understand or apply 3GPP cellular information. The following groups are proposed for validation; they do not determine a fixed answer format.
 
-Users need:
-- Clear explanations with examples, comparisons or procedures appropriate to their question.
-- Relevant information without manually searching through lengthy specifications.
-- Answers supported by traceable evidence, presented at the end of the response.
-- Specific clarification questions when missing information would materially affect the answer.
-- Continuity across follow-up questions without repeatedly providing the same context.
+| Possible user | Main need |
+| --- | --- |
+| Learner or student | Understand a concept, comparison or procedure with a clear explanation and useful example. |
+| Wireless engineer | Find the relevant clause, document version, conditions and exceptions. |
+| Researcher or technical reader | Follow source references and compare explanations within the declared collection. |
+| Project maintainer | Prepare sources, configure permitted API access and understand failures. |
 
-The assistant should interpret each request using the user's query, any clarification questions and answers, and relevant conversation history. It should use retrieved source context to support its response.
+Every user needs answers that fit the question, traceable supporting sources, focused clarification when necessary, and continuity across follow-up questions. Response depth follows the user's request and context rather than an assumed role.
 
-Response depth and format should follow the user's expressed needs and available context rather than a fixed category such as student, engineer or researcher.
+The original question, relevant history, user corrections and clarification replies together define the current need. The assistant retrieves source evidence to answer that need.
 
-## Project Goals
+## Project Goals and Expected Benefits
 
-1. **Improve understanding:** Help users understand wireless concepts and procedures through clear explanations, suitable examples and appropriate detail.
+| Goal | Expected user benefit |
+| --- | --- |
+| G1 — Improve understanding | Necessary terminology is explained, with the requested examples and level of detail. |
+| G2 — Reduce search effort | Relevant passages can be found without manually reading many specifications. |
+| G3 — Address the actual need | The answer gives the requested explanation, comparison or procedure and respects important constraints. |
+| G4 — Make answers verifiable | Claims have traceable sources; missing evidence and unresolved uncertainty are disclosed. |
+| G5 — Maintain continuity | Relevant context is reused so users do not repeatedly explain the same information. |
 
-2. **Reduce information-search effort:** Help users find relevant information from supported sources without manually navigating lengthy specifications.
+The SRS defines observable checks and proposed quality measures for these goals. No measured improvement or accuracy level is claimed yet.
 
-3. **Address the user's actual need:** Interpret the query together with clarification exchanges and relevant conversation history. Ask specific clarification questions when needed to provide a useful answer.
+## First-Release Scope
 
-4. **Provide accurate and verifiable answers:** Ground factual claims in relevant source material and present supporting references at the end. Clearly communicate insufficient evidence or uncertainty.
+The first release covers **3GPP cellular information in an explicitly declared, prepared collection**. The name Wireless Assistant does not imply coverage of every wireless technology.
 
-5. **Maintain conversation continuity:** Automatically save conversation history and use relevant context to support follow-up questions without unnecessary repetition.
+Included behavior:
 
-6. **Combine useful contributions from multiple models:** Select and reconcile relevant, supported content from model responses to produce one coherent answer. Agreement between models alone must not be treated as proof of correctness.
+- Text questions, explanations, examples, comparisons and supported procedures.
+- Domain checking that considers context, including short follow-up questions.
+- Focused clarification when an unresolved detail would materially affect the answer.
+- Recent relevant history, with older original messages retrieved when needed; summaries remain aids.
+- Evidence-backed answers with citations near material claims and a source list at the end.
+- Checked partial answers with clear limitations when a complete answer is unavailable.
+- A localhost application using configured free cloud APIs, with locally stored history and corpus data.
 
-7. **Stay within the supported wireless scope:** Decline unrelated requests before source retrieval and multi-model answer generation, while allowing the minimal processing needed to assess relevance.
+Outside the first release:
 
-8. **Operate efficiently on localhost:** Provide a usable local application while avoiding unnecessary model calls and repeated processing. Define measurable performance targets after evaluating the available hardware and model options.
+- General-purpose answers outside the cellular scope.
+- Live network control, standards compliance certification or equipment changes.
+- Searching the web or downloading a new standard for every question.
+- Model training, local generative models, automatic paid fallback, public multi-user hosting, voice or image input.
+
+Exact specifications, releases and document versions are still to be selected in [issue #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4).
+
+## Agreed Answering Responsibilities
+
+| Component | Responsibility |
+| --- | --- |
+| A — Context collector | Understand the need and request relevant evidence, history or clarification through backend tools. |
+| B — Answer writer | Produce and revise the technical answer using the need and supporting evidence. |
+| C — Judge | Check the exact B draft and return specific findings; never rewrite the user answer. |
+| Backend | Execute tools, enforce finite budgets, route feedback and deliver the eligible B answer. |
+
+C's actionable findings go to B first. If existing context is sufficient, the path is **C → B → C**. Only B's specific information gap causes **C → B → A → B → C**, with all transitions controlled by the backend.
+
+One initial draft and at most two correction rounds are allowed. A feedback round counts even if B keeps its wording unchanged. The system stops when limits are reached or no useful progress is possible.
+
+This role separation replaces the earlier broad goal of combining responses from several answer-writing models. A, B and C may use the same underlying model or different models; that selection remains open. Agreement between models is not proof of correctness.
+
+## Assumptions to Validate
+
+| Assumption | How it will be checked |
+| --- | --- |
+| The proposed audience and question types represent useful initial users. | Review with representative users before the pilot. |
+| A small 3GPP collection can support a useful first set of questions. | Select documents and verify representative supporting passages in issue #4. |
+| Available free APIs can support the role contracts and bounded workflow. | Measure quality, quota and response time in issue #5. |
+| The chosen local machine and stores can handle the declared collection. | Record and benchmark the selected configuration in issue #5. |
+| The proposed quality gates and operating settings are practical. | Review the SRS proposals and pilot plan in issue #6. |
+
+These are assumptions, not accepted performance claims.
+
+## Unresolved Questions
+
+- Which specification numbers, releases and versions will be included, and which release default should apply?
+- Which models, providers, embedding method, search store and application stack meet the constraints?
+- What history, retention, language, platform and finite resource settings should be used?
+- Who will review the domain evidence, and which quality and latency gates will be accepted?
+
+The [decision register](decisions.md) tracks D01–D11 without treating open choices as settled.
+
+## Completion and Next Step
+
+The problem statement, intended users, user goals, scope, assumptions and unresolved questions are documented. The product brief is ready to serve as the planning reference in main.
+
+The SRS is a complete review draft with 94 requirements and 30 acceptance scenarios. Formal baseline approval and implementation remain pending. Follow the [roadmap](roadmap.md) and [issue #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) before declaring M1 complete.
+
