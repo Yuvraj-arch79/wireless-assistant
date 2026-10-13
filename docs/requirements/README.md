@@ -6,13 +6,13 @@ The SRS describes the agreed product and the proposed implementation baseline in
 - [Read or edit the Markdown source](wireless-assistant-srs.md)
 - [Related product brief review (PR #2)](https://github.com/Yuvraj-arch79/wireless-assistant/pull/2)
 
-**Version:** 0.9, dated 12 October 2026. **Status:** review draft; no product approval or implementation test pass is implied.
+**Version:** 0.9.1, dated 13 October 2026. **Status:** review draft; no product approval or implementation test pass is implied.
 
 The document covers the user problems and goals, cellular scope, domain checks, clarification, history, prepared 3GPP RAG, A/B/C responsibilities, bounded correction, evidence and citations, final delivery, privacy, operation, quality measures, acceptance scenarios, traceability, risks and open decisions.
 
 There are 94 identified requirements, each with a check, and 30 acceptance scenarios. CONFIRMED requirements reflect the agreed design. PROPOSED requirements and numerical quality targets require baseline review. Exact source coverage, API/model choices and operating limits are intentionally left as explicit decisions.
 
-The existing product brief remains a separate draft. This SRS makes the division of model responsibilities explicit: A gathers context, B writes and revises, C judges, and backend code delivers the eligible B answer.
+The existing product brief remains a separate draft. A gathers context, B writes and revises, C judges, and backend code delivers the eligible B answer. C's actionable findings go to B first. B revises using the existing context when sufficient; A is called only for specific missing information requested by B. T14 and T15 check both correction routes.
 
 ## Rebuild the PDF
 

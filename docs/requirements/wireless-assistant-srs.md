@@ -3,8 +3,8 @@
 Software Requirements Specification
 
 **Document ID:** WA-SRS-001
-**Version:** 0.9
-**Date:** 12 October 2026
+**Version:** 0.9.1
+**Date:** 13 October 2026
 **Status:** Review draft - proposed implementation baseline
 **Repository:** Yuvraj-arch79/wireless-assistant
 
@@ -20,7 +20,7 @@ This document defines what Wireless Assistant must do, how users should experien
 | Field | Value |
 | --- | --- |
 | Document ID | WA-SRS-001 |
-| Version / date | 0.9 / 12 October 2026 |
+| Version / date | 0.9.1 / 13 October 2026 |
 | Status | Review draft. No implementation, test result or approval is implied. |
 | Project / repository | Wireless Assistant / Yuvraj-arch79/wireless-assistant |
 | Related brief | docs/product-brief.md; the user's edited problem statement is the product basis. |
@@ -111,7 +111,7 @@ These are examples of possible users, not fixed answer categories. Response dept
 | --- | --- |
 | A collects the relevant context | A identifies the need, resolves references and requests evidence. Backend tools execute searches. |
 | B writes the technical answer | The final technical response comes from a version of B's answer. |
-| C only judges | C returns findings and a review status. It never rewrites the response. |
+| C only judges | C returns findings to the backend for B. It never rewrites the answer or directly triggers A. |
 | Backend delivers the response | Code applies process rules and displays the eligible B answer; there is no fourth synthesis LLM. |
 | RAG uses prepared 3GPP content | Documents are acquired, parsed and indexed before question answering. |
 | History is selected, not dumped | Use recent relevant context and retrieve older original messages when needed. |
@@ -138,16 +138,17 @@ flowchart TD
     A -->|"Essential detail missing"| Q["Ask user; pause"]
     Q -->|"User replies"| A
     A -->|"Clearly unrelated"| O["Explain scope"]
-    A -->|"Need understood"| R["A requests; backend retrieves evidence"]
-    R --> B["B writes answer + citations"]
-    B --> C["Code validates; C judges"]
+    A -->|"Need understood"| R["A collects; backend retrieves evidence/history"]
+    R -->|"Requested context"| B["B writes or revises answer + citations"]
+    B -->|"Specific missing information only"| R
+    B -->|"Candidate answer"| C["Code validates; C judges"]
     C -->|"Eligible full or partial"| F["Backend displays exact B version"]
-    C -->|"Specific issue"| L{"Progress + budget left?"}
-    L -->|"Yes: targeted repair"| R
+    C -->|"Specific findings"| L{"Backend: attempt allowed?"}
+    L -->|"Yes: send findings to B"| B
     L -->|"No"| S["Use eligible result or explain inability"]
 ```
 
-Backend code owns every transition. The user does not need to see role names, internal review messages or search parameters. While work is running, the interface shows a short progress message.
+Backend code owns every transition. C's actionable findings go to B when another attempt is allowed. B uses existing context first and requests A only for specific missing evidence or history. After B submits a candidate, C reviews it. The interface shows progress, not internal drafts.
 
 <!-- widths: 0.3,0.7 -->
 | Stage | What happens |
@@ -155,7 +156,7 @@ Backend code owns every transition. The user does not need to see role names, in
 | Receive and understand | Save the message; inspect recent context; use cheap domain clues; let A resolve ambiguity. |
 | Ask or retrieve | Ask one focused clarification if essential information is missing. Otherwise search prepared sources and older history as needed. |
 | Write and check | B writes with citations. Code checks references and format. C checks meaning, support and fit to the need. |
-| Release or stop | Deliver the eligible answer. If repair is justified, revise within the shared budget. Otherwise produce a checked partial answer or a clear inability notice. |
+| Release or stop | Deliver the eligible answer. Otherwise send C's findings to B within budget; involve A only for B's missing information. Stop with a checked result or clear inability notice. |
 
 > **Offline documents do not mean an offline assistant**
 > The prepared 3GPP documents and index are local. Cloud embeddings and A/B/C calls still need internet access. The product must explain this distinction.
@@ -167,17 +168,17 @@ Backend code owns every transition. The user does not need to see role names, in
 <!-- widths: 0.17,0.38,0.45 -->
 | Part | Receives | Produces / must not do |
 | --- | --- | --- |
-| A / Context | Original query, relevant recent messages, current need and available collection details. | Need record, retrieval requests, evidence package or a clarification. Must not replace original evidence with an unsupported summary. |
-| B / Writer | Original query, critical replies, need record, selected history and original source passages. | Answer with claim-linked sources; explicit missing items or a targeted evidence request. Must not approve itself. |
-| C / Judge | The same need and source context, plus the exact B draft and earlier findings when relevant. | Review status and specific findings. Must not supply a rewritten final answer. |
+| A / Context | Original query, recent context and collection details; B's specific missing-information request during correction. | Need record, original evidence, selected history or a clarification. Must not treat every C objection as a retrieval request. |
+| B / Writer | Original query, critical replies, need record, history, original source passages and C's findings on the draft. | Answer with citations; justified revisions or a specific request to A through the backend. Must not approve itself. |
+| C / Judge | The same need and source context, plus the exact B draft and earlier findings when relevant. | Review status and specific findings sent to the backend for B. Must not rewrite answers or direct A's searches. |
 | Backend / Code | Role outputs, stored records, configuration and API responses. | Tool execution, record validation, shared limits, version binding and final delivery. It does not infer technical truth from a citation ID. |
 | Interface | Backend status and an eligible response. | Readable answer, citations and limitations. It does not send hidden drafts or internal debate as a final answer. |
 
 ### When B and C disagree
 
-C must identify the disputed statement, the relevant user requirement or source passage, and the reason for the finding. B may explain its interpretation and request precise additional evidence, but this does not override a failed review. A may retrieve that evidence. Code checks whether another bounded attempt is allowed.
+C identifies the disputed claim or requirement and its reason. The backend checks the finding's structure and the remaining budget, then sends actionable findings to B. B examines the existing evidence first. If it is sufficient, B responds or revises directly; only a specific missing-information request from B is routed to A. A's results return to B, then C reviews B's candidate.
 
-C can also be wrong. An unsupported objection does not authorize a blind rewrite. The issue is recorded, evidence is sought only if useful, and unresolved material disagreement becomes a limitation. No further judge is added to judge C indefinitely.
+C can also be wrong. B may preserve a supported statement and explain its disagreement using existing evidence, but it cannot override a failed review or approve itself. A malformed finding may be returned to C for bounded format repair. Unresolved material disagreement becomes a limitation; no endless judge-of-judge loop is added.
 
 > **Protecting a good answer**
 > Keep every B draft. Change only justified parts and check for lost correct content. These controls reduce harmful revisions; they cannot guarantee that one LLM will never make another LLM's answer worse.
@@ -510,9 +511,9 @@ B must retain source conditions that change the answer, including applicable rel
 
 **Status:** CONFIRMED
 
-When information is insufficient, B must identify what is missing and why it matters. The backend routes eligible evidence requests to A or a necessary clarification to the user.
+When information is insufficient, B must identify the missing source, history or user detail and why it matters. The backend sends eligible collection requests to A; A retrieves context or asks the necessary clarification. Results return to B.
 
-**Check:** A request names the missing condition rather than asking to search everything again.
+**Check:** A receives B's specific gap and returns the result to B; C's finding alone does not start retrieval.
 
 ### ANS-05 - Write limitations with the answer
 
@@ -526,9 +527,9 @@ B must state which parts are answered, which remain unresolved and why. It must 
 
 **Status:** CONFIRMED
 
-B must tie each substantive revision to evidence or a specific user requirement. The system must retain the previous draft and the reason for change.
+B must assess C's actionable findings using the available context first. It must revise directly when that context is sufficient, and tie substantive changes to evidence or the user need. Preserve the prior draft and the reason for each change.
 
-**Check:** A correction record identifies the changed claim and justification.
+**Check:** A repair using existing evidence makes no new A retrieval call and records the justified change.
 
 ### ANS-07 - Use simple, suitable language
 
@@ -562,9 +563,9 @@ C must receive the original need, critical messages, relevant history, actual so
 
 **Status:** CONFIRMED
 
-C must return a review decision and specific findings only. It must not return a replacement user-facing technical answer.
+C must return a review decision and specific findings to the backend for B. It must neither provide a replacement user-facing answer nor invoke A or retrieval directly.
 
-**Check:** The review schema rejects a rewritten-final-answer field.
+**Check:** C outputs findings only; the controller routes actionable issues to B, not directly to A.
 
 ### REV-03 - Separate issue types
 
@@ -622,17 +623,17 @@ The project must measure C's missed errors, false objections and harmful revisio
 
 **Status:** CONFIRMED
 
-Backend code must control states, call permissions, tool execution and final delivery. A role must not independently start an unbounded chain of calls.
+Backend code must control states, tools, budgets and delivery. For an allowed correction, it must send C's actionable findings to B first. It may call A for more context only after B identifies a specific gap; A's result must return to B.
 
-**Check:** A malformed or excessive role request cannot bypass the controller.
+**Check:** Traces show C-to-B correction and optional B-to-A-to-B collection; no role bypasses the controller.
 
 ### ORC-02 - Enforce two correction rounds
 
 **Status:** CONFIRMED
 
-A request may have one initial B draft and C review, then at most two B correction drafts with reviews. Changing roles or issue labels must not reset this counter.
+After the initial B draft and C review, at most two correction rounds are allowed. Sending C's findings to B starts a round. It counts even if B preserves the wording; B's requests to A remain within that round and the shared budget.
 
-**Check:** Repeated objections end after no more than three B draft versions.
+**Check:** No more than two feedback rounds follow the initial review; unchanged wording and retrieval do not reset the counter.
 
 ### ORC-03 - Use shared resource limits
 
@@ -694,8 +695,8 @@ These rules implement ORC-01 to ORC-08. Code checks identifiers, allowed states,
 | Meaning-changing detail is missing | A asks a focused clarification; dependent processing pauses. | Clarification question. |
 | Draft passes basic checks and C accepts all requested parts | Release the exact eligible B version. | Complete answer with sources. |
 | B explicitly limits the answer; C accepts its support and gap statements | Release the exact eligible B version with partial status. | Supported partial answer and specific limitations. |
-| C reports a specific resolvable issue and budget remains | Retrieve targeted evidence if needed; B revises; C reviews. | Progress status until a terminal result. |
-| C raises an ungrounded or invalid objection | Do not blindly rewrite B. Validate the finding; seek clarification or evidence only within budget. | No automatic release while a material valid review is missing. |
+| C reports a specific issue and another attempt is allowed | Send the findings to B. With enough context, B revises directly. Only B's specific gap goes to A; results return to B, then C reviews. | Progress status until a terminal result. |
+| C's objection is disputed or its record is malformed | Send a well-formed disputed finding to B for an evidence-based response. Return malformed review records to C for bounded repair. Neither case automatically starts A. | No blind rewrite, self-approval or automatic release without a valid review. |
 | Final allowed correction is starting | B fixes supported issues and qualifies or omits unresolved claims; C reviews this final candidate. | Complete or partial answer if eligible. |
 | Budget ends or no further progress is possible | Use a still-valid previously reviewed candidate, if one exists and addresses the current need; otherwise stop. | Eligible answer, or a clear inability notice. |
 | API failure prevents the reserved final review | Do not pretend the review passed or publish the unchecked draft. | Service limitation with retry guidance. |
@@ -787,7 +788,7 @@ These are logical records, not a mandated database design. Identifiers connect a
 | Corpus manifest | Collection version, included document IDs, spec/version/release, acquisition source, parse status and content hash. | Declare coverage and reproduce retrieval. |
 | Evidence passage | Chunk ID, original text, document/section IDs, parent/neighbor links, version and source location. | Trace a claim to the correct original context. |
 | Retrieval record | Request ID, question or target gap, filters, embedding/index version and returned passage IDs. | Explain a missing or irrelevant result. |
-| B answer version | Draft ID, need/evidence versions, text, claim-to-source links, gaps and revision reason. | Preserve good content and bind review to a draft. |
+| B answer version | Draft ID, need/evidence versions, text, source links, addressed C finding IDs, gaps and revision reason. | Trace a finding through B's response and optional request to A. |
 | C review | Draft ID, review status, finding type, affected claim/requirement, evidence links and remaining gaps. | Support a specific, reviewable release decision. |
 | Request run | Request ID, state, role/model versions, budget used, attempts, stop reason and displayed answer ID. | Prevent loops and diagnose failures. |
 
@@ -873,7 +874,7 @@ The release must declare supported operating systems, browser versions, input li
 | No evidence in the active collection | Name the searched scope and the missing answer part; return supported material if available. | Assert that no 3GPP specification contains the information. |
 | Sources use different versions | Separate the version-specific statements or ask which scope is needed. | Merge conflicting rules into one universal answer. |
 | Unreadable table or missing note | Flag the extraction gap and avoid relying on the damaged passage. | Fill in the unreadable value from model memory. |
-| B and C disagree | Identify the disputed claim; seek targeted evidence only if useful and within budget. | Let B self-approve or add endless judges. |
+| B and C disagree | Route C's actionable finding to B first. Use current evidence; involve A only for B's specific missing item within budget. | Send every C objection to A, let B self-approve or add endless judges. |
 | Repeated retrieval or review failure | Stop early; attempt a checked partial answer within the remaining allowed draft budget. | Reset counters or wait for a confidence score to increase. |
 | No eligible draft at the stop point | Show the recorded inability reason with a useful next step. | Publish the last failed draft with a disclaimer. |
 | Internet, quota or provider failure | Keep the question, show a service message and allow an explicit retry. | Pretend that the missing review was completed. |
@@ -1143,9 +1144,9 @@ Test fixtures must be pinned to known document versions. The text in this SRS de
 | T11 | B must give a comparison and a labeled example using a conditional rule. | All requested parts are present; conditions and optional/required meaning remain correct; claims link to supporting text. |
 | T12 | Part of the answer lacks evidence but another part is supported. | B identifies the exact gap, writes an honest partial answer and removes unsupported assertions. C may accept partial status. |
 | T13 | C sees a contradicted claim, an unsupported claim, an unrelated real citation and a missed requirement. | Findings identify the correct type, affected item and reason. C does not produce a rewritten answer. |
-| T14 | A correct B draft receives a vague or wrong C objection. | No blind rewrite occurs. Any correction requires a specific reason and evidence; unresolved review does not become automatic approval. |
-| T15 | A correction fixes one error but drops a correct requested example. | The regression is detected and the original draft remains available; C assesses the changed candidate. |
-| T16 | C continues raising the same problem through the maximum rounds. | At most two correction drafts occur; no role resets the counter. Final output is eligible partial/full content or an inability notice. |
+| T14 | With enough evidence already available, test a valid C issue and a wrong C objection. | Findings reach B first. B repairs a supported error or explains disagreement, with no new A retrieval call. C reviews the candidate; B cannot self-approve. |
+| T15 | B needs an absent clause to address C's finding; the revision also drops a correct example. | A is called only after B names the gap. Evidence returns to B, then B's revision goes to C. The lost example is detected and the original draft is retained. |
+| T16 | C repeats the same problem; include a B response that keeps the wording unchanged. | At most two correction rounds occur after the initial review. Unchanged text and A calls cannot reset the counter. Output is an eligible answer or inability notice. |
 | T17 | Retrieval and provider retries approach time, token and call limits. | All work shares the same budget; optional work stops before the reserved closing attempt; the run terminates. |
 | T18 | Review passes draft A; draft B or the evidence set then changes. | The stale pass cannot release the changed answer; only a still-valid reviewed version is eligible. |
 | T19 | The final allowed draft fails or C is unavailable during the final review. | No failed or unchecked technical draft is released; a clear recorded limitation is shown. |
@@ -1194,11 +1195,11 @@ Ranges below include every listed ID. The goal column connects implementation wo
 | RET-02, RET-07 | G2, G4 | T03, T09, T12 |
 | RET-05, RET-08 | G2 | T06, T10, T17 |
 | ANS-01 to ANS-03, ANS-07 | G1, G3, G4 | T01, T09, T11 |
-| ANS-04, ANS-05 | G3, G4 | T04, T10, T12 |
+| ANS-04, ANS-05 | G3, G4 | T04, T10, T12, T15 |
 | ANS-06, ANS-08 | G3, G4 | T14, T15, T18, T20 |
 | REV-01 to REV-05 | G3, G4 | T13, T14, T18 |
 | REV-06 to REV-08 | G3, G4 | T12, T15, T29 |
-| ORC-01 to ORC-05 | All | T10, T16, T17, T23 |
+| ORC-01 to ORC-05 | All | T10, T14, T15, T16, T17, T23 |
 | ORC-06 to ORC-08 | All | T18, T19, T22 |
 
 ## Requirement traceability: operation
@@ -1316,7 +1317,7 @@ No duration or staffing commitment is assumed. Corpus breadth should expand only
 | Model, prompt, parser or corpus | Run affected evaluations, preserve configuration history and keep a rollback path. |
 
 > **Approval record**
-> Version 0.9 is prepared for review. Product approval, technical approval and domain validation are pending. No person's name, signature, merger or test result is represented as completed by this document.
+> Version 0.9.1 is prepared for review. Product approval, technical approval and domain validation are pending. No person's name, signature, merger or test result is represented as completed by this document.
 
 ## Worked behavior examples
 
@@ -1338,7 +1339,7 @@ The question is cellular and therefore in scope, but the specified release is ab
 
 ### Example 3: C challenges a correct B answer
 
-C claims that a statement is wrong. Its finding must name the statement and explain the source or requirement conflict. Code validates this structure; it cannot decide the technical dispute. A retrieves a targeted missing passage if the attempt is useful. B changes only what that evidence justifies. C checks the new draft and potential lost content. If the dispute remains at the limit, the system uses an eligible checked partial answer or states that it could not verify the disputed part.
+C claims that a statement is wrong. The backend validates the finding and budget, then sends it to B. If the existing passage supports B, B explains that support without calling A or blindly rewriting. If a clause is missing, B names the gap; the backend asks A to collect it and return it to B. C reviews B's resulting candidate, including any preserved disputed statement. Unresolved material disagreement at the limit produces an eligible partial answer or a precise inability notice.
 
 > **What is not promised**
 > C is not guaranteed to be wiser than B, and a score crossing a threshold does not establish truth. The system earns reliability through evidence, finite control rules, evaluation and transparent limitations.
@@ -1364,7 +1365,7 @@ C claims that a statement is wrong. Its finding must name the statement and expl
 | Grounded / supported | The asserted statement follows from the cited evidence in the relevant context. |
 | Provenance | The record of where a passage or statement came from, including its document and version. |
 | Need record | A compact internal description of what the user is trying to obtain, with links to original messages. |
-| Correction round | One additional B draft and its review after the initial draft. |
+| Correction round | One bounded response to C's findings by B, with optional collection by A and C's review. Unchanged wording still counts. |
 | Regression | A previously correct or working behavior becoming worse after a change. |
 | Held-out evaluation | Testing on examples not used to tune the system. |
 | False acceptance / objection | A judge approving a flawed answer / wrongly blocking a correct answer. |
@@ -1412,4 +1413,5 @@ https://learn.microsoft.com/en-us/azure/search/hybrid-search-overview
 <!-- widths: 0.14,0.23,0.63 -->
 | Version | Date | Change / status |
 | --- | --- | --- |
-| 0.9 | 12 October 2026 | Initial complete review draft based on the agreed design and edited product problem statement. Proposed implementation requirements and open decisions are explicitly marked. |
+| 0.9 | 12 October 2026 | Initial review draft based on the agreed design and edited problem statement. Proposed requirements and open decisions marked. |
+| 0.9.1 | 13 October 2026 | Corrected C-to-B feedback routing; A collects extra context only on B's request. Aligned diagrams, requirements, examples and T14/T15. |
