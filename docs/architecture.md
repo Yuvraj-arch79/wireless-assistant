@@ -1,4 +1,4 @@
-# Initial architecture
+# Initial architecture 
 
 **Status:** Design summary of SRS v0.9.1; implementation has not started.  
 **Detailed reference:** [Software Requirements Specification](requirements/wireless-assistant-srs.md)
