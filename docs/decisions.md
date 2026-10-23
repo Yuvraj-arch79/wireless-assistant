@@ -1,7 +1,8 @@
 # Decision register
 
-**Reference:** SRS v0.9.1, “Settings and open decisions.”  
-**Status date:** 13 October 2026
+**Reference:** SRS v0.9.1, “Settings and open decisions.”
+
+**Status date:** 23 October 2026
 
 Requirements documentation is complete. Final acceptance of proposed requirements and several implementation settings remains open. Publishing the documents in main does not close these decisions.
 
@@ -14,6 +15,22 @@ Requirements documentation is complete. Final acceptance of proposed requirement
 - One initial draft plus at most two correction rounds is the starting policy.
 - Limits are finite, limitations are visible, and failed or unchecked drafts are not automatically released.
 - The intended deployment is localhost with configured free cloud APIs and no automatic paid fallback.
+
+## Clarification and finite-processing decision
+
+**Owner:** Project owner, recorded from the 23 October 2026 discussion.
+
+**Design:** [DESIGN-LLD-001](design/system-design.md), especially sections 3–4.
+
+**Affected requirements:** DOM-04 to DOM-07, CTX-07, ORC-02 to ORC-08, OPS-01, OPS-04, OPS-07, UX-08.
+
+**Verification:** T04, T16–T19, T22–T23 and the additional failure scenarios in [design verification](design/verification.md).
+
+Ask a clear, specific clarification whenever an unresolved essential detail would change the answer. One earlier question is not a reason to guess. Check available context first. Asking pauses dependent processing and removes the busy spinner; only a user reply resumes work. Repeated confusion must explain the exact missing detail instead of repeating an unhelpful question.
+
+All autonomous work remains bounded. A clarification reply, role re-entry, automatic retry or format repair does not reset the same run's counters. Human waiting is idle and excluded from active-processing time. Exhausted allowance stops with a clear reason. An explicit retry/continuation can create a linked new bounded attempt; the backend cannot automatically create endless new attempts.
+
+This supersedes the supplied PDF draft's one-clarification cap and forced continuation. It makes the existing SRS clarification and finite-budget requirements concrete. The owner requested these safeguards; the implementation mechanisms in the LLD and numeric example values remain subject to technical review and testing. Revisit this decision only through explicit behavior review, not a provider default.
 
 ## Open settings and approval work
 
@@ -34,6 +51,8 @@ Owner labels below identify responsibilities; a named domain reviewer has not ye
 | D11 | Frameworks, local stores, parsing and hardware capacity | Open | Developer | Initial design completion | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
 
 All proposed SRS requirements also require review in issue #6. The numerical quality targets are proposed gates, not measured results.
+
+The LLD now documents candidate control, data and recovery mechanisms. [limits.example.json](design/limits.example.json) supplies development examples for D05/D06/D11; these are not benchmarked or owner-approved numerical targets. The reference SQL design does not close the storage/framework choice in D11. No corpus, model/provider or retrieval stack was selected by this documentation work.
 
 ## Record a decision
 
