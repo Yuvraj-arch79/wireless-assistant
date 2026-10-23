@@ -2,6 +2,13 @@
 
 This log tracks project documentation and design changes. SRS versions are document versions, not application releases.
 
+## 2026-10-24 — Reproducible source acquisition
+
+- Lock all 12 owner-listed initial PHY/Layer-2 specifications to exact Release 18 official ETSI PDFs, including SHA-256, byte size, page count and original 3GPP archive references.
+- Add a standard-library download/verify tool with bounded attempts/deadlines, checksum enforcement, atomic file promotion, full-collection receipts and offline failure tests.
+- Add a clone/setup/update/recovery guide and repository CI checks. Keep original PDFs and all generated data in the existing ignored local data directory.
+- Record the source baseline as a development choice; leave domain/default-release review, parsing/indexing, model integration and application acceptance pending.
+
 ## 2026-10-23 — Detailed design robustness review
 
 - Add DESIGN-LLD-001 covering the full product flow, finite processing, repeat clarification without forced guessing, concurrency, cancellation, recovery, contracts and exact reviewed-answer delivery.

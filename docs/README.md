@@ -9,6 +9,7 @@ Read these documents in order if you are new to the project.
 | [Architecture](architecture.md) | How do A, B, C and backend control work together? |
 | [System design and LLD](design/system-design.md) | What are the precise states, limits, role contracts, history rules, APIs and recovery behavior? |
 | [Implementation handoff](design/implementation-guide.md) | What data crosses each component boundary, what do API payloads contain, and in what order should implementation proceed? |
+| [Corpus setup and source lock](../corpus/README.md) | How can another developer obtain and verify the exact same 12 source documents without storing PDFs in Git? |
 | [Design changes and verification](design/verification.md) | Which gaps were corrected, how are all 94 requirements covered, and which checks remain pending? |
 | [Decision register](decisions.md) | What is agreed, what is proposed, and what is still open? |
 | [Roadmap](roadmap.md) | What should be done next, and when is each stage complete? |
