@@ -1,7 +1,7 @@
-# Initial architecture 
+# Architecture overview
 
 **Status:** Design summary of SRS v0.9.1; implementation has not started.  
-**Detailed reference:** [Software Requirements Specification](requirements/wireless-assistant-srs.md)
+**Detailed references:** [SRS](requirements/wireless-assistant-srs.md), [system design / LLD](design/system-design.md), and [implementation handoff](design/implementation-guide.md)
 
 ## Two different times
 
@@ -56,14 +56,20 @@ There is one initial draft and at most two correction rounds. Sending C's findin
 
 Every B version is retained. B changes only parts justified by evidence and the user need; C checks for lost correct content. B can explain an evidence-backed disagreement, but cannot override a failed review. These controls reduce harmful revisions without guaranteeing perfect model judgment.
 
-Approval is tied to the exact answer, need and evidence versions. An earlier candidate is reusable only if it is still eligible for the current need. When nothing is eligible, code may display an operational inability notice; it cannot release an unchecked technical draft.
+Clarification may be asked again when essential meaning remains unresolved. It puts the run into a saved waiting state with no active worker, model calls or processing spinner. Replies resume the same need and remaining budget through a dedicated reply operation. Repeated confusion produces a specific information-needed wait; exhausted processing allowance produces a clear stop and explicit continuation guidance.
+
+Each active run has total and per-operation deadlines, finite calls/tokens/tool operations, bounded retries and a closing reserve. Atomic session ownership, idempotent submissions, worker fencing and persist-before-deliver finalization prevent duplicate and late publication. Restart marks abandoned processing interrupted; browser reconnection reads saved status rather than restarting generation.
+
+Approval is tied to the exact answer, need and evidence versions. The first eligible full or partial candidate completes immediately. A sequential run reaching its third failed candidate therefore has no earlier approved answer to fall back to. Code displays an operational inability notice; it cannot release an unchecked technical draft. Cross-run answer caching is disabled in the initial LLD.
 
 ## Context and records
 
 Keep original messages locally and use recent relevant context first. Older-history retrieval is on demand; summaries help selection but do not replace the original evidence.
 
+Oversized recent turns are not silently truncated. Every excluded message remains reachable through the complete local history index, including messages omitted by the token cap within the most recent turns. A run pins its corpus build and exact evidence snapshot; saved citation inspection must retain that source version.
+
 The planned records include request/need IDs, source and corpus versions, selected history, B draft IDs, C findings, usage budgets and terminal status. Provider data handling, retention, backup and deletion settings require explicit decisions before real-user data is used.
 
 ## Technology status
 
-No application framework, vector store or model provider is selected by this document. The next step is to resolve the [decision register](decisions.md), then build the [evidence foundation](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7).
+No application framework, vector store or model provider is selected by this document. The LLD supplies an executable reference database schema and provisional limits to make its rules reviewable. The next step is to review that design and resolve the [decision register](decisions.md), then build the [evidence foundation](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7).

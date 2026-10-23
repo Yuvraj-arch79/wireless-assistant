@@ -2,8 +2,10 @@
 
 A planned assistant for clear, relevant and verifiable answers from a prepared **3GPP cellular** collection, with context-aware follow-up questions.
 
-**Project stage:** Requirements review and initial design.  
-**SRS:** v0.9.1 — 94 requirements and 30 acceptance scenarios.  
+**Project stage:** Requirements review and detailed design.
+
+**SRS:** v0.9.1 — 94 requirements and 30 acceptance scenarios.
+
 **Application:** Not implemented yet.
 
 [Read the SRS PDF](docs/requirements/wireless-assistant-srs.pdf) · [Product brief](docs/product-brief.md) · [Documentation](docs/README.md) · [Roadmap](docs/roadmap.md) · [Open decisions](docs/decisions.md)
@@ -29,7 +31,7 @@ The first release is limited to the selected 3GPP cellular documents. It will ex
 
 C's findings go to **B first**. A is called during correction only when B identifies missing information. The workflow allows one initial draft and at most two correction rounds.
 
-[Read the architecture](docs/architecture.md) for the full behavior, including clarification, partial answers and stopping.
+[Read the architecture](docs/architecture.md) for an overview, and the [system design and LLD](docs/design/system-design.md) for clarification, finite processing, review contracts, persistence, recovery and API behavior.
 
 ## Current status
 
@@ -39,6 +41,8 @@ C's findings go to **B first**. A is called during correction only when B identi
 | Functional and quality requirements | Complete review draft, SRS v0.9.1 |
 | Acceptance scenarios and requirement mapping | Specified; application tests have not been run |
 | Initial role and control architecture | Documented |
+| Detailed design and failure handling | Documented; [changes, design checks and pending acceptance](docs/design/verification.md) |
+| Developer handoff | [Component connections, data contracts and implementation order](docs/design/implementation-guide.md) |
 | Exact corpus, technology choices and baseline approval | Open: [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4), [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5), [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
 | First evidence pipeline | Planned: [#7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) |
 | Runnable chatbot and product release | Not available yet |
@@ -51,4 +55,4 @@ Start with the [documentation guide](docs/README.md). Use the [contribution guid
 
 The intended application runs locally with configured free cloud APIs. Prepared local documents do not remove the need for internet access to those APIs. Providers and the application stack remain open decisions.
 
-The only executable code currently supplied is the [SRS PDF renderer](docs/requirements/README.md#rebuild-the-pdf). Follow its instructions to rebuild the document; there is no chatbot installation command yet.
+The executable utilities are the [SRS PDF renderer](docs/requirements/README.md#rebuild-the-pdf) and the [design validator](docs/design/validate_design.py). The latter checks example limits, requirement coverage and reference database constraints; it does not run a chatbot or establish model accuracy. There is no chatbot installation command yet.

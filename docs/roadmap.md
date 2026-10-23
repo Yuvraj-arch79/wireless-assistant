@@ -8,6 +8,7 @@
 - The five user problems, intended users, goals, scope and assumptions are documented.
 - The SRS includes 94 identified requirements, 30 acceptance scenarios and a complete requirement mapping.
 - Initial A/B/C responsibilities, backend control, correction paths and stopping rules are documented.
+- A detailed LLD, implementation handoff, reference data schema, provisional limits and complete requirement coverage are documented, including clarification, concurrency, timeout and recovery behavior.
 - The PDF and editable source are published together.
 
 This is completed documentation work. No runnable chatbot, indexed corpus, provider benchmark or product test pass is claimed.
@@ -22,6 +23,8 @@ This is completed documentation work. No runnable chatbot, indexed corpus, provi
 | 4 | [Build evidence foundation — #7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) | Working, evaluated ingestion and retrieval on the selected corpus |
 
 The first two decision tasks can inform each other. Start the evidence implementation only when its source and retrieval prerequisites are resolved.
+
+Review the [LLD and verification record](design/verification.md) alongside issue #6. Its document/database checks do not satisfy the runtime, quality or security acceptance gates in later stages.
 
 ## Stage exit conditions
 

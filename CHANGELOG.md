@@ -2,6 +2,16 @@
 
 This log tracks project documentation and design changes. SRS versions are document versions, not application releases.
 
+## 2026-10-23 — Detailed design robustness review
+
+- Add DESIGN-LLD-001 covering the full product flow, finite processing, repeat clarification without forced guessing, concurrency, cancellation, recovery, contracts and exact reviewed-answer delivery.
+- Correct history selection/coverage, bounded alternative retrieval, source-build pinning, immutable evidence versions, complete UI APIs, security wording and requirement references.
+- Add a reference SQL data model, explicitly provisional development limits, a standard-library design validator and mapping of all 94 requirements to the existing acceptance scenarios.
+- Add an implementation handoff with component connections, shared record types, role/tool action shapes, public API payloads, transaction responsibilities and dependency-ordered implementation gates.
+- Add 24 implementation failure scenarios; retain pending status for application, provider, accuracy and security tests.
+- Align the overview, architecture, roadmap and decision register. Preserve the product brief and SRS 0.9.1 source/PDF.
+- Keep source/model/stack choices and baseline approval open; no runnable application or production-readiness claim is introduced.
+
 ## 2026-10-13 — Repository organization
 
 - Publish the completed product brief and SRS package in main through their existing PRs.

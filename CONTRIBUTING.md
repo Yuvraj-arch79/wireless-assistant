@@ -26,6 +26,7 @@ Keep useful history. Remove a file only when it is obsolete and its replacement 
 - Keep statuses accurate: planned, documented, approved, implemented and tested mean different things.
 - If the SRS changes, follow the [PDF rebuild and review process](docs/requirements/README.md).
 - Record document changes in [CHANGELOG.md](CHANGELOG.md).
+- For LLD, reference schema or limit changes, run `python docs/design/validate_design.py` and keep [design coverage](docs/design/verification.md) current. Report these as design checks, separately from application tests.
 
 Acceptance scenarios describe application tests to perform later. Editing their text is not a passing test result.
 
