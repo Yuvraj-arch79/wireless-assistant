@@ -10,14 +10,15 @@
 - Initial A/B/C responsibilities, backend control, correction paths and stopping rules are documented.
 - A detailed LLD, implementation handoff, reference data schema, provisional limits and complete requirement coverage are documented, including clarification, concurrency, timeout and recovery behavior.
 - The PDF and editable source are published together.
+- The initial 12 PHY/Layer-2 source PDFs have a [version/hash lock and download/verification tool](../corpus/README.md); the files stay local and outside Git.
 
-This is completed documentation work. No runnable chatbot, indexed corpus, provider benchmark or product test pass is claimed.
+Completed work covers documentation and reproducible source acquisition. No runnable chatbot, indexed corpus, provider benchmark or product test pass is claimed.
 
 ## What must happen next
 
 | Order | Work | Result needed |
 | --- | --- | --- |
-| 1 | [Select source scope — #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) | Finite document inventory, release defaults and verified sample evidence |
+| 1 | [Review source scope — #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) | Inventory/version lock exists; review default-release policy, missing dependencies and sample evidence before indexing |
 | 2 | [Select technology — #5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) | Benchmarked API, retrieval and local application choices |
 | 3 | [Approve baseline — #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) | Reviewed requirements, operating decisions and evaluation plan |
 | 4 | [Build evidence foundation — #7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) | Working, evaluated ingestion and retrieval on the selected corpus |

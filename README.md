@@ -10,6 +10,17 @@ A planned assistant for clear, relevant and verifiable answers from a prepared *
 
 [Read the SRS PDF](docs/requirements/wireless-assistant-srs.pdf) · [Product brief](docs/product-brief.md) · [Documentation](docs/README.md) · [Roadmap](docs/roadmap.md) · [Open decisions](docs/decisions.md)
 
+## Reproduce the source documents
+
+The [corpus setup guide](corpus/README.md) locks the initial 12 NR PHY/Layer-2 specifications to exact Release 18 PDF versions and SHA-256 hashes. Original files are downloaded locally and remain outside Git.
+
+```bash
+python scripts/corpus.py fetch
+python scripts/corpus.py verify
+```
+
+Run from the repository root with Python 3.10+. This prepares verified source PDFs; parsing, indexing and the chatbot are not implemented yet.
+
 ## What the assistant will help with
 
 - Understand concepts and procedures through suitable explanations and examples.
@@ -43,7 +54,8 @@ C's findings go to **B first**. A is called during correction only when B identi
 | Initial role and control architecture | Documented |
 | Detailed design and failure handling | Documented; [changes, design checks and pending acceptance](docs/design/verification.md) |
 | Developer handoff | [Component connections, data contracts and implementation order](docs/design/implementation-guide.md) |
-| Exact corpus, technology choices and baseline approval | Open: [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4), [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5), [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
+| Source inventory | [12 version-pinned Release 18 PDFs and reproducible acquisition](corpus/README.md); domain/coverage review remains in [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
+| Technology choices and baseline approval | Open: [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5), [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
 | First evidence pipeline | Planned: [#7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) |
 | Runnable chatbot and product release | Not available yet |
 
@@ -55,4 +67,4 @@ Start with the [documentation guide](docs/README.md). Use the [contribution guid
 
 The intended application runs locally with configured free cloud APIs. Prepared local documents do not remove the need for internet access to those APIs. Providers and the application stack remain open decisions.
 
-The executable utilities are the [SRS PDF renderer](docs/requirements/README.md#rebuild-the-pdf) and the [design validator](docs/design/validate_design.py). The latter checks example limits, requirement coverage and reference database constraints; it does not run a chatbot or establish model accuracy. There is no chatbot installation command yet.
+The executable utilities are the [corpus downloader/verifier](scripts/corpus.py), [SRS PDF renderer](docs/requirements/README.md#rebuild-the-pdf) and [design validator](docs/design/validate_design.py). They verify source identity or document/database mechanics; they do not run a chatbot or establish model accuracy. There is no chatbot installation command yet.

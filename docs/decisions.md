@@ -2,7 +2,7 @@
 
 **Reference:** SRS v0.9.1, “Settings and open decisions.”
 
-**Status date:** 23 October 2026
+**Status date:** 24 October 2026
 
 Requirements documentation is complete. Final acceptance of proposed requirements and several implementation settings remains open. Publishing the documents in main does not close these decisions.
 
@@ -34,11 +34,17 @@ This supersedes the supplied PDF draft's one-clarification cap and forced contin
 
 ## Open settings and approval work
 
+### Initial source-acquisition baseline
+
+On 24 October 2026, the owner requested reproducible acquisition of the provided initial PHY/Layer-2 list with a small repository. [The source lock and setup guide](../corpus/README.md) now cover all 12 listed specifications. Release 18 is the recorded development baseline selected for this acquisition work; exact versions, official ETSI PDF URLs and verified byte hashes are pinned in one manifest. The rationale is a single Release with version-specific official PDFs and repeatable downloads; no claim of complete cross-reference coverage or domain acceptance is made. Source files and generated data stay outside Git.
+
+This partially resolves D01 for development. D07's user-facing default-release/clarification policy and domain review remain open. Changing Release or coverage requires a reviewed inventory update; acquisition cannot silently select newer versions or another Release. This does not select a model, parser, embedding/index technology or application framework.
+
 Owner labels below identify responsibilities; a named domain reviewer has not yet been assigned.
 
 | SRS ID | Decision or review needed | Status | Responsible role | Required before | Work item |
 | --- | --- | --- | --- | --- | --- |
-| D01 | Exact specifications, releases and document versions | Open | Owner + domain reviewer | Corpus build | [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
+| D01 | Exact specifications, releases and document versions | Development source lock recorded; domain/coverage review pending | Owner + domain reviewer | Corpus build | [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
 | D02 | Providers/models for A, B and C | Open | Developer + owner | Model integration | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
 | D03 | Embeddings, store, exact/semantic matching and reranking | Open | Developer | Indexing | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
 | D04 | Record the agreed two-correction policy in baseline approval | Agreed policy; approval record pending | Owner | Baseline approval | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
@@ -52,7 +58,7 @@ Owner labels below identify responsibilities; a named domain reviewer has not ye
 
 All proposed SRS requirements also require review in issue #6. The numerical quality targets are proposed gates, not measured results.
 
-The LLD now documents candidate control, data and recovery mechanisms. [limits.example.json](design/limits.example.json) supplies development examples for D05/D06/D11; these are not benchmarked or owner-approved numerical targets. The reference SQL design does not close the storage/framework choice in D11. No corpus, model/provider or retrieval stack was selected by this documentation work.
+The LLD documents candidate control, data and recovery mechanisms. [limits.example.json](design/limits.example.json) supplies development examples for D05/D06/D11; these are not benchmarked or owner-approved numerical targets. The reference SQL design does not close the storage/framework choice in D11. Source acquisition now has the development lock above; no indexed corpus, model/provider or retrieval stack has been selected or evaluated.
 
 ## Record a decision
 
