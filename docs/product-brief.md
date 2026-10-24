@@ -1,7 +1,7 @@
 # Wireless Assistant — Product Brief
 
-**Document status:** Complete product brief for planning; unresolved choices are listed below.  
-**Updated:** 13 October 2026  
+**Document status:** Complete product brief for planning; unresolved choices are listed below.
+**Updated:** 24 October 2026
 **Detailed requirements:** [SRS v0.9.1](requirements/wireless-assistant-srs.md)
 
 ## Objective
@@ -68,7 +68,7 @@ Outside the first release:
 - Searching the web or downloading a new standard for every question.
 - Model training, local generative models, automatic paid fallback, public multi-user hosting, voice or image input.
 
-Exact specifications, releases and document versions are still to be selected in [issue #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4).
+The [development source lock](../corpus/README.md) now pins the owner-listed 12 PHY/Layer-2 specifications to exact Release 18 PDFs. Domain coverage, supported question types and user-facing release-default policy remain under [issue #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4); source acquisition is implemented, while parsing and retrieval are pending.
 
 ## Agreed Answering Responsibilities
 
@@ -90,7 +90,7 @@ This role separation replaces the earlier broad goal of combining responses from
 | Assumption | How it will be checked |
 | --- | --- |
 | The proposed audience and question types represent useful initial users. | Review with representative users before the pilot. |
-| A small 3GPP collection can support a useful first set of questions. | Select documents and verify representative supporting passages in issue #4. |
+| A small 3GPP collection can support a useful first set of questions. | Use the pinned inventory and verify representative supporting passages in issue #4. |
 | Available free APIs can support the role contracts and bounded workflow. | Measure quality, quota and response time in issue #5. |
 | The chosen local machine and stores can handle the declared collection. | Record and benchmark the selected configuration in issue #5. |
 | The proposed quality gates and operating settings are practical. | Review the SRS proposals and pilot plan in issue #6. |
@@ -99,7 +99,7 @@ These are assumptions, not accepted performance claims.
 
 ## Unresolved Questions
 
-- Which specification numbers, releases and versions will be included, and which release default should apply?
+- Does the pinned development inventory support the intended questions, which referenced sources are missing, and which user-facing release default should apply?
 - Which models, providers, embedding method, search store and application stack meet the constraints?
 - What history, retention, language, platform and finite resource settings should be used?
 - Who will review the domain evidence, and which quality and latency gates will be accepted?
@@ -110,5 +110,5 @@ The [decision register](decisions.md) tracks D01–D11 without treating open cho
 
 The problem statement, intended users, user goals, scope, assumptions and unresolved questions are documented. The product brief is ready to serve as the planning reference in main.
 
-The SRS is a complete review draft with 94 requirements and 30 acceptance scenarios. Formal baseline approval and implementation remain pending. Follow the [roadmap](roadmap.md) and [issue #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) before declaring M1 complete.
+The SRS is a complete review draft with 94 requirements and 30 acceptance scenarios. Formal baseline approval and chatbot implementation remain pending; source acquisition is available. Follow the [roadmap](roadmap.md) and [issue #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) before declaring M1 complete.
 

@@ -22,6 +22,7 @@ List unresolved items, or state that none are introduced.
 
 - [ ] The change stays within the intended scope and preserves unrelated edits.
 - [ ] Related documents, requirement IDs and acceptance scenarios remain consistent.
+- [ ] README, decision register, roadmap and linked issue/milestone statuses reflect this change; historical records are labeled as such.
 - [ ] Changed links work; statuses and results are supported by evidence.
 - [ ] If the SRS changed, its PDF was regenerated and affected pages inspected.
 - [ ] No secrets, real conversations or local indexes are included.

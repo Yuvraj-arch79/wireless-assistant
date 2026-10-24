@@ -1,6 +1,6 @@
 # Contributing
 
-The repository is currently a requirements and initial-design project. There is no runnable assistant yet.
+The repository contains requirements, detailed design and an implemented source-acquisition utility. There is no runnable assistant yet.
 
 ## Before changing behavior
 
@@ -29,6 +29,12 @@ Keep useful history. Remove a file only when it is obsolete and its replacement 
 - For LLD, reference schema or limit changes, run `python docs/design/validate_design.py` and keep [design coverage](docs/design/verification.md) current. Report these as design checks, separately from application tests.
 
 Acceptance scenarios describe application tests to perform later. Editing their text is not a passing test result.
+
+## Synchronize progress
+
+For each change, review README, affected design/implementation references, decision register, roadmap and linked issues. Mark only completed acceptance items; keep partially completed issues open. Check milestone descriptions when role/scope wording changes. Closed PRs, dated verification results and released SRS versions retain historical evidence; point readers to the current decision register rather than rewriting old test results.
+
+For corpus-tool changes, run `python -m unittest discover -s tests -v` and `python scripts/corpus.py list`. Source-lock changes additionally require the clean download and verification procedure in [the corpus guide](corpus/README.md). CI runs the offline tests and design validator.
 
 ## Local files and data
 

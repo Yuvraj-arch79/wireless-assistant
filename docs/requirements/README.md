@@ -16,6 +16,10 @@ There are 94 identified requirements, each with a check, and 30 acceptance scena
 
 The product brief states the user problem and goals; this SRS provides the detailed requirements. A gathers context, B writes and revises, C judges, and backend code delivers the eligible B answer. C's actionable findings go to B first. B revises using the existing context when sufficient; A is called only for specific missing information requested by B. T14 and T15 check both correction routes.
 
+## Snapshot and current decisions
+
+The SRS Markdown/PDF pair is the dated 13 October 2026 requirements snapshot. Its open-decision table records the position at that revision; it is not the live project-status register. See the [decision register](../decisions.md) for subsequent decisions and [corpus setup](../../corpus/README.md) for the 24 October 12-document Release 18 development lock. Acquisition is implemented; parser/index and chatbot acceptance remain pending. No requirement change is introduced by pinning development sources, so the existing matched SRS/PDF pair is retained.
+
 ## Rebuild the PDF
 
 Use Python 3.10 or newer, ReportLab 4, and the DejaVu Sans regular and bold fonts. Install the documentation dependency in a virtual environment:
