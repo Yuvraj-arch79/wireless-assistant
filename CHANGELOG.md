@@ -2,6 +2,11 @@
 
 This log tracks project documentation and design changes. SRS versions are document versions, not application releases.
 
+## 2026-10-24 — Windows design-check compatibility
+
+- Read all design-check text inputs explicitly as UTF-8 so Windows locale defaults cannot corrupt or reject repository documents.
+- Run repository checks on Windows and Linux with Python 3.12; reject implicit text encodings in the design checker to catch regressions.
+
 ## 2026-10-24 — Repository status consistency
 
 - Align product brief, architecture, LLD, implementation handoff, verification, overview and contribution guidance with completed source acquisition and pending chat-runtime work.

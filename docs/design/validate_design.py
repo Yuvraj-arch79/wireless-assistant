@@ -94,7 +94,7 @@ def review_row(review_id='c1', **changes):
 
 
 def validate_config():
-    c = json.loads((HERE / 'limits.example.json').read_text())
+    c = json.loads((HERE / 'limits.example.json').read_text(encoding='utf-8'))
     for key, value in c.items():
         if isinstance(value, int):
             check('finite positive config: ' + key,
@@ -112,9 +112,9 @@ def validate_config():
 
 
 def validate_traceability():
-    srs = (ROOT / 'docs/requirements/wireless-assistant-srs.md').read_text()
+    srs = (ROOT / 'docs/requirements/wireless-assistant-srs.md').read_text(encoding='utf-8')
     required = set(re.findall(r'^### ([A-Z]{2,3}-\d{2}) -', srs, re.M))
-    v = (HERE / 'verification.md').read_text()
+    v = (HERE / 'verification.md').read_text(encoding='utf-8')
     rows = re.findall(r'^\| ([A-Z]{2,3}-\d{2}) \|', v, re.M)
     check('94 unique SRS requirements', len(required) == 94)
     check('94 unique design mapping rows', len(rows) == len(set(rows)) == 94)
@@ -122,7 +122,7 @@ def validate_traceability():
     check('all original acceptance scenarios retained',
           set(re.findall(r'\bT\d{2}\b', v)) == {f'T{i:02d}' for i in range(1, 31)})
     for filename in ('system-design.md', 'implementation-guide.md', 'verification.md'):
-        text = (HERE / filename).read_text()
+        text = (HERE / filename).read_text(encoding='utf-8')
         refs = set(re.findall(r'\b[A-Z]{2,3}-\d{2}\b', text)) - {'LLD-001'}
         check(filename + ': no unknown requirement IDs', not refs - required)
 
@@ -132,7 +132,7 @@ def validate_document_links():
     count = 0
     for path in [ROOT / 'README.md', ROOT / 'CONTRIBUTING.md', ROOT / 'CHANGELOG.md',
                  *sorted((ROOT / 'docs').rglob('*.md'))]:
-        for target in re.findall(r'\]\(([^)]+)\)', path.read_text()):
+        for target in re.findall(r'\]\(([^)]+)\)', path.read_text(encoding='utf-8')):
             if re.match(r'^[a-zA-Z]+:', target) or target.startswith('#'):
                 continue
             relative = target.split('#')[0]
@@ -144,7 +144,7 @@ def validate_document_links():
 
     # Syntax-check the illustrative JSON API payloads, without claiming that a
     # runtime API/schema or model contract has been implemented.
-    guide = (HERE / 'implementation-guide.md').read_text()
+    guide = (HERE / 'implementation-guide.md').read_text(encoding='utf-8')
     examples = re.findall(r'```json\n(.*?)\n```', guide, re.S)
     parsed = [json.loads(example) for example in examples]
     check('handoff API examples are valid JSON objects', len(parsed) == 2 and
@@ -152,7 +152,7 @@ def validate_document_links():
 
 
 def validate_schema():
-    sql = (HERE / 'schema.sql').read_text()
+    sql = (HERE / 'schema.sql').read_text(encoding='utf-8')
     db = sqlite3.connect(':memory:')
     db.executescript(sql)
     check('foreign keys enabled', db.execute('PRAGMA foreign_keys').fetchone()[0] == 1)
