@@ -4,6 +4,8 @@
 
 This is the entry point for an engineer implementing Wireless Assistant. Read the [product brief](../product-brief.md), then the [architecture overview](../architecture.md), [system design](system-design.md), and this guide. The [schema](schema.sql) specifies storage; [limits](limits.example.json) are provisional development settings; [verification](verification.md) contains requirement coverage and acceptance scenarios. These files form one design set. They do not claim a working chatbot or measured production readiness.
 
+**Implementation status, 24 October 2026:** [Source acquisition](../../corpus/README.md) is implemented and verified for all 12 pinned Release 18 PDFs. Parsing, indexes and every chat-runtime module below remain pending. Its source-lock manifest and `verified.json` receipt are inputs to a future ingestion build, not the runtime `CorpusBuild` or an activated retrieval index.
+
 ## 1. Boundaries and component connections
 
 The first release has a local browser UI and backend, a local conversation store and prepared corpus, developer-only ingestion, and configured free cloud model/embedding services. External network access is limited to configured providers during questions. Corpus acquisition is a separate maintainer operation. Conversations never enter the technical corpus.
@@ -235,7 +237,7 @@ The SQL constrains core identities and selected invariants. JSON shape/coverage,
 
 | Step | Build / decision | Gate before continuing |
 | --- | --- | --- |
-| 1 | Resolve initial inventory/default release (#4), benchmark role APIs/retrieval/parser/store/framework (#5), record relevant baseline decisions (#6) | Versioned decision evidence; no guessed provider or corpus choice |
+| 1 | Review the pinned inventory and resolve runtime release defaults (#4), benchmark role APIs/retrieval/parser/store/framework (#5), record relevant baseline decisions (#6) | Versioned decision evidence; no guessed provider or corpus choice |
 | 2 | Configuration validation, database migration/repositories, synthetic role adapters, state controller, supervisor and bounded scheduling | Fault tests for admission, wait/reply, timeout, cancel, restart, duplicate/late result and storage errors; no real model needed for control tests |
 | 3 | Developer ingestion, compatible indexes, retrieval and inspectable original evidence (#7) | Verified reference clauses/tables and source versions; safe activation/rollback |
 | 4 | Context/history, A/B adapters and local UI/API lifecycle | Exact need/critical replies preserved; context bounded; citations inspectable; internal development only |
@@ -251,4 +253,4 @@ No arbitrary speed/accuracy guarantee is introduced. Record observed latency by 
 
 The design set documents scope, component ownership/connections, exact shared record meanings, role/tool action contracts, public API payloads, persisted relationships, state transitions, budgets, security boundaries, failure behavior, UI outcomes, dependency order and acceptance mapping. Open choices are visible in the decision register and issues #4–#6, with an owner and required stage.
 
-The remaining model/corpus/stack choices are implementation prerequisites, not missing decisions to silently fill with guesses. Record each selected choice and its evidence before coding the dependent integration. Keep this handoff and its LLD/schema/tests consistent when any contract changes; regenerate the SRS PDF only if the SRS itself changes.
+The remaining model, corpus-domain/default-release and stack choices are prerequisites for their dependent implementation, not missing decisions to silently fill with guesses. Record each selected choice and its evidence before coding the dependent integration. Keep this handoff and its LLD/schema/tests consistent when any contract changes; regenerate the SRS PDF only if the SRS itself changes.

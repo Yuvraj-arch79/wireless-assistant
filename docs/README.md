@@ -25,6 +25,8 @@ SRS labels distinguish CONFIRMED behavior from PROPOSED implementation requireme
 
 Current baseline: **SRS v0.9.1, review draft**. The detailed design and implementation handoff document component contracts, a reference relational schema and explicitly provisional development limits. Baseline approval, technology selection and application implementation are still pending.
 
+The dated SRS and historical PR/test records preserve their original decisions and results. Use the decision register and roadmap for current progress; the development corpus lock and downloader are implemented, while chat-runtime modules remain pending.
+
 ## Keeping the documents consistent
 
 For a change to behavior, review the product brief, affected SRS requirement IDs, acceptance scenarios and decision entries together. Rebuild the PDF when the SRS source or renderer changes. Update the roadmap only when the stage or its exit condition changes.

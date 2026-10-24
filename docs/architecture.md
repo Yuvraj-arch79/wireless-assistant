@@ -1,7 +1,9 @@
 # Architecture overview
 
-**Status:** Design summary of SRS v0.9.1; implementation has not started.  
+**Status:** Chatbot design summary of SRS v0.9.1. Source acquisition is implemented; parsing, indexing and the chat application remain pending.
 **Detailed references:** [SRS](requirements/wireless-assistant-srs.md), [system design / LLD](design/system-design.md), and [implementation handoff](design/implementation-guide.md)
+
+The [corpus setup](../corpus/README.md) reproduces the exact 12 development source PDFs. The runtime components and connections below are specified behavior, not implemented application features.
 
 ## Two different times
 

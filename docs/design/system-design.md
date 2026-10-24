@@ -17,7 +17,7 @@ The five problems in the [product brief](../product-brief.md) remain the product
 
 This design implements the SRS and the owner's recorded clarifications. Another useful clarification is permitted when essential meaning remains unclear; a previous question is never a reason to force a guessed answer. Design publication is not production acceptance, proof of perfect model judgment, or evidence of measured performance.
 
-Frameworks, model providers, corpus inventory, retrieval implementation and operating values remain subject to [D01–D11](../decisions.md). SQLite DDL is an executable reference data design, not a benchmark-backed final stack selection. FastAPI, BM25/FTS, vector stores and RRF remain candidates. A selected implementation must preserve the behavior below even if its technology differs.
+The [12-document development source inventory and acquisition tool](../../corpus/README.md) are available as of 24 October 2026. Domain/default-release review, frameworks, model providers, retrieval implementation and operating values remain subject to [D01–D11](../decisions.md). SQLite DDL is an executable reference data design, not a benchmark-backed final stack selection. FastAPI, BM25/FTS, vector stores and RRF remain candidates. A selected implementation must preserve the behavior below even if its technology differs.
 
 ## 2. Components and end-to-end flow
 
@@ -343,6 +343,6 @@ Measure retrieval relevance and missed conditions; claim support and need covera
 
 Do not infer correctness from citations existing, similarity scores, model confidence, two-model agreement, valid JSON, or a documentation validator passing. Failures that escape the judge must remain measurable and reportable.
 
-Resolve corpus/release choices (#4), benchmark providers/retrieval/stack (#5), and record operating/evaluation approvals (#6) before the corresponding implementation stages. The evidence foundation (#7) follows its prerequisites. This LLD supplies concrete control and data behavior; it does not close those decisions, mark M1 complete, or invent test results.
+Complete domain/default-release review of the pinned source inventory (#4), benchmark providers/retrieval/stack (#5), and record operating/evaluation approvals (#6) before the corresponding implementation stages. The evidence foundation (#7) follows its prerequisites. This LLD supplies concrete control and data behavior; it does not close those decisions, mark M1 complete, or invent test results.
 
 Rebuild the SRS PDF only when its source changes. This revision keeps SRS 0.9.1 intact: it makes its pause/resume, finite-budget, exact-version and recovery requirements concrete. Any later change to product behavior must update affected requirements, tests and decision records together.

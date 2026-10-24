@@ -4,6 +4,8 @@
 
 **Scope:** Design artifacts and reference database constraints. Application acceptance is pending.
 
+**Current progress, 24 October 2026:** [PR #9](https://github.com/Yuvraj-arch79/wireless-assistant/pull/9) implemented source acquisition for the [12 pinned PDFs](../../corpus/README.md). Live download/verification and 22 offline acquisition tests passed. The review basis and executed-check counts below record the 23 October design snapshot; they are historical evidence, not current inventory/link counts. Application acceptance remains pending.
+
 ## Review basis
 
 - Live repository main at `3109b11170784a71ac3d21131700277b5ffdee93`, its 18 files, requirements and issue records #4–#7. The snapshot contains planning documents and an SRS renderer, not an application.
@@ -192,7 +194,7 @@ Document checks also compare the SRS source/PDF and product brief to the retriev
 
 ## Remaining work
 
-- Select and verify initial corpus/releases and examples (#4).
+- Review domain coverage, runtime release defaults and supporting examples for the pinned development source set (#4); acquisition and byte identity are already verified.
 - Benchmark model APIs, exact/semantic retrieval, parser/storage/framework and capacity (#5).
 - Approve numeric operating values, supported platforms/languages, retention/provider disclosure and human evaluation gates (#6).
 - Implement the specified behavior, then execute acceptance and failure scenarios with evidence. A schema validator is not a replacement for those tests.

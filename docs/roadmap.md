@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-**Current stage:** M1 — Requirements and Initial Design.  
+**Current stage:** M1 acceptance remains open; M2 source acquisition is implemented, with parsing/indexing/retrieval pending.
 **Planning reference:** [SRS v0.9.1](requirements/wireless-assistant-srs.md)
 
 ## What is done
@@ -38,10 +38,14 @@ Review the [LLD and verification record](design/verification.md) alongside issue
 | M5 — Pilot hardening | Privacy, diagnostics, failures and held-out evaluation | Measured quality, usability and latency reviewed with limitations |
 | M6 — First release | Reproducible setup and release evidence | Declared scope, accepted requirements and test report approved |
 
-M2–M6 are planned delivery stages, not a claim that matching GitHub milestones already exist. M3 by itself is not the complete agreed product.
+M2–M6 describe delivery stages, not a claim that matching GitHub milestones already exist. Only M2 source acquisition has been implemented so far. M3 by itself is not the complete agreed product.
 
 ## Completion rules
 
 [M1](https://github.com/Yuvraj-arch79/wireless-assistant/milestone/1) stays open while its blocking decisions remain unresolved. Closing the product-brief task does not close the milestone.
 
 Do not add dates, staffing commitments, completed tests or accuracy claims without evidence. Update this roadmap when a stage outcome changes; use issues for the detailed work and recorded results.
+
+## Tracking metadata correction
+
+The existing M1 milestone description still contains the superseded phrase “multi-model answer synthesis.” Its intended replacement is “A collects context, B alone writes/revises, C reviews, and backend code controls delivery, with inline and end references.” The live description edit is pending authenticated milestone-edit access and is tracked in [issue #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6). The role contracts in the SRS, architecture and LLD are authoritative; M1 remains open.

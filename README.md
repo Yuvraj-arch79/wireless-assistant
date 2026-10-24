@@ -2,7 +2,7 @@
 
 A planned assistant for clear, relevant and verifiable answers from a prepared **3GPP cellular** collection, with context-aware follow-up questions.
 
-**Project stage:** Requirements review and detailed design.
+**Project stage:** Requirements review and detailed design; source acquisition implemented.
 
 **SRS:** v0.9.1 — 94 requirements and 30 acceptance scenarios.
 
@@ -56,7 +56,7 @@ C's findings go to **B first**. A is called during correction only when B identi
 | Developer handoff | [Component connections, data contracts and implementation order](docs/design/implementation-guide.md) |
 | Source inventory | [12 version-pinned Release 18 PDFs and reproducible acquisition](corpus/README.md); domain/coverage review remains in [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
 | Technology choices and baseline approval | Open: [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5), [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
-| First evidence pipeline | Planned: [#7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) |
+| Parsing, indexing and retrieval | Pending: [#7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) |
 | Runnable chatbot and product release | Not available yet |
 
 Publishing documents in main makes them accessible; it does not mean proposed requirements are approved or the product has passed testing.

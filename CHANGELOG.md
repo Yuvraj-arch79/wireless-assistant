@@ -2,6 +2,12 @@
 
 This log tracks project documentation and design changes. SRS versions are document versions, not application releases.
 
+## 2026-10-24 — Repository status consistency
+
+- Align product brief, architecture, LLD, implementation handoff, verification, overview and contribution guidance with completed source acquisition and pending chat-runtime work.
+- Distinguish the dated SRS/design verification snapshots from the live decision register; preserve the matched SRS/PDF and historical test results.
+- Add a cross-document and issue/milestone status check to contribution/PR guidance.
+
 ## 2026-10-24 — Reproducible source acquisition
 
 - Lock all 12 owner-listed initial PHY/Layer-2 specifications to exact Release 18 official ETSI PDFs, including SHA-256, byte size, page count and original 3GPP archive references.
