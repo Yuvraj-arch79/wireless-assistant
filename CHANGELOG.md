@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-31 — Chat actions in the sidebar
+
+- Put accessible rename/delete icons beside every saved chat, available without opening it or scrolling to the header.
+- Keep the current conversation intact when another chat is renamed/deleted; retain deletion confirmation and existing backend safeguards.
+- Extend the browser journey to verify actions on both current and unopened chats.
+
+
 ## 2026-10-31 — Development prototype 0.1.0
 
 - Implement local chat API/UI, durable history and A–B–C controller with exact review bindings, finite shared limits, clarification, cancel/retry and restart recovery.
