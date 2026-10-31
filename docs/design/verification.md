@@ -4,7 +4,9 @@
 
 **Scope:** Design artifacts and reference database constraints. Application acceptance is pending.
 
-**Current progress, 24 October 2026:** [PR #9](https://github.com/Yuvraj-arch79/wireless-assistant/pull/9) implemented source acquisition for the [12 pinned PDFs](../../corpus/README.md). Live download/verification and 22 offline acquisition tests passed. The review basis and executed-check counts below record the 23 October design snapshot; they are historical evidence, not current inventory/link counts. Application acceptance remains pending.
+**Current progress, 31 October 2026:** A first implementation and offline runtime regression suite now exist; see [prototype verification](../implementation/verification.md) for results, gaps and reproduction. Full application acceptance remains open.
+
+**Historical progress, 24 October 2026:** [PR #9](https://github.com/Yuvraj-arch79/wireless-assistant/pull/9) implemented source acquisition for the [12 pinned PDFs](../../corpus/README.md). Live download/verification and 22 offline acquisition tests passed. The review basis and executed-check counts below record the 23 October design snapshot; they are historical evidence, not current inventory/link counts. Application acceptance remains pending.
 
 ## Review basis
 
@@ -145,7 +147,7 @@ Each existing requirement appears exactly once. Section references point into [s
 
 ## Additional fault scenarios for implementation
 
-Every scenario below is **pending application execution**. Record the concrete versions, trace, expected result, observed result and reviewer. The schema checks in the next section cover only a subset of the database mechanics.
+This is the **design-stage scenario register**. The prototype verification record links executed regression coverage; full scenario acceptance is not inferred from those tests. Record the concrete versions, trace, expected result, observed result and reviewer. The schema checks in the next section cover only a subset of the database mechanics.
 
 | Case | Injected condition | Required result |
 | --- | --- | --- |
@@ -188,7 +190,7 @@ The standard-library validator checks finite example values and closing reserves
 
 All 94 SRS requirements have one mapping row, all 30 original acceptance scenario IDs are retained, 67 local documentation file links resolve, and the prepared diff has no whitespace errors. The product brief, SRS Markdown and SRS PDF match the retrieved upstream bytes.
 
-The test database uses synthetic records, including deliberately nontechnical placeholder JSON. Passing these tests proves only the tested structural constraints and transaction predicates. It does not validate real JSON role outputs, model accuracy, a provider timeout, UI recovery, full security, source parsing, semantic coverage, or deployed behavior. All F01–F24 and SRS application acceptance scenarios remain pending until implementation.
+The test database uses synthetic records, including deliberately nontechnical placeholder JSON. Passing these tests proves only the tested structural constraints and transaction predicates. It does not validate real JSON role outputs, model accuracy, a provider timeout, UI recovery, full security, source parsing, semantic coverage, or deployed behavior. This historical design-check result does not mark F01–F24 or SRS application scenarios accepted. See the current prototype verification record for implemented regression coverage.
 
 Document checks also compare the SRS source/PDF and product brief to the retrieved upstream blobs, check relative links and inspect the final diff. The original SRS and its matching PDF are unchanged.
 

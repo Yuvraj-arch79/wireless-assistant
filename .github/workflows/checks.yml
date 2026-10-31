@@ -14,9 +14,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+    timeout-minutes: 10
     env:
-      # Exercise platform defaults instead of masking missing encodings.
       PYTHONUTF8: '0'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -25,6 +24,44 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
+      - run: python -m pip install -r requirements.lock
+      - run: python -m pip install --no-deps -e .
+      - run: python -m pip check
       - run: python scripts/corpus.py list
-      - run: python -m unittest discover -s tests -v
+      - run: python -m pytest -q
       - run: python -X warn_default_encoding -W error::EncodingWarning docs/design/validate_design.py
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      WA_BROWSER_TEST: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.lock -r requirements-browser.lock
+      - run: python -m pip install --no-deps -e .
+      - run: python -m playwright install --with-deps chromium
+      - run: python -m pytest tests/runtime/test_browser.py -q
+  checkpoint:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [checks, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Preserve first implementation checkpoints without moving existing tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git rev-parse -q --verify refs/tags/prototype-v0.1.0 >/dev/null; then
+            git tag prototype-v0.1.0 "$GITHUB_SHA"
+            git push origin refs/tags/prototype-v0.1.0
+          fi

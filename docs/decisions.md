@@ -2,7 +2,7 @@
 
 **Reference:** SRS v0.9.1, “Settings and open decisions.”
 
-**Status date:** 24 October 2026
+**Status date:** 31 October 2026
 
 Requirements documentation is complete. Final acceptance of proposed requirements and several implementation settings remains open. Publishing the documents in main does not close these decisions.
 
@@ -45,8 +45,8 @@ Owner labels below identify responsibilities; a named domain reviewer has not ye
 | SRS ID | Decision or review needed | Status | Responsible role | Required before | Work item |
 | --- | --- | --- | --- | --- | --- |
 | D01 | Exact specifications, releases and document versions | Development source lock recorded; domain/coverage review pending | Owner + domain reviewer | Corpus build | [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
-| D02 | Providers/models for A, B and C | Open | Developer + owner | Model integration | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
-| D03 | Embeddings, store, exact/semantic matching and reranking | Open | Developer | Indexing | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
+| D02 | Providers/models for A, B and C | Gemini adapter/default selected for prototype; live benchmark pending | Developer + owner | Model integration | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
+| D03 | Embeddings, store, exact/semantic matching and reranking | FTS5 + Gemini vectors/RRF implemented; real hybrid evaluation pending | Developer | Indexing | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
 | D04 | Record the agreed two-correction policy in baseline approval | Agreed policy; approval record pending | Owner | Baseline approval | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
 | D05 | Shared call, search, token, time and closing-reserve values | Open | Developer + owner | End-to-end pilot | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
 | D06 | Recent window, summary trigger, history search and retention | Open | Developer + owner | History integration | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
@@ -54,11 +54,11 @@ Owner labels below identify responsibilities; a named domain reviewer has not ye
 | D08 | Initial languages, OS and browser support | Open | Owner | Usability pilot | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
 | D09 | Quality gates, test set, reviewer and latency target | Proposed targets; approval pending | Owner + reviewer | Pilot acceptance | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
 | D10 | Provider data use, retention, backups and diagnostic access | Open | Owner + developer | Real-user data | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
-| D11 | Frameworks, local stores, parsing and hardware capacity | Open | Developer | Initial design completion | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
+| D11 | Frameworks, local stores, parsing and hardware capacity | Python/FastAPI/SQLite/pdfplumber selected for prototype; capacity review pending | Developer | Initial design completion | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
 
 All proposed SRS requirements also require review in issue #6. The numerical quality targets are proposed gates, not measured results.
 
-The LLD documents candidate control, data and recovery mechanisms. [limits.example.json](design/limits.example.json) supplies development examples for D05/D06/D11; these are not benchmarked or owner-approved numerical targets. The reference SQL design does not close the storage/framework choice in D11. Source acquisition now has the development lock above; no indexed corpus, model/provider or retrieval stack has been selected or evaluated.
+The LLD documents candidate control, data and recovery mechanisms. [limits.example.json](design/limits.example.json) supplies development examples for D05/D06/D11; these are not benchmarked or owner-approved numerical targets. The reference SQL design does not close the storage/framework choice in D11. Source acquisition now has the development lock above; prototype development choices are now recorded below; acceptance still needs real provider and domain measurements.
 
 ## Record a decision
 
@@ -72,3 +72,13 @@ For each resolved choice, record:
 6. Conditions that would trigger another review.
 
 Small decisions can be recorded here with a linked issue or PR. Add a separate decision document only when the supporting reasoning needs more space. Development defaults must remain labeled as defaults until accepted.
+
+## Prototype development choices — 31 October 2026
+
+The owner requested implementation of the agreed scope followed by testing and iteration. This authorizes a development checkpoint; it does not accept unmeasured quality targets. Python 3.12/FastAPI/static browser UI/SQLite avoid extra services and keep local setup small. pdfplumber retains source coordinates and structured table cells; actual extraction exposed unreadable mathematics and incomplete coverage, so it is not a certified standards transcription. FTS5 plus normalized Gemini vectors and reciprocal-rank fusion preserves exact-keyword and semantic paths without a separate vector server. A brute-force vector scan is bounded and appropriate only for the small initial collection; measure it before expanding.
+
+A/B/C use separate calls and strict contracts, initially the same configurable `gemini-3.8-flash` model. This is an integration default, not a claim that it is best or independently validates truth. `gemini-embedding-001`/768 dimensions pins index compatibility. Official model/pricing/API sources and data-use implications are linked in [setup](implementation/setup.md). No paid or alternate provider fallback is configured. Live quotas, contract compliance and technical accuracy remain untested without credentials.
+
+For D05/D06, [runtime settings](../wireless_assistant/config.py) replace example numbers for this checkpoint. Conservative UTF-8 input-byte accounting avoids depending on a guessed provider tokenizer; large mandatory context fails explicitly. Exact searchable originals are used instead of an unverified generated summary. The UI renders answer text safely, polls status with finite reconnect limits, and exposes bound original passages. Full Markdown/math display is pending. The [verification guide](implementation/verification.md) records all material limitations, including parsing, single-process recovery and provider data terms.
+
+Revisit these defaults when real evaluations fail, model availability changes, or corpus scale exceeds measured limits. Issues #4–#7 remain open for their unmet acceptance items.

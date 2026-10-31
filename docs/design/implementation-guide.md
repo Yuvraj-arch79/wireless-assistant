@@ -2,9 +2,9 @@
 
 **Baseline:** DESIGN-LLD-001 / 0.1, aligned with SRS 0.9.1.
 
-This is the entry point for an engineer implementing Wireless Assistant. Read the [product brief](../product-brief.md), then the [architecture overview](../architecture.md), [system design](system-design.md), and this guide. The [schema](schema.sql) specifies storage; [limits](limits.example.json) are provisional development settings; [verification](verification.md) contains requirement coverage and acceptance scenarios. These files form one design set. They do not claim a working chatbot or measured production readiness.
+This is the entry point for an engineer implementing Wireless Assistant. Read the [product brief](../product-brief.md), then the [architecture overview](../architecture.md), [system design](system-design.md), and this guide. The [schema](schema.sql) specifies storage; [limits](limits.example.json) are provisional development settings; [verification](verification.md) contains requirement coverage and acceptance scenarios. These files form one design set. They describe the agreed target; the [prototype setup](../implementation/setup.md) and [runtime verification](../implementation/verification.md) record the implemented checkpoint and its limitations.
 
-**Implementation status, 24 October 2026:** [Source acquisition](../../corpus/README.md) is implemented and verified for all 12 pinned Release 18 PDFs. Parsing, indexes and every chat-runtime module below remain pending. Its source-lock manifest and `verified.json` receipt are inputs to a future ingestion build, not the runtime `CorpusBuild` or an activated retrieval index.
+**Implementation status, 31 October 2026:** Source acquisition, parsing, hybrid retrieval adapter, HTTP/UI and bounded A–B–C runtime are implemented for v0.1.0. Live provider/embedding evaluation and full acceptance are pending. The source-lock receipt remains distinct from a validated `CorpusBuild` and activated index. The runtime verification guide lists concrete modules and development choices; example design limits are not the runtime configuration.
 
 ## 1. Boundaries and component connections
 

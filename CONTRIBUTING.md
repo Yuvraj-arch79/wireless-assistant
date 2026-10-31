@@ -34,10 +34,10 @@ Acceptance scenarios describe application tests to perform later. Editing their 
 
 For each change, review README, affected design/implementation references, decision register, roadmap and linked issues. Mark only completed acceptance items; keep partially completed issues open. Check milestone descriptions when role/scope wording changes. Closed PRs, dated verification results and released SRS versions retain historical evidence; point readers to the current decision register rather than rewriting old test results.
 
-For corpus-tool changes, run `python -m unittest discover -s tests -v` and `python scripts/corpus.py list`. Source-lock changes additionally require the clean download and verification procedure in [the corpus guide](corpus/README.md). CI runs the offline tests and design validator.
+For corpus-tool changes, run `python -m unittest discover -s tests -v` and `python scripts/corpus.py list`. Source-lock changes additionally require the clean download and verification procedure in [the corpus guide](corpus/README.md). CI runs the locked application dependencies, offline runtime/acquisition tests, design validator and a synthetic browser flow.
 
 ## Local files and data
 
 Use placeholder values in examples. Keep API keys, real conversations, source downloads, indexes and temporary build output out of version control. The repository ignores common local data and environment paths.
 
-Add a reproducible application setup only after the stack is selected. Do not add badges, coverage numbers or performance claims that have not been measured.
+Use the [prototype setup](docs/implementation/setup.md) and run `python -m pytest -q` for runtime changes. Keep the verification record aligned with executed results. Do not add badges, coverage numbers or performance claims that have not been measured.
