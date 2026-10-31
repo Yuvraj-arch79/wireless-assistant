@@ -16,7 +16,6 @@ function controls(){
  const busy=active?.status==='ACTIVE';const waiting=active?.status==='WAITING_USER';
  $('send').disabled=sending||busy||!ready;$('question').disabled=sending||busy;
  $('send').textContent=waiting?'Reply ↑':'Send ↑';$('composer-label').textContent=waiting?'Reply to the saved clarification':'Ask about the prepared 3GPP collection';
- $('rename-chat').hidden=!current;$('delete-chat').hidden=!current;
  $('run-status').hidden=!active||terminal.has(active.status);
  $('busy-indicator').hidden=!busy;$('run-label').textContent=waiting?'Waiting for your reply — processing is paused':busy?({NEED:'Understanding your question',A:'Collecting context',B:'Writing an answer',C:'Checking the answer'}[active.stage]||'Processing your question'):'';
  $('cancel-run').hidden=!active||terminal.has(active.status);
@@ -24,7 +23,33 @@ function controls(){
 async function listChats(append=false){
  const result=await api('/api/sessions?query='+encodeURIComponent($('chat-search').value)+'&cursor='+(append?(sessionCursor||0):0));
  if(!append)$('chat-list').replaceChildren();sessionCursor=result.next_cursor;$('more-chats').hidden=sessionCursor===null;
- for(const chat of result.items){const b=document.createElement('button');b.className='chat-item'+(chat.session_id===current?.session_id?' active':'');b.textContent=chat.title;b.onclick=()=>openChat(chat.session_id).catch(e=>notice(e.message));$('chat-list').append(b);}
+ for(const chat of result.items){
+  const row=document.createElement('div');row.className='chat-row';row.dataset.sessionId=chat.session_id;
+  const b=document.createElement('button');b.className='chat-item'+(chat.session_id===current?.session_id?' active':'');b.textContent=chat.title;b.title=chat.title;b.onclick=()=>openChat(chat.session_id).catch(e=>notice(e.message));
+  const actions=document.createElement('div');actions.className='chat-actions';
+  actions.append(chatAction('Rename',chat,renameChat,'M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L9 17l-4 1 1-4Z'),chatAction('Delete',chat,deleteChat,'M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7'));
+  row.append(b,actions);$('chat-list').append(row);
+ }
+}
+function chatAction(label,chat,handler,path){
+ const button=document.createElement('button');button.className='chat-action '+label.toLowerCase();button.type='button';button.title=label+' chat';button.setAttribute('aria-label',label+' chat: '+chat.title);
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
+ const shape=document.createElementNS(svg.namespaceURI,'path');shape.setAttribute('d',path);svg.append(shape);button.append(svg);
+ button.onclick=async()=>{if(button.disabled)return;button.disabled=true;try{await handler(chat);}catch(e){notice(e.message);}finally{button.disabled=false;}};
+ return button;
+}
+async function renameChat(chat){
+ const title=prompt('Chat title',chat.title);if(!title?.trim())return;
+ const fresh=await api('/api/sessions/'+chat.session_id);
+ const renamed=await api('/api/sessions/'+chat.session_id,'PATCH',{title,expected_session_version:fresh.state_version});
+ if(current?.session_id===chat.session_id){current=renamed;$('chat-title').textContent=current.title;}
+ await listChats();
+}
+async function deleteChat(chat){
+ if(!confirm('Delete "'+chat.title+'" and its saved messages, sources and feedback?'))return;
+ await api('/api/sessions/'+chat.session_id,'DELETE');
+ if(current?.session_id===chat.session_id){++watchId;current=null;active=null;pending=null;$('messages').replaceChildren();$('welcome').hidden=false;$('chat-title').textContent='Wireless Assistant';controls();}
+ await listChats();
 }
 function renderMessage(m,before=null){
  if(document.getElementById('message-'+m.message_id))return;
@@ -100,8 +125,6 @@ $('new-chat').onclick=()=>newChat().catch(e=>notice(e.message));
 $('more-chats').onclick=()=>listChats(true).catch(e=>notice(e.message));
 $('more-messages').onclick=()=>loadMessages(true).catch(e=>notice(e.message));
 let searchTimer;$('chat-search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>listChats().catch(e=>notice(e.message)),250);};
-$('rename-chat').onclick=async()=>{const title=prompt('Chat title',current.title);if(!title?.trim())return;try{current=await api('/api/sessions/'+current.session_id,'PATCH',{title,expected_session_version:current.state_version});$('chat-title').textContent=current.title;await listChats();}catch(e){notice(e.message);}};
-$('delete-chat').onclick=async()=>{if(!confirm('Delete this chat and its saved messages, sources and feedback?'))return;try{await api('/api/sessions/'+current.session_id,'DELETE');++watchId;current=null;active=null;pending=null;$('messages').replaceChildren();$('welcome').hidden=false;$('chat-title').textContent='Wireless Assistant';controls();await listChats();}catch(e){notice(e.message);}};
 $('cancel-run').onclick=async()=>{if(!active)return;try{active=await api('/api/runs/'+active.run_id+'/cancel','POST',{});++watchId;await loadMessages();controls();}catch(e){notice(e.message);}};
 $('refresh-status').onclick=()=>active&&follow(active.run_id).catch(e=>notice(e.message));
 $('close-source').onclick=()=>$('source-dialog').close();
