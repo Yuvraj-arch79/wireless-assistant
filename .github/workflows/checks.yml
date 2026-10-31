@@ -31,7 +31,8 @@ jobs:
       - run: python -m pytest -q
       - run: python -X warn_default_encoding -W error::EncodingWarning docs/design/validate_design.py
   browser:
-    runs-on: ubuntu-latest
+    # Pin the OS supported by the optional browser toolchain.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
       WA_BROWSER_TEST: '1'
