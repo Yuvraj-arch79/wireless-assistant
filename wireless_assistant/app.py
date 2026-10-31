@@ -46,11 +46,11 @@ class ProcessLock:
     """OS lock released on process exit; a stale filename does not block restart."""
     def __init__(self,path):
         self.file=Path(path).open('a+b')
-        self.file.seek(0)
-        if not self.file.read(1):
-            self.file.write(b'0');self.file.flush()
-        self.file.seek(0)
         try:
+            self.file.seek(0)
+            if not self.file.read(1):
+                self.file.write(b'0');self.file.flush()
+            self.file.seek(0)
             if os.name=='nt':
                 import msvcrt
                 msvcrt.locking(self.file.fileno(),msvcrt.LK_NBLCK,1)
@@ -59,7 +59,7 @@ class ProcessLock:
                 fcntl.flock(self.file.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
         except OSError:
             self.file.close()
-            raise AppError('ALREADY_RUNNING','Another server uses this data directory. Stop it before starting a second.',503) from None
+            raise AppError('ALREADY_RUNNING','Cannot acquire the data-directory lock. Check file access and stop another server or maintenance command using it.',503) from None
     def close(self):
         self.file.close()
 

@@ -13,8 +13,8 @@ The agreed product scope is unchanged. This checkpoint implements the local UI/b
 | Real source ingestion | All 12 manifest-pinned PDFs verified and parsed with pdfplumber 0.11.10 / `pdfplumber-clause-v2`; 6,921 passages, 2,710 marked excluded/unreadable, 3 oversized-table warnings. Front matter is included in the exclusion count. |
 | Real lexical retrieval probes | RLC functions, PDCP compression and MAC prioritization returned relevant clauses. The resource-block definition probe did not return the desired definition in the top 3. These four exploratory probes are not a held-out benchmark. |
 | Real provider generation/embedding | **Not run:** no private API credentials supplied. Successful fixture calls do not prove live schema compliance, latency, quotas, hybrid ranking quality or answer correctness. |
-| Browser UI | Reproducible Chromium fixture test included. Local browser binary download was unavailable; consult the PR's browser CI job for its executed result. |
-| Platforms | Linux local execution; Windows/Linux matrix in CI is required before merge. No macOS/mobile acceptance claim. |
+| Browser UI | Chromium fixture flow passed in [GitHub CI](https://github.com/Yuvraj-arch79/wireless-assistant/actions/runs/41159295859/job/124413032279): send/review, source inspection, feedback, rename/reopen, idle clarification, cancel and deletion. Local browser download was unavailable. |
+| Platforms | Linux local execution; Windows/Linux matrix in CI is required before merge. No macOS/mobile acceptance claim. The first Windows run exposed lock-file reads raising raw PermissionError; the lock now handles this safely and is retested in CI. |
 
 The source manifest SHA-256 for the ingestion observation was `a30b266b6e655278b8e874282c3e295ddf9284b626b68d25317264d4d1025391`. Build IDs are local identities, not portable source versions. Reproduction uses the manifest and parser/config versions. Original PDFs, indexes and user data are not committed.
 
