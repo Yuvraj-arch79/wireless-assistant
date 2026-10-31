@@ -18,7 +18,7 @@ The product brief states the user problem and goals; this SRS provides the detai
 
 ## Snapshot and current decisions
 
-The SRS Markdown/PDF pair is the dated 13 October 2026 requirements snapshot. Its open-decision table records the position at that revision; it is not the live project-status register. See the [decision register](../decisions.md) for subsequent decisions and [corpus setup](../../corpus/README.md) for the 24 October 12-document Release 18 development lock. Acquisition is implemented; parser/index and chatbot acceptance remain pending. No requirement change is introduced by pinning development sources, so the existing matched SRS/PDF pair is retained.
+The SRS Markdown/PDF pair is the dated 13 October 2026 requirements snapshot. Its open-decision table records the position at that revision; it is not the live project-status register. See the [decision register](../decisions.md) for subsequent decisions and [corpus setup](../../corpus/README.md) for the 24 October 12-document Release 18 development lock. Acquisition and the prototype parser/index/chat runtime are implemented; domain and full chatbot acceptance remain pending. No requirement change is introduced by pinning development sources, so the existing matched SRS/PDF pair is retained.
 
 ## Rebuild the PDF
 

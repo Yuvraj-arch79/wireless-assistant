@@ -1,9 +1,9 @@
 # Architecture overview
 
-**Status:** Chatbot design summary of SRS v0.9.1. Source acquisition is implemented; parsing, indexing and the chat application remain pending.
+**Status:** SRS v0.9.1 architecture implemented as development prototype v0.1.0. See [runtime verification](implementation/verification.md) for actual coverage and open quality gates.
 **Detailed references:** [SRS](requirements/wireless-assistant-srs.md), [system design / LLD](design/system-design.md), and [implementation handoff](design/implementation-guide.md)
 
-The [corpus setup](../corpus/README.md) reproduces the exact 12 development source PDFs. The runtime components and connections below are specified behavior, not implemented application features.
+The [corpus setup](../corpus/README.md) reproduces the exact 12 development source PDFs. The components below define the agreed behavior. Runtime choices, tested paths and deviations are recorded in the prototype verification guide.
 
 ## Two different times
 
@@ -70,7 +70,7 @@ Keep original messages locally and use recent relevant context first. Older-hist
 
 Oversized recent turns are not silently truncated. Every excluded message remains reachable through the complete local history index, including messages omitted by the token cap within the most recent turns. A run pins its corpus build and exact evidence snapshot; saved citation inspection must retain that source version.
 
-The planned records include request/need IDs, source and corpus versions, selected history, B draft IDs, C findings, usage budgets and terminal status. Provider data handling, retention, backup and deletion settings require explicit decisions before real-user data is used.
+Persisted prototype records include request/need IDs, source and corpus versions, selected history, B draft IDs, C findings, usage budgets and terminal status. Provider data handling, retention, backup and deletion settings require explicit decisions before real-user data is used.
 
 ## Technology status
 

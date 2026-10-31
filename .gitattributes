@@ -1,7 +1,5 @@
-* text=auto
-*.md text eol=lf
-*.py text eol=lf
-*.txt text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
+# Keep manifest fingerprints and text artifacts reproducible across platforms.
+* text=auto eol=lf
 *.pdf binary
+*.png binary
+*.jpg binary

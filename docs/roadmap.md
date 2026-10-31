@@ -1,6 +1,6 @@
 # Delivery roadmap
 
-**Current stage:** M1 acceptance remains open; M2 source acquisition is implemented, with parsing/indexing/retrieval pending.
+**Current stage:** Development prototype v0.1.0 implements M2–M4 paths. M1 approval and M2–M6 acceptance gates remain open; live API and domain evaluation come next.
 **Planning reference:** [SRS v0.9.1](requirements/wireless-assistant-srs.md)
 
 ## What is done
@@ -12,7 +12,7 @@
 - The PDF and editable source are published together.
 - The initial 12 PHY/Layer-2 source PDFs have a [version/hash lock and download/verification tool](../corpus/README.md); the files stay local and outside Git.
 
-Completed work covers documentation and reproducible source acquisition. No runnable chatbot, indexed corpus, provider benchmark or product test pass is claimed.
+The first runnable prototype now covers ingestion, retrieval adapters, local chat and bounded A–B–C control. [Executed tests and limitations](implementation/verification.md) are recorded separately from full product acceptance. Real provider benchmarks and real hybrid retrieval quality remain unverified.
 
 ## What must happen next
 
@@ -21,9 +21,9 @@ Completed work covers documentation and reproducible source acquisition. No runn
 | 1 | [Review source scope — #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) | Inventory/version lock exists; review default-release policy, missing dependencies and sample evidence before indexing |
 | 2 | [Select technology — #5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) | Benchmarked API, retrieval and local application choices |
 | 3 | [Approve baseline — #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) | Reviewed requirements, operating decisions and evaluation plan |
-| 4 | [Build evidence foundation — #7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) | Working, evaluated ingestion and retrieval on the selected corpus |
+| 4 | [Build evidence foundation — #7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) | Implementation exists; evaluate real hybrid retrieval and repair measured parser gaps |
 
-The first two decision tasks can inform each other. Start the evidence implementation only when its source and retrieval prerequisites are resolved.
+The first two decision tasks can inform each other. Development defaults are selected in the decision register. The owner authorized a working prototype followed by measured iteration; remaining quality decisions gate pilot acceptance, not coding.
 
 Review the [LLD and verification record](design/verification.md) alongside issue #6. Its document/database checks do not satisfy the runtime, quality or security acceptance gates in later stages.
 
@@ -38,7 +38,7 @@ Review the [LLD and verification record](design/verification.md) alongside issue
 | M5 — Pilot hardening | Privacy, diagnostics, failures and held-out evaluation | Measured quality, usability and latency reviewed with limitations |
 | M6 — First release | Reproducible setup and release evidence | Declared scope, accepted requirements and test report approved |
 
-M2–M6 describe delivery stages, not a claim that matching GitHub milestones already exist. Only M2 source acquisition has been implemented so far. M3 by itself is not the complete agreed product.
+M2–M6 describe delivery stages, not a claim that matching GitHub milestones already exist. M2–M4 now have a prototype implementation; their exit conditions are not automatically satisfied by merging code. M3 by itself is not the complete agreed product.
 
 ## Completion rules
 

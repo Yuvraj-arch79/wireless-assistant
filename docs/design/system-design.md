@@ -4,7 +4,7 @@
 | --- | --- |
 | ID / revision | DESIGN-LLD-001 / 0.1 |
 | Date | 23 October 2026 |
-| Status | Implementation design reference; application not implemented or release-tested |
+| Status | Design reference; v0.1.0 prototype implemented, full release acceptance pending; see [runtime verification](../implementation/verification.md) |
 | Requirements | [SRS 0.9.1](../requirements/wireless-assistant-srs.md), 94 requirements, T01–T30 |
 | Upstream basis | `3109b11170784a71ac3d21131700277b5ffdee93` |
 | Supporting specifications | [Implementation handoff and connection contracts](implementation-guide.md), [relational schema](schema.sql), [development limits](limits.example.json), [coverage and acceptance checks](verification.md) |
@@ -337,7 +337,7 @@ A missing corpus, incompatible embedding index, malformed role output, unavailab
 
 ## 12. Evaluation, delivery and change control
 
-[verification.md](verification.md) maps all 94 requirement IDs to design sections and the original T01–T30, adds focused failure scenarios, and records exactly which document/schema checks were executed. Product tests remain pending.
+[verification.md](verification.md) maps all 94 requirement IDs to design sections and the original T01–T30, adds focused failure scenarios, and records exactly which document/schema checks were executed. Full product acceptance remains pending; [prototype verification](../implementation/verification.md) records executed runtime regression tests.
 
 Measure retrieval relevance and missed conditions; claim support and need coverage; correct and flawed draft controls; C false acceptance, false objections and harmful revisions; full/partial/failure latency and quotas. Compare B-only and final pipeline quality using human-reviewed cases. Keep tuning and held-out examples separate. Use versioned prompts, configuration, source builds and test data, and retain rollback paths.
 

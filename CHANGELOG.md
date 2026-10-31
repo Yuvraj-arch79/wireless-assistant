@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-31 — Development prototype 0.1.0
+
+- Implement local chat API/UI, durable history and A–B–C controller with exact review bindings, finite shared limits, clarification, cancel/retry and restart recovery.
+- Add verified PDF ingestion, staged corpus builds, lexical/semantic retrieval, source inspection and explicit resumable embedding preparation.
+- Add locked Python dependencies, runtime/browser regression suites, setup/backup instructions and checkpoint workflow.
+- Synchronize current documentation and record real extraction gaps; live provider quality and full SRS acceptance remain pending.
+
+
 This log tracks project documentation and design changes. SRS versions are document versions, not application releases.
 
 ## 2026-10-24 — Windows design-check compatibility

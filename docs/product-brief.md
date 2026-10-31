@@ -110,5 +110,5 @@ The [decision register](decisions.md) tracks D01–D11 without treating open cho
 
 The problem statement, intended users, user goals, scope, assumptions and unresolved questions are documented. The product brief is ready to serve as the planning reference in main.
 
-The SRS is a complete review draft with 94 requirements and 30 acceptance scenarios. Formal baseline approval and chatbot implementation remain pending; source acquisition is available. Follow the [roadmap](roadmap.md) and [issue #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) before declaring M1 complete.
+The SRS is a complete review draft with 94 requirements and 30 acceptance scenarios. The first chatbot prototype and source acquisition are implemented; formal baseline approval and full product acceptance remain pending. See [prototype verification](implementation/verification.md) for executed results. Follow the [roadmap](roadmap.md) and [issue #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) before declaring M1 complete.
 
