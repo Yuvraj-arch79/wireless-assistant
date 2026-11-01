@@ -780,14 +780,14 @@
       "fixture": {
         "type": "history_setup",
         "steps": [
-          "Create a first user message specifying Release 18.",
+          "Create a first user message specifying Release 17, deliberately different from the corpus default.",
           "Add an unrelated complete turn whose UTF-8 content exceeds recent_bound.",
           "Add four further unrelated turns.",
           "Ask the prompt; exact originals remain stored."
         ]
       },
       "expected": [
-        "Find the earlier release via bounded history search/fetch or ask a justified clarification if budget prevents recovery.",
+        "Recover the earlier user-specified Release 17 via bounded history search/fetch or ask a justified clarification if budget prevents recovery.",
         "Record whether exact history recovery succeeded separately from safe abstention."
       ],
       "forbidden": [
