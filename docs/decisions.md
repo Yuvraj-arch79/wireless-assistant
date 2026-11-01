@@ -2,7 +2,7 @@
 
 **Reference:** SRS v0.9.1, “Settings and open decisions.”
 
-**Status date:** 31 October 2026
+**Status date:** 1 November 2026
 
 Requirements documentation is complete. Final acceptance of proposed requirements and several implementation settings remains open. Publishing the documents in main does not close these decisions.
 
@@ -38,27 +38,27 @@ This supersedes the supplied PDF draft's one-clarification cap and forced contin
 
 On 24 October 2026, the owner requested reproducible acquisition of the provided initial PHY/Layer-2 list with a small repository. [The source lock and setup guide](../corpus/README.md) now cover all 12 listed specifications. Release 18 is the recorded development baseline selected for this acquisition work; exact versions, official ETSI PDF URLs and verified byte hashes are pinned in one manifest. The rationale is a single Release with version-specific official PDFs and repeatable downloads; no claim of complete cross-reference coverage or domain acceptance is made. Source files and generated data stay outside Git.
 
-This partially resolves D01 for development. D07's user-facing default-release/clarification policy and domain review remain open. Changing Release or coverage requires a reviewed inventory update; acquisition cannot silently select newer versions or another Release. This does not select a model, parser, embedding/index technology or application framework.
+This partially resolves D01 for development. The prototype now defaults an omitted release to declared Release 18 and preserves explicit scope filters; D07 domain acceptance remains open. Changing Release or coverage requires a reviewed inventory update; acquisition cannot silently select newer versions or another Release. This acquisition decision did not select a model, parser, embedding/index technology or application framework; subsequent development choices are recorded below.
 
 Owner labels below identify responsibilities; a named domain reviewer has not yet been assigned.
 
 | SRS ID | Decision or review needed | Status | Responsible role | Required before | Work item |
 | --- | --- | --- | --- | --- | --- |
-| D01 | Exact specifications, releases and document versions | Development source lock recorded; domain/coverage review pending | Owner + domain reviewer | Corpus build | [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
-| D02 | Providers/models for A, B and C | Gemini adapter/default selected for prototype; live benchmark pending | Developer + owner | Model integration | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
-| D03 | Embeddings, store, exact/semantic matching and reranking | FTS5 + Gemini vectors/RRF implemented; real hybrid evaluation pending | Developer | Indexing | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
+| D01 | Exact specifications, releases and document versions | Development source lock recorded; domain/coverage review pending | Owner + domain reviewer | Pilot acceptance | [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
+| D02 | Providers/models for A, B and C | Gemini/Groq/Mistral shortlist confirmed; only Gemini adapter implemented; role assignment pending benchmark | Developer + owner | Multi-provider pilot | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
+| D03 | Embeddings, store, exact/semantic matching and reranking | FTS5 + Gemini vectors/RRF implemented; real hybrid evaluation pending | Developer | Retrieval acceptance | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
 | D04 | Record the agreed two-correction policy in baseline approval | Agreed policy; approval record pending | Owner | Baseline approval | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
-| D05 | Shared call, search, token, time and closing-reserve values | Open | Developer + owner | End-to-end pilot | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
-| D06 | Recent window, summary trigger, history search and retention | Open | Developer + owner | History integration | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
-| D07 | Default release and when to clarify it | Open | Domain reviewer | Technical pilot | [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
-| D08 | Initial languages, OS and browser support | Open | Owner | Usability pilot | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
+| D05 | Shared call, search, token, time and closing-reserve values | Runtime defaults implemented; measurement/tuning pending | Developer + owner | End-to-end pilot | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
+| D06 | Recent window, summary trigger, history search and retention | Bounded recent turns and exact history search/fetch implemented; no generated summary; retention approval pending | Developer + owner | History/retention acceptance | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
+| D07 | Default release and when to clarify it | Release 18 development default implemented; domain acceptance pending | Domain reviewer | Technical pilot | [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
+| D08 | Initial languages, OS and browser support | Windows/Linux CI and Chromium fixture verified; language/usability acceptance pending | Owner | Usability pilot | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
 | D09 | Quality gates, test set, reviewer and latency target | Proposed targets; approval pending | Owner + reviewer | Pilot acceptance | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
-| D10 | Provider data use, retention, backups and diagnostic access | Open | Owner + developer | Real-user data | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
-| D11 | Frameworks, local stores, parsing and hardware capacity | Python/FastAPI/SQLite/pdfplumber selected for prototype; capacity review pending | Developer | Initial design completion | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
+| D10 | Provider data use, retention, backups and diagnostic access | Local backup/delete implemented; provider terms and retention approval pending | Owner + developer | Real-user data | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
+| D11 | Frameworks, local stores, parsing and hardware capacity | Python/FastAPI/SQLite/pdfplumber selected for prototype; capacity review pending | Developer | Capacity acceptance | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
 
 All proposed SRS requirements also require review in issue #6. The numerical quality targets are proposed gates, not measured results.
 
-The LLD documents candidate control, data and recovery mechanisms. [limits.example.json](design/limits.example.json) supplies development examples for D05/D06/D11; these are not benchmarked or owner-approved numerical targets. The reference SQL design does not close the storage/framework choice in D11. Source acquisition now has the development lock above; prototype development choices are now recorded below; acceptance still needs real provider and domain measurements.
+The LLD documents candidate control, data and recovery mechanisms. [limits.example.json](design/limits.example.json) supplies development examples for D05/D06/D11; these are not benchmarked or owner-approved numerical targets. The reference SQL alone does not close D11; the prototype records SQLite/FastAPI as development choices, with capacity acceptance still pending. Source acquisition now has the development lock above; prototype development choices are now recorded below; acceptance still needs real provider and domain measurements.
 
 ## Record a decision
 
@@ -82,3 +82,9 @@ A/B/C use separate calls and strict contracts, initially the same configurable `
 For D05/D06, [runtime settings](../wireless_assistant/config.py) replace example numbers for this checkpoint. Conservative UTF-8 input-byte accounting avoids depending on a guessed provider tokenizer; large mandatory context fails explicitly. Exact searchable originals are used instead of an unverified generated summary. The UI renders answer text safely, polls status with finite reconnect limits, and exposes bound original passages. Full Markdown/math display is pending. The [verification guide](implementation/verification.md) records all material limitations, including parsing, single-process recovery and provider data terms.
 
 Revisit these defaults when real evaluations fail, model availability changes, or corpus scale exceeds measured limits. Issues #4–#7 remain open for their unmet acceptance items.
+
+## Generation-provider shortlist — recorded 1 November 2026
+
+The owner selected **Gemini, Groq and Mistral** for comparative testing in the 31 October discussion. This confirms candidates, not role assignments or quota/quality guarantees. A/B/C assignment will follow the same representative questions, checking intent/clarification, supported answers/citations, review errors, JSON-contract reliability, latency and quota consumption. One provider may serve two or all three roles if evidence supports that choice.
+
+Only Gemini is wired into the current application. Groq/Mistral generation adapters and per-role provider selection are next implementation work in [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5). `WA_MODEL_A/B/C` currently changes Gemini model IDs only, not providers. API keys remain local. Embeddings remain a separate compatibility decision; changing a generation provider does not itself require re-embedding. Automatic provider or paid fallback is not enabled.

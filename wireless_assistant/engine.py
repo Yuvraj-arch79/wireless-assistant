@@ -221,8 +221,11 @@ class Engine:
                 def valid_a(a):
                     if a.get('need'):
                         validate_need(a['need'],context['originals'])
-                    if a['action']=='ready_for_b':
-                        require(not any(g['kind']=='user_detail' for g in a['need']['unresolved_gaps']),'Essential ambiguity requires clarification.')
+                    moves_to_b = a['action']=='ready_for_b' or (a['action']=='collect' and state['closing'])
+                    if moves_to_b:
+                        gaps=a['need']['unresolved_gaps']+a['coverage_gaps']
+                        require(a['intent_relation']!='uncertain' and not any(g['kind']=='user_detail' for g in gaps),
+                                'Essential ambiguity requires clarification, including in closing mode.')
                 result=self.call(rid,w,'A',payload,valid_a)
                 if result['action']=='out_of_scope':
                     self.store.stop(rid,'COMPLETED','OUT_OF_SCOPE','This assistant covers the declared 3GPP NR collection. Please ask a question within that scope.',w['epoch'],self.elapsed(w));return

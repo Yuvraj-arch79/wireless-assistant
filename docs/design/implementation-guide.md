@@ -1,6 +1,6 @@
 # Implementation handoff
 
-**Baseline:** DESIGN-LLD-001 / 0.1, aligned with SRS 0.9.1.
+**Baseline:** DESIGN-LLD-001 / 0.2, aligned with SRS 0.9.1. Updated 1 November 2026 for implemented API contracts and development status; product requirements unchanged.
 
 This is the entry point for an engineer implementing Wireless Assistant. Read the [product brief](../product-brief.md), then the [architecture overview](../architecture.md), [system design](system-design.md), and this guide. The [schema](schema.sql) specifies storage; [limits](limits.example.json) are provisional development settings; [verification](verification.md) contains requirement coverage and acceptance scenarios. These files form one design set. They describe the agreed target; the [prototype setup](../implementation/setup.md) and [runtime verification](../implementation/verification.md) record the implemented checkpoint and its limitations.
 
@@ -72,33 +72,33 @@ These are implementation responsibilities, not empty directories to create befor
 
 ## 3. Shared data dictionary
 
-Use UTF-8 JSON at boundaries. IDs are opaque server-generated strings; timestamps are UTC ISO-8601 strings; counters are nonnegative integers; durations explicitly use milliseconds or seconds. Internal SQL `*_json` columns hold serialized versions of the records below, not arbitrary extra fields. Unknown fields and duplicate JSON keys are rejected. Optional fields are explicitly null; arrays are empty when applicable but contain no duplicate IDs. A missing required field is invalid.
+Use UTF-8 JSON at boundaries. IDs are opaque server-generated strings; timestamps are UTC ISO-8601 strings; counters are nonnegative integers; durations explicitly use milliseconds or seconds. The records below describe logical data; evidence/context row identity columns are separate from their JSON content in SQL. Role output schemas live in `contracts.py`, runtime configuration in `config.py`, and the exact prompt packing in `engine.py`. Unknown fields and duplicate JSON keys are rejected. Optional fields are explicitly null; arrays are empty when applicable but contain no duplicate IDs. A missing required field is invalid.
 
 | Record / field | Type and interpretation |
 | --- | --- |
 | OriginalRef | `{message_id: string, session_id: string, content_hash: string, start_offset: integer, end_offset: integer}`; half-open Unicode code-point range into immutable original text |
 | OriginalText | `{ref: OriginalRef, role: user/assistant/clarification/notice, text: string}`; offset/hash validated against the same session |
 | Requirement | `{req_id: string, description: string, mandatory: boolean, established_by: OriginalRef[]}`; stable within a need lineage |
-| Scope | `{spec_numbers: string[], release: string|null, document_versions: string[], default_used: boolean}`; no silent release substitution |
+| Scope | `{spec_numbers: string[], release: string\|null, document_versions: string[], default_used: boolean}`; no silent release substitution |
 | Gap | `{gap_id: string, kind: user_detail/source/history/conflict/unreadable/context_limit, requirement_ids: string[], reason: string, source_or_message_ids: string[]}` |
 | Need | `{topic: string, requested_task: string, language: string, depth: string, scope: Scope, requirements: Requirement[], assumptions: string[], unresolved_gaps: Gap[], original_refs: OriginalRef[]}`; server adds need ID/version/hash |
-| Passage | `{passage_id, build_id, document_id, spec_number, document_version, clause_id, content_hash, source_uri, text: string; release, clause_title, page_location: string|null; unreadable: boolean; parent_id, previous_id, next_id: string|null}`; all comma-grouped fields share the indicated type |
+| Passage | `{passage_id, build_id, document_id, spec_number, document_version, clause_id, content_hash, source_uri, text: string; release, clause_title, page_location: string\|null; unreadable: boolean; parent_id, previous_id, next_id: string\|null}`; all comma-grouped fields share the indicated type; runtime additionally returns `structure: object` (kind, table/cross-reference metadata) and `token_count: integer` |
 | EvidenceSet | `{evidence_set_id: string, run_id: string, build_id: string, evidence_hash: string, passages: Passage[], coverage_gaps: Gap[]}`; immutable, including exact text and order |
 | ContextSnapshot | `{context_id: string, run_id: string, context_hash: string, originals: OriginalText[], excluded_history_refs: OriginalRef[]}`; stored references may be larger than the compact prompt map, but fetches remain bounded |
 | Citation | `{marker: string, claim_anchor: string, passage_ids: string[]}`; marker is unique within the candidate; anchor is a stable paragraph/claim label; source metadata resolves from the immutable EvidenceSet |
 | UnresolvedRequirement | `{req_id: string, reason: string}` |
 | RevisionEntry | `{finding_id: string, disposition: changed/retained_with_evidence/unresolved, target: string, reason: string, evidence_ids: string[]}` |
 | Finding | `{finding_id: string, finding_type: contradicted_claim/insufficient_support/missing_user_requirement/presentation_problem, blocking: boolean, target_claim_or_req: string, reason: string, evidence_ids: string[]}` |
-| RegressionCheck | `{status: not_applicable/checked, compared_candidate_id: string|null, lost_or_changed_requirement_ids: string[], resulting_finding_ids: string[]}`; first draft requires not_applicable; revisions require checked |
+| RegressionCheck | `{status: not_applicable/checked, compared_candidate_id: string\|null, lost_or_changed_requirement_ids: string[], resulting_finding_ids: string[]}`; first draft requires not_applicable; revisions require checked |
 | ReviewedBinding | `{candidate_id, candidate_hash, need_id, need_hash, evidence_set_id, evidence_hash, context_id, context_hash: string}`; all are backend-provided expected values |
-| BudgetCounters | `{provider_calls, provider_retries, format_repairs, search_queries, history_operations, tool_operations, controller_steps, charged_tokens: integer, missing_info_by_round: integer[3]}`; active elapsed time and correction round use dedicated run columns |
-| ConfigSnapshot | `{config_snapshot_id, config_hash, backend_version, contract_version, tokenizer_version, corpus_build_id: string; limits: object; roles: object; retrieval: object; prompts: object}`; role records identify provider/model/revision, input/output caps and credential reference name, never credential value |
+| BudgetCounters | `{provider_calls, provider_retries, format_repairs, search_queries, history_operations, tool_operations, controller_steps, charged_tokens: integer}`; per-round missing requests are `runtime_state.missing_by_round` (three integers); active elapsed time is on the run and round is persisted in runtime state/candidates |
+| ConfigSnapshot | The flat `Settings.snapshot()` object: Settings fields except `data_dir`, plus `contract_version`, `tokenizer_version`, `prompt_version`; includes `config_version`, model IDs and numeric bounds. SHA-256 is stored separately as the run `config_hash`; corpus build is also a separate run field. No secret is stored |
 
-An empty corpus inventory uses a null build reference during need/scope resolution. Before any technical retrieval/candidate, a validated build and compatible embedding configuration must exist. Domain clarification can occur without a usable corpus; technical generation cannot claim nonexistent coverage.
+An empty corpus inventory uses a null build reference during need/scope resolution. Before any technical retrieval/candidate, a validated build and compatible embedding configuration must exist. The reference design permits domain clarification before technical retrieval. The current prototype gates all AI runs, including clarification, on API configuration and a compatible active hybrid corpus; saved-chat management remains available without them.
 
-Hash convention for this baseline: SHA-256 of UTF-8 JSON with object keys sorted, no insignificant whitespace, arrays in recorded order, non-finite numbers rejected, and strings preserved without silent Unicode normalization. Numeric payload values included in hashes are integers; retrieval scores, if needed, are explicit decimal strings. The adapter's canonical serialization must be consistent across the implementation. A backend-assigned snapshot ID alone is insufficient if mutable content could be substituted.
+Hash convention for this baseline: SHA-256 of UTF-8 JSON with object keys sorted, no insignificant whitespace, arrays in recorded order, non-finite numbers rejected, and strings preserved without silent Unicode normalization. Integers and finite floating-point values use the canonical Python JSON serializer in `common.py`; settings contain finite floating-point time limits. Hash the stored representation consistently rather than converting between integer and float representations. The adapter's canonical serialization must be consistent across the implementation. A backend-assigned snapshot ID alone is insufficient if mutable content could be substituted.
 
-The LLD calls the shared envelope's context identifier `context_snapshot_id`; it maps to `context_snapshots.context_id` and `ReviewedBinding.context_id`. Its `corpus_build_id` maps to the stored evidence `build_id`. `config_snapshot_id` is carried inside the run's immutable `config_snapshot_json`, alongside `config_hash`. These are explicit mappings, not different versions of the same input.
+In the runtime envelope, `config_snapshot_id` equals the run's `config_hash`; it is not an extra field inside `config_snapshot_json`. `corpus_build_id` maps to stored evidence `build_id`. B receives an `input_binding` and C a `reviewed_binding`, with `context_id` mapping to `context_snapshots.context_id`. The LLD's conceptual `context_snapshot_id` is not a separate runtime envelope field. `Engine.payload()` is the exact input layout; do not build clients against the conceptual envelope alone.
 
 ## 4. Role and tool action shapes
 
@@ -110,7 +110,7 @@ Combine the common records above with LLD section 7. Input envelopes are assembl
 | A / collect | `need: Need`, `intent_relation`, `requests: ToolRequest[]` (nonempty), `coverage_gaps: Gap[]` | clarification, scope_reason |
 | A / ready_for_b | `need: Need`, `intent_relation`, `coverage_gaps: Gap[]` | requests, clarification, scope_reason |
 | A / out_of_scope | `intent_relation`, `scope_reason: string`; `need` may be null | requests, clarification |
-| B / submit_draft | `answer_markdown: string`, `citations: Citation[]`, `covered_requirements: string[]`, `unresolved_requirements: UnresolvedRequirement[]`, `limitation_statement: string|null`, `revision_log: RevisionEntry[]` | missing_info, cannot_answer_reason |
+| B / submit_draft | `answer_markdown: string`, `citations: Citation[]`, `covered_requirements: string[]`, `unresolved_requirements: UnresolvedRequirement[]`, `limitation_statement: string\|null`, `revision_log: RevisionEntry[]` | missing_info, cannot_answer_reason |
 | B / request_missing_info | `missing_info: {type: source/history/user_detail, item: string, why_material: string, requirement_ids: string[]}` | answer_markdown, citations, cannot_answer_reason |
 | B / cannot_answer | `cannot_answer_reason: Gap[]` (nonempty) | answer_markdown, citations, missing_info |
 | C / review | `reviewed_binding: ReviewedBinding`, `decision`, `satisfied_requirements: string[]`, `unmet_requirements: string[]`, `findings: Finding[]`, `regression_check: RegressionCheck` | technical answer, rewrite, retrieval or tool fields |
@@ -123,43 +123,43 @@ A `collect` request must use one of these tagged shapes, with unknown fields rej
 | --- | --- | --- |
 | `corpus_search` | `purpose: string`, `requirement_ids: string[]`, `query: string`, `filters: Scope`, `limit: integer` | Original Passage[] plus query/build identity and explicit gaps |
 | `expand_passages` | `purpose`, `requirement_ids`, `passage_ids: string[]`, `relation: parent/previous/next/cross_reference`, `limit: integer` | Original passages in the same pinned build, bounded by visited-set/depth limits |
-| `history_search` | `purpose`, `requirement_ids`, `query: string`, `cursor: string|null`, `limit: integer` | Same-session original references/snippets plus opaque next cursor |
+| `history_search` | `purpose`, `requirement_ids`, `query: string`, `cursor: string\|null`, `limit: integer` | Same-session original references/snippets plus opaque next cursor |
 | `history_fetch` | `purpose`, `requirement_ids`, `refs: OriginalRef[]` | Exact validated OriginalText[] within aggregate size/context bounds |
 
-Tool results have `{operation_id: string, status: ok/empty/limited/failed, items: array, gaps: Gap[], next_cursor: string|null, error: SafeError|null}`. The backend supplies session/build boundaries and caps requested limits. Empty results are not transport errors; duplicate queries use the recorded fingerprint/result without uncounted provider work. Each actual backend/embedding/reranking operation is separately accounted in the shared ledger. A tool error cannot be reinterpreted as successful absence of evidence.
+Normal runtime tool results have `{operation_id: string, status: ok/empty, items: array, gaps: Gap[], next_cursor: string|null, error: SafeError|null}`. Duplicate requests produce `{status: limited, items: [], reason: string}` and switch to closing mode. Tool errors stop through the bounded error path rather than returning a successful empty result. Corpus search/expansion results contain passage identities; full selected Passage records are supplied separately in the role payload evidence. The backend supplies session/build boundaries and caps requested limits. Empty results are not transport errors; duplicate queries use the recorded fingerprint/result without uncounted provider work. Each actual backend/embedding/reranking operation is separately accounted in the shared ledger. A tool error cannot be reinterpreted as successful absence of evidence.
 
 There is no generic agent-to-agent channel. All transitions go through the controller. Prompts should state role purpose, input meanings, allowed action schema, source/history trust boundaries and limits. Prompt text is versioned with its role; production prompts and model choices must be evaluated rather than copied from an untested chat example.
 
 ## 5. UI API payloads and events
 
-The complete endpoint list is in LLD section 9. Common success data is wrapped in `{request_id: string, data: object}`. `SafeError` is `{code: string, message: string, retryable: boolean, retry_after_seconds: integer|null}`. Error responses are `{request_id: string, error: SafeError, current_run: RunStatus|null}`. Never include keys, raw provider payloads or hidden drafts.
+This section describes the implemented v0.1 API, checked against `app.py`, `store.py` and `corpus.py`. The complete endpoint list is in LLD section 9. Fetch `/api/bootstrap` first and send its CSRF token in `X-WA-CSRF`, plus an allowed local Origin, on mutations. Common success data is wrapped in `{request_id: string, data: object}`. `SafeError` is `{code: string, message: string, retryable: boolean, retry_after_seconds: integer|null}`. Error responses are `{request_id: string, error: SafeError, current_run: RunStatus|null}`. Never include keys, raw provider payloads or hidden drafts.
 
 | Command | JSON request body | Success data |
 | --- | --- | --- |
-| Create session | `{title: string|null}` | Session |
+| Create session | `{title: string\|null}` | Session |
 | Rename session | `{title: string, expected_session_version: integer}` | Updated Session |
 | Submit message | `{text: string}` | `{message_id, run_id: string, status: ACTIVE, state_version: integer}`; `202` only after transaction commits |
 | Clarification reply | `{text: string, expected_run_version: integer}`; run/question IDs in route | Message/run receipt; duplicate request returns original receipt |
 | Cancel | `{}` | Current RunStatus; does not falsely promise cancellation if completion already won |
-| Retry | `{}` | Receipt containing new run ID and retry_of_run_id; original user message is reused |
-| Delete session | No body | `204` once purge completes; `202` with tombstoned state while bounded cleanup remains; retrying DELETE reconciles cleanup |
-| Feedback | `{run_id, candidate_id: string, category: wrong/unclear/irrelevant/incomplete, comment: string|null}` | `{feedback_id: string}`; server resolves exact displayed review/evidence |
+| Retry | `{}` | Same message/run receipt shape as submit, with a new run ID; retry lineage is stored internally in `request_runs.retry_of_run_id`; original user message is reused |
+| Delete session | No body | `200` with `{deleted: true}` after the bounded transaction commits; missing chat also succeeds. Storage failure rolls back and reports an error; there is no asynchronous cleanup job in v0.1 |
+| Feedback | `{run_id, candidate_id: string, category: wrong/unclear/irrelevant/incomplete, comment: string\|null}` | `{feedback_id: string}`; server resolves exact displayed review/evidence |
 
 Every mutation has the Idempotency-Key header. Missing key is `400`; same key/different canonical route/body is `409`. Retry is an explicit user command, never a browser reconnect action. An accepted clarification reply retains original query and all relevant critical replies on subsequent retries; rebuilding context from only the first question would be incorrect.
 
 | Response DTO | Fields |
 | --- | --- |
-| Session | `session_id, title, created_at, updated_at: string; state_version: integer; active_run: RunStatus|null` |
-| Message | `message_id, turn_id, content_text, created_at: string; sequence: integer; role: user/assistant/clarification/notice; run_id: string|null` |
-| Page | `items: array, next_cursor: string|null`; stable cursor and bounded page size |
-| RunStatus | `run_id, session_id: string; status: lifecycle enum; stage: string; state_version: integer; pending_clarification: {clarification_id, question, message_id: string}|null; outcome: Outcome|null; retryable: boolean` |
-| Outcome | `kind: ACCEPTED/PARTIAL_ACCEPTED/INABILITY/OUT_OF_SCOPE/ERROR/CANCELED/TIMED_OUT/INTERRUPTED; final_message_id: string|null; candidate_id: string|null; review_id: string|null; evidence_set_id: string|null; stop_code: string|null` |
-| Health | `live: boolean, storage_ready: boolean, generation_ready: boolean, safe_reasons: string[]`; provider availability is last observed, not an unbounded probe |
-| CorpusStatus | `active_build_id: string|null, ready: boolean, documents: {spec_number,title,version,source_uri: string; release: string|null; status: string}[], coverage_gaps: string[]` |
+| Session | `session_id, title, created_at, updated_at: string; state_version: integer; active_run: RunStatus\|null` |
+| Message | `message_id, content_text, created_at: string; sequence: integer; role: user/assistant/clarification/notice; run_id: string\|null; outcome: Outcome\|null`; reviewed assistant messages also carry `citations` |
+| Page | `items: array, next_cursor: integer\|null`; message pages also have `previous_cursor: integer\|null`. Session cursor is an offset; message cursor is a sequence. Page size is at most 50 |
+| RunStatus | `run_id, session_id: string; status: lifecycle enum; stage: string; state_version: integer; pending_clarification: {clarification_id, question, message_id: string}\|null; outcome: Outcome\|null; retryable: boolean` |
+| Outcome | `kind: string, message_id: string, retryable: boolean`; accepted/partial results additionally contain `candidate_id, review_id, evidence_set_id: string`. `kind` is ACCEPTED, PARTIAL_ACCEPTED, INABILITY, OUT_OF_SCOPE or a safe operational stop code such as USER_CANCELED, ACTIVE_DEADLINE or INVALID_CONTRACT; lifecycle is in RunStatus.status |
+| Health | `alive, ready, provider_configured, provider_live_tested, corpus_ready, worker_available: boolean; release, version: string`; `provider_live_tested` is false in this prototype, and `ready` checks prerequisites only. Storage failure returns a safe error |
+| CorpusStatus | `active_build_id: string\|null, ready: boolean, documents: {spec_number,title,version,release,source_uri: string}[], coverage_gaps: string[]`; documents are the active build inventory, or empty before activation |
 
-`RunStatus` omits raw prompts, C findings, token-level hidden reasoning and internal candidates. A technical outcome references exactly one persisted B candidate and valid review. Nontechnical terminal outcomes may have no candidate/review. The Message DTO's run_id is resolved from run final-message/original-message links or the clarification record; it need not be duplicated in the messages table. If one original user message has multiple retry runs, its displayed run reference is the latest applicable run; attempt history remains separate.
+`RunStatus` omits raw prompts, C findings, token-level hidden reasoning and internal candidates. A technical outcome references exactly one persisted B candidate and valid review. Nontechnical terminal outcomes may have no candidate/review. The Message DTO's run_id/outcome are populated for committed final answer/notice messages; ordinary user and clarification messages return null for those fields. The current active/waiting run is available on Session, and attempt lineage remains internal. Message history supports `latest=true` and `before=<sequence>` for older pages. Saved-chat offset pages can shift when another request adds/deletes a chat; refresh the list after mutations. Snapshot-stable list pagination remains a future refinement.
 
-SSE data uses `{event_id: string, run_id: string, state_version: integer, type: string, payload: object}`. Persisted `event_id` represents the run plus event sequence. `progress` carries `{stage: string, message: string}`; `clarification_required` carries the pending clarification; terminal events carry Outcome and committed message ID. The UI fetches the committed message and renders it or progressively reveals that stored checked content. Heartbeats carry status/version, do not advance processing, and need no durable ID. Support Last-Event-ID; pruned events produce resync guidance and status fetch. Apply bounded reconnect as specified in the LLD.
+SSE data uses `{event_id: string, run_id: string, state_version: integer, type: string, payload: object}`. Persisted `event_id` represents the run plus event sequence. The wire event name is `update`; its JSON `type` identifies progress/clarification/terminal events. `progress` carries `{stage: string, message: string}`; `clarification_required` carries `{clarification_id, question: string}` (fetch RunStatus for its message ID); terminal payloads are Outcome, including `message_id`. `state_version` is the current run version at the read, not a historical per-event version. The UI fetches the committed message and renders it or progressively reveals that stored checked content. Heartbeats carry status/version, do not advance processing, and need no durable ID. Last-Event-ID replays retained events; a detected sequence gap emits `resync`. Streams end after at most 30 seconds, and storage/deletion errors emit `unavailable`. The shipped UI uses bounded status polling instead of SSE. Apply bounded reconnect as specified in the LLD.
 
 Synthetic submit example (identifiers are illustrative, not production IDs):
 
@@ -209,7 +209,7 @@ Implement the following as short database transactions with bounded lock waits. 
 | Finalize | Recheck complete release predicate; store final visible B text and exact candidate/review/evidence references; terminal record/event; release session ownership together |
 | Cancel/interruption | Conditional transition; fence epoch; close pending clarification if applicable; stop active-time accounting; persist outcome/event; release session ownership |
 | Retry | Verify retriable terminal attempt and live/free session; reuse original user-message ID and relevant reply context; new run/config snapshot and retry lineage; no automatic retry loop |
-| Delete | Fence and tombstone first; reject reads/new work; purge original and derived session data; report pending/error honestly if cleanup cannot complete within bounds |
+| Delete | In v0.1, cancel/fence active work and cascade-purge all session data in one bounded transaction; return success only after commit, otherwise roll back and report error. A separate persistent tombstone/cleanup worker is not implemented |
 | Activate corpus | Verify fully durable validated build and expected prior pointer; atomically switch pointer; retain referenced snapshots/builds for existing answers |
 
 The admission transaction and worker scheduling require reconciliation: a committed ACTIVE run that never receives a worker must expire through a dispatch deadline/lease and become INTERRUPTED. A process crash between commit and scheduling must not leave a permanent ACTIVE record. Persisted operations with uncertain dispatch/completion are UNKNOWN on recovery and consume conservative quota; they are not blindly replayed.
@@ -237,7 +237,7 @@ The SQL constrains core identities and selected invariants. JSON shape/coverage,
 
 | Step | Build / decision | Gate before continuing |
 | --- | --- | --- |
-| 1 | Review the pinned inventory and resolve runtime release defaults (#4), benchmark role APIs/retrieval/parser/store/framework (#5), record relevant baseline decisions (#6) | Versioned decision evidence; no guessed provider or corpus choice |
+| 1 | Record development defaults and provider shortlist; review source scope (#4), benchmark roles/retrieval (#5), resolve baseline decisions (#6) | Development defaults recorded; unresolved quality decisions gate pilot acceptance |
 | 2 | Configuration validation, database migration/repositories, synthetic role adapters, state controller, supervisor and bounded scheduling | Fault tests for admission, wait/reply, timeout, cancel, restart, duplicate/late result and storage errors; no real model needed for control tests |
 | 3 | Developer ingestion, compatible indexes, retrieval and inspectable original evidence (#7) | Verified reference clauses/tables and source versions; safe activation/rollback |
 | 4 | Context/history, A/B adapters and local UI/API lifecycle | Exact need/critical replies preserved; context bounded; citations inspectable; internal development only |
@@ -245,7 +245,7 @@ The SQL constrains core identities and selected invariants. JSON shape/coverage,
 | 6 | Real-provider integration, privacy/security, capacity/latency and held-out domain evaluation | Recorded T01–T30 and F01–F24 results, configuration versions and accepted limitations |
 | 7 | Reproducible startup/setup docs, rollout and rollback | Owner/domain review of release evidence; supported scope/platform and retention disclosed |
 
-SRS stages remain M1–M6; these steps break those stages into implementation dependencies rather than create new milestones. Synthetic control tests may be developed while data/provider decisions are open. Production integration must wait for the decisions it depends on.
+SRS stages remain M1–M6; these steps break those stages into implementation dependencies rather than create new milestones. Steps 2–5 and reproducible setup have development implementations; acceptance evidence is listed in the runtime verification guide. Synthetic control tests and provider adapters may proceed with recorded development choices while measurements are open. Production acceptance must wait for the decisions it depends on.
 
 No arbitrary speed/accuracy guarantee is introduced. Record observed latency by stage/outcome, retrieval support, C false acceptance/objection, harmful revisions, token/call usage and hardware/corpus/provider versions. Keep held-out evaluation separate from prompt tuning. Store evidence of failures and rollback instructions before expanding the corpus.
 
@@ -253,4 +253,4 @@ No arbitrary speed/accuracy guarantee is introduced. Record observed latency by 
 
 The design set documents scope, component ownership/connections, exact shared record meanings, role/tool action contracts, public API payloads, persisted relationships, state transitions, budgets, security boundaries, failure behavior, UI outcomes, dependency order and acceptance mapping. Open choices are visible in the decision register and issues #4–#6, with an owner and required stage.
 
-The remaining model, corpus-domain/default-release and stack choices are prerequisites for their dependent implementation, not missing decisions to silently fill with guesses. Record each selected choice and its evidence before coding the dependent integration. Keep this handoff and its LLD/schema/tests consistent when any contract changes; regenerate the SRS PDF only if the SRS itself changes.
+Prototype development choices are recorded in the decision register under the owner-authorized build-and-iterate approach. Remaining domain, provider-comparison and operating decisions gate pilot acceptance; they do not retroactively block the existing development implementation. Record new integration choices and their evidence explicitly. Keep this handoff and its LLD/schema/tests consistent when any contract changes; regenerate the SRS PDF only if the SRS itself changes.

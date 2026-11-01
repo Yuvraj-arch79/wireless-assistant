@@ -25,7 +25,7 @@ Linux/macOS: replace the first two commands with `python3.12 -m venv .venv` and 
 python -m wireless_assistant.cli serve
 ```
 
-Open **http://127.0.0.1:8765** in the browser. The terminal stays open while the server runs; Ctrl+C stops it. Chat management is available before AI setup. The UI disables answer generation until a compatible hybrid corpus and server API configuration exist. It never substitutes canned answers.
+Open **http://127.0.0.1:8765** in the browser. The terminal stays open while the server runs; Ctrl+C stops it. Chat management is available before AI setup. Each saved chat has pencil (rename) and trash (delete, with confirmation) icons in the left sidebar. Explicit New chat retains its title until renamed; sending without an open chat derives the initial title from the first 70 characters. Titles are not AI-generated. The UI disables answer generation until a compatible hybrid corpus and server API configuration exist. It never substitutes canned answers.
 
 Stop the server before ingestion, embeddings, activation or backup; maintenance and the server share a data-directory lock. All generated state stays under ignored `data/app/`. `WA_DATA_DIR` may select a different absolute directory; `WA_PORT` may select another loopback port. Do not run multiple server processes against one database.
 
@@ -50,7 +50,7 @@ The parser retains clause, page, document version, original hash, table cells an
 
 ## 4. Configure free API access on your computer
 
-Use your own Gemini API project with **billing disabled** and model access available. Never paste the key into a chat, issue, screenshot or Git file. The application does not inspect your billing account: `WA_FREE_TIER_CONFIRMED=1` records your confirmation, not a server-side billing guarantee. There is no automatic paid/provider fallback, built-in web search or provider file-search service.
+Only the Gemini adapter is implemented today. Gemini, Groq and Mistral are the agreed shortlist for later comparison; Groq/Mistral keys cannot be used by this version. A/B/C provider assignment is pending testing. Use your own Gemini API project with **billing disabled** and model access available. Never paste the key into a chat, issue, screenshot or Git file. The application does not inspect your billing account: `WA_FREE_TIER_CONFIRMED=1` records your confirmation, not a server-side billing guarantee. There is no automatic paid/provider fallback, built-in web search or provider file-search service.
 
 Windows Command Prompt (current terminal only):
 
@@ -66,7 +66,7 @@ export GEMINI_API_KEY='YOUR_PRIVATE_KEY'
 export WA_FREE_TIER_CONFIRMED=1
 ```
 
-Defaults are `gemini-3.8-flash` for each independent A, B and C call, and `gemini-embedding-001` with 768 dimensions. Optional `WA_MODEL_A`, `WA_MODEL_B`, `WA_MODEL_C` override generative IDs; they do not silently fall back if unavailable. Treat any model change as a new evaluation. Embedding changes require a reviewed compatible rebuild. Availability and free quotas depend on your project and may change.
+Defaults are `gemini-3.8-flash` for each independent A, B and C call, and `gemini-embedding-001` with 768 dimensions. Optional `WA_MODEL_A`, `WA_MODEL_B`, `WA_MODEL_C` override Gemini generative IDs only; they do not select other providers or silently fall back if unavailable. Treat any model change as a new evaluation. Embedding changes require a reviewed compatible rebuild. Availability and free quotas depend on your project and may change.
 
 Provider calls send the selected question/history, retrieved passages and role instructions to Google. Free-tier data terms can permit product improvement; use public standards and nonsensitive test questions initially. Local chat deletion cannot delete provider-side records or your separate backups. See the official [model catalog](https://ai.google.dev/gemini-api/docs/models), [pricing/data-use table](https://ai.google.dev/gemini-api/docs/pricing) and [embedding API](https://ai.google.dev/api/embeddings). Development defaults were checked against these pages on 31 October 2026; no live model benchmark was performed.
 
@@ -86,7 +86,7 @@ python -m wireless_assistant.cli status
 python -m wireless_assistant.cli serve
 ```
 
-`ready: true` means local configuration/index prerequisites exist; it does not prove the API key works or the model answers correctly. Ask one simple question and inspect its cited clause. Then try a follow-up, clarification, cancel and restart. Record real provider outcomes and compare answers with original PDFs before a pilot.
+The CLI `status` reports corpus readiness only. `/api/health` additionally checks that API-key/free-tier configuration and worker availability exist. Neither `ready: true` proves the API key works nor that a model answers correctly. Ask one simple question and inspect its cited clause. Then try a follow-up, clarification, cancel and restart. Record real provider outcomes and compare answers with original PDFs before a pilot.
 
 ## 6. Check, back up and return to a checkpoint
 
@@ -105,7 +105,7 @@ git fetch origin --tags
 git worktree add ../wireless-assistant-checkpoint CHECKPOINT_REF
 ```
 
-Create its own virtual environment and use a **different `WA_DATA_DIR`**. The existing `baseline-before-prototype` tag preserves pre-implementation commit `3e924297fa88dbdbe7f16497d10d9dfd42afe695`. The prototype tag is `prototype-v0.1.0` only after the successful main-branch checkpoint workflow creates it; confirm with `git tag -l`. Never force-move a tag.
+Create its own virtual environment and use a **different `WA_DATA_DIR`**. The existing `baseline-before-prototype` tag preserves pre-implementation commit `3e924297fa88dbdbe7f16497d10d9dfd42afe695`. The existing `prototype-v0.1.0` tag preserves the first prototype merge `f185e70f485808df29f72b9a28abf39bfe759806`. Both tags were verified on GitHub on 1 November 2026. Later fixes are separate commits/PRs on main; a tag does not follow main. Never force-move a tag.
 
 To restore local data, stop the server, keep the entire current data directory, and copy a verified backup to a new directory as `assistant.sqlite3`. Point `WA_DATA_DIR` at that new directory. Do not overwrite a live database or combine an old main database with newer WAL/SHM files. To roll back only the corpus, use `activate PREVIOUS_VALIDATED_BUILD_ID`; retained builds keep existing citations resolvable.
 

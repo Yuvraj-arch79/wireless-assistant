@@ -16,7 +16,7 @@ Describe what should happen.
 
 ## Reproduce or locate it
 
-List the steps or exact file/requirement ID. For a future application issue, include the relevant app, corpus and configuration versions.
+List the steps or exact file/requirement ID. For an application issue, include the relevant app, corpus and configuration versions.
 
 ## Evidence
 

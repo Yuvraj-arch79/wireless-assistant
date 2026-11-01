@@ -66,7 +66,7 @@ Approval is tied to the exact answer, need and evidence versions. The first elig
 
 ## Context and records
 
-Keep original messages locally and use recent relevant context first. Older-history retrieval is on demand; summaries help selection but do not replace the original evidence.
+Keep original messages locally and use recent relevant context first. Older-history retrieval is on demand. The prototype uses bounded metadata/previews and exact searchable originals; it does not generate narrative summaries.
 
 Oversized recent turns are not silently truncated. Every excluded message remains reachable through the complete local history index, including messages omitted by the token cap within the most recent turns. A run pins its corpus build and exact evidence snapshot; saved citation inspection must retain that source version.
 
@@ -74,4 +74,4 @@ Persisted prototype records include request/need IDs, source and corpus versions
 
 ## Technology status
 
-No application framework, vector store or model provider is selected by this document. The LLD supplies an executable reference database schema and provisional limits to make its rules reviewable. The next step is to review that design and resolve the [decision register](decisions.md), then build the [evidence foundation](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7).
+The prototype uses Python 3.12, FastAPI, SQLite/FTS5, pdfplumber and a Gemini generation/embedding adapter. Gemini, Groq and Mistral are the owner-selected generation-provider shortlist; Groq/Mistral adapters and measured A/B/C assignment remain pending. The same provider may serve multiple roles. These development choices are recorded in the [decision register](decisions.md), not claimed as benchmark winners. Next, complete provider integration and evaluate the existing [evidence foundation](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7). Runtime values come from `wireless_assistant/config.py`; LLD example limits are illustrative.

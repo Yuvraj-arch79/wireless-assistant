@@ -1,6 +1,6 @@
 # Contributing
 
-The repository contains requirements, detailed design and an implemented source-acquisition utility. There is no runnable assistant yet.
+The repository contains requirements, detailed design, source acquisition and a runnable development chatbot. Live-provider, domain-quality and full product acceptance remain pending; see the [verification record](docs/implementation/verification.md).
 
 ## Before changing behavior
 
@@ -28,7 +28,7 @@ Keep useful history. Remove a file only when it is obsolete and its replacement 
 - Record document changes in [CHANGELOG.md](CHANGELOG.md).
 - For LLD, reference schema or limit changes, run `python docs/design/validate_design.py` and keep [design coverage](docs/design/verification.md) current. Report these as design checks, separately from application tests.
 
-Acceptance scenarios describe application tests to perform later. Editing their text is not a passing test result.
+Acceptance scenarios define product checks. Prototype regressions cover selected paths; they do not establish that all acceptance scenarios passed. Editing a scenario is not a passing test result.
 
 ## Synchronize progress
 
