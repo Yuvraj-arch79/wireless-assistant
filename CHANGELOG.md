@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-01 — Source-grounded evaluation baseline
+
+- Add 32 versioned cases: 16 technical, 12 conversation/failure scenarios and 4 reviewer challenges, covering all 12 pinned specifications.
+- Define development/locked splits, source-linked grading, trial records and separate retrieval, answer, reviewer and control metrics.
+- Add no-key CI validation and optional original-PDF verification; domain approval, trial harness and live model results remain pending.
+
 ## 2026-11-01 — Repository consistency and clarification guard
 
 - Synchronize current prototype/stack status, Gemini/Groq/Mistral shortlist, readiness instructions, immutable checkpoint tags and corrected M1 metadata.

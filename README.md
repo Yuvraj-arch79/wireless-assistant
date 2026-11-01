@@ -56,6 +56,7 @@ C's findings go to **B first**. A is called during correction only when B identi
 | Developer handoff | [Component connections, data contracts and implementation order](docs/design/implementation-guide.md) |
 | Source inventory | [12 version-pinned Release 18 PDFs and reproducible acquisition](corpus/README.md); domain/coverage review remains in [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
 | Technology choices and baseline approval | Gemini implemented; Gemini/Groq/Mistral shortlist recorded, Groq/Mistral adapters and role benchmark pending; baseline acceptance open: [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5), [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
+| Evaluation questions and scoring | [32 source-checked cases](evaluation/README.md), split discipline and grading contract prepared; domain approval and live trials pending |
 | Parsing, indexing and retrieval | Implemented; real-corpus quality evaluation pending: [#7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) |
 | Runnable chatbot and product release | Development prototype available; needs local API key and prepared hybrid build; product acceptance pending |
 

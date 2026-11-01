@@ -12,6 +12,8 @@
 - The PDF and editable source are published together.
 - The initial 12 PHY/Layer-2 source PDFs have a [version/hash lock and download/verification tool](../corpus/README.md); the files stay local and outside Git.
 
+The [initial evaluation suite](../evaluation/README.md) now defines 32 source-checked cases and scoring rules. Domain review, a trial harness and live provider comparisons remain pending.
+
 The first runnable prototype now covers ingestion, retrieval adapters, local chat and bounded A–B–C control. [Executed tests and limitations](implementation/verification.md) are recorded separately from full product acceptance. Real provider benchmarks and real hybrid retrieval quality remain unverified.
 
 ## What must happen next
