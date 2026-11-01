@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "suite_version": "0.1.0",
+  "schema_version": 2,
+  "suite_version": "0.2.0",
   "status": "source_checked_candidate_not_domain_approved",
   "corpus_id": "nr-l1-l2-rel18-2026-10-24",
   "manifest_sha256": "a30b266b6e655278b8e874282c3e295ddf9284b626b68d25317264d4d1025391",
@@ -10,7 +10,7 @@
       "family": "architecture_phy",
       "split": "dev",
       "kind": "technical",
-      "prompt": "TS 38.201 ke according Layer 1 aur Layers 2/3 kaun-si specification series mein described hain?",
+      "prompt": "In 5G NR, which specification series describe Layer 1 and Layers 2/3?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -18,7 +18,8 @@
         "38.300 describes Layers 2 and 3."
       ],
       "forbidden": [
-        "Do not claim that all 38.3xx documents are exclusively Layer 2."
+        "Do not claim that all 38.3xx documents are exclusively Layer 2.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -38,14 +39,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "5G NR ki PHY aur L2/L3 ki spec series konsi hain?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "TS 38.201 ke according Layer 1 aur Layers 2/3 kaun-si specification series mein described hain?"
+        }
+      ]
     },
     {
       "id": "T02",
       "family": "phy_services",
       "split": "locked",
       "kind": "technical",
-      "prompt": "According to TS 38.202, what service does PHY offer, how is it accessed, and what is a transport block?",
+      "prompt": "What service does the NR physical layer provide to higher layers, how is it accessed, and what is a transport block?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -54,7 +67,8 @@
         "A transport block is data transferred between MAC and PHY."
       ],
       "forbidden": [
-        "Do not identify a transport block as a logical channel."
+        "Do not identify a transport block as a logical channel.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -74,14 +88,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR PHY upper layers ko kya service deti hai, access kaise hota hai aur transport block kya hai?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "According to TS 38.202, what service does PHY offer, how is it accessed, and what is a transport block?"
+        }
+      ]
     },
     {
       "id": "T03",
       "family": "resource_grid",
       "split": "dev",
       "kind": "technical",
-      "prompt": "TS 38.211 Table 4.2-1 mein mu=2 ka subcarrier spacing aur cyclic-prefix options kya hain?",
+      "prompt": "NR mein numerology mu=2 ho toh subcarrier spacing aur cyclic prefix options kya hain?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -89,7 +115,8 @@
         "Normal and extended cyclic prefixes."
       ],
       "forbidden": [
-        "Do not generalize extended CP to every numerology."
+        "Do not generalize extended CP to every numerology.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -109,14 +136,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "For NR numerology 2, what are the subcarrier spacing and supported CP types?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "TS 38.211 Table 4.2-1 mein mu=2 ka subcarrier spacing aur cyclic-prefix options kya hain?"
+        }
+      ]
     },
     {
       "id": "T04",
       "family": "channel_mapping",
       "split": "locked",
       "kind": "technical",
-      "prompt": "Map UL-SCH, RACH and UCI to physical channels using TS 38.212 tables 4.1-1 and 4.1-2.",
+      "prompt": "In NR, which physical channels carry UL-SCH, RACH and UCI?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -125,7 +164,8 @@
         "UCI can map to PUCCH or PUSCH."
       ],
       "forbidden": [
-        "Do not say UCI uses only PUCCH."
+        "Do not say UCI uses only PUCCH.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -145,14 +185,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR me UL-SCH, RACH aur UCI konse physical channls pe jate hain?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "Map UL-SCH, RACH and UCI to physical channels using TS 38.212 tables 4.1-1 and 4.1-2."
+        }
+      ]
     },
     {
       "id": "T05",
       "family": "cell_search",
       "split": "locked",
       "kind": "technical",
-      "prompt": "In TS 38.213, what does NR cell search obtain, and which synchronization signals does the UE receive?",
+      "prompt": "What does a UE obtain during NR cell search, and which synchronization signals does it use?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -161,7 +213,8 @@
         "PSS and SSS."
       ],
       "forbidden": [
-        "Do not replace physical cell identity with subscriber identity."
+        "Do not replace physical cell identity with subscriber identity.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -181,14 +234,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR cell serch me UE ko kya milta hai aur kaunse sync signals use hote hain?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "In TS 38.213, what does NR cell search obtain, and which synchronization signals does the UE receive?"
+        }
+      ]
     },
     {
       "id": "T06",
       "family": "harq_limits",
       "split": "locked",
       "kind": "technical",
-      "prompt": "TS 38.214 clause 5.1: state the downlink HARQ process limits and the default without configuration.",
+      "prompt": "How many downlink HARQ processes can an NR UE support per cell, what conditions apply, and what is assumed when none are configured?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -198,7 +263,8 @@
       ],
       "forbidden": [
         "Do not claim every UE unconditionally supports 32.",
-        "Do not claim the capability details in unavailable TS 38.306 were inspected."
+        "Do not claim the capability details in unavailable TS 38.306 were inspected.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -218,14 +284,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR downlink HARQ process limit per cell, capability condition aur bina configuration default bata."
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "TS 38.214 clause 5.1: state the downlink HARQ process limits and the default without configuration."
+        }
+      ]
     },
     {
       "id": "T07",
       "family": "rsrp_conditions",
       "split": "dev",
       "kind": "technical",
-      "prompt": "Explain the basic SS-RSRP definition and the SMTC-window exception for L1-RSRP in TS 38.215.",
+      "prompt": "How is NR SS-RSRP defined, and does the SMTC measurement-window restriction also apply to configured L1-RSRP?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -235,7 +313,8 @@
       ],
       "forbidden": [
         "Do not average dBm values arithmetically.",
-        "Do not omit the L1-RSRP exception."
+        "Do not omit the L1-RSRP exception.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -255,14 +334,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR SS-RSRP kaise define hota hai? Configured L1-RSRP par bhi SMTC window restriction lagti hai?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "Explain the basic SS-RSRP definition and the SMTC-window exception for L1-RSRP in TS 38.215."
+        }
+      ]
     },
     {
       "id": "T08",
       "family": "ngran_interfaces",
       "split": "locked",
       "kind": "technical",
-      "prompt": "Using TS 38.300 clause 4.1, distinguish gNB and ng-eNB and identify Xn, NG-C and NG-U endpoints.",
+      "prompt": "In NG-RAN, how do gNB and ng-eNB differ, and what nodes do Xn, NG-C and NG-U connect?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -272,7 +363,8 @@
       ],
       "forbidden": [
         "Do not swap AMF and UPF.",
-        "Do not invent F1 details from unavailable TS 38.401."
+        "Do not invent F1 details from unavailable TS 38.401.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -292,14 +384,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "gNB vs ng-eNB samjha aur Xn, NG-C, NG-U kisko connect karte hain?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "Using TS 38.300 clause 4.1, distinguish gNB and ng-eNB and identify Xn, NG-C and NG-U endpoints."
+        }
+      ]
     },
     {
       "id": "T09",
       "family": "l2_measurements",
       "split": "locked",
       "kind": "technical",
-      "prompt": "TS 38.314 mein per-QoS-level measurements ke liye NR SA aur EN-DC mein kya identifiers use hote hain?",
+      "prompt": "NR SA aur EN-DC mein per-QoS-level Layer 2 measurements ke liye kaunse identifiers use hote hain?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -308,7 +412,8 @@
         "These are measurement aggregation distinctions."
       ],
       "forbidden": [
-        "Do not reverse 5QI and QCI."
+        "Do not reverse 5QI and QCI.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -328,14 +433,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "Which QoS identifiers are used to aggregate Layer 2 measurements in NR SA versus EN-DC?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "TS 38.314 mein per-QoS-level measurements ke liye NR SA aur EN-DC mein kya identifiers use hote hain?"
+        }
+      ]
     },
     {
       "id": "T10",
       "family": "mac_pdcp",
       "split": "dev",
       "kind": "technical",
-      "prompt": "TS 38.321 ke according MAC logical channels aur transport blocks ke beech kya karta hai?",
+      "prompt": "NR mein MAC logical channels aur transport blocks ke beech kya kaam karta hai?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -344,7 +461,8 @@
         "Demultiplexes received transport blocks to logical channels."
       ],
       "forbidden": [
-        "Do not attribute ROHC header compression to MAC."
+        "Do not attribute ROHC header compression to MAC.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -364,14 +482,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "What does NR MAC do between logical channels and transport blocks?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "TS 38.321 ke according MAC logical channels aur transport blocks ke beech kya karta hai?"
+        }
+      ]
     },
     {
       "id": "T11",
       "family": "rlc_entities",
       "split": "dev",
       "kind": "technical",
-      "prompt": "TS 38.322 clause 4.2.1: who generally controls RLC configuration, and how do SDUs and PDUs cross its boundaries?",
+      "prompt": "In NR, who generally controls RLC configuration, and how do SDUs and PDUs cross its boundaries?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -380,7 +510,8 @@
         "RLC exchanges PDUs with its peer through lower layers."
       ],
       "forbidden": [
-        "Do not reverse SDU and PDU boundary roles."
+        "Do not reverse SDU and PDU boundary roles.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -400,14 +531,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR RLC config generally kaun control karta hai aur SDU/PDU kis boundary par exchange hote hain?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "TS 38.322 clause 4.2.1: who generally controls RLC configuration, and how do SDUs and PDUs cross its boundaries?"
+        }
+      ]
     },
     {
       "id": "T12",
       "family": "mac_pdcp",
       "split": "dev",
       "kind": "technical",
-      "prompt": "Name the PDCP compression protocols listed in TS 38.323 clause 4.4 and two listed security functions.",
+      "prompt": "Which compression protocols and two security functions does NR PDCP support?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -415,7 +558,8 @@
         "Ciphering/deciphering and integrity protection/verification."
       ],
       "forbidden": [
-        "Do not say all listed functions necessarily apply to every bearer without configuration conditions."
+        "Do not say all listed functions necessarily apply to every bearer without configuration conditions.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -435,7 +579,19 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR PDCP me kaunse compression protocols aur koi do security functions hain?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "Name the PDCP compression protocols listed in TS 38.323 clause 4.4 and two listed security functions."
+        }
+      ]
     },
     {
       "id": "T13",
@@ -450,7 +606,8 @@
       ],
       "forbidden": [
         "Do not answer 12 OFDM symbols.",
-        "Unreadable extracted symbols cannot be silently repaired as trusted evidence."
+        "Unreadable extracted symbols cannot be silently repaired as trusted evidence.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -470,14 +627,21 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "How many consecutive subcarriers form an NR resource block, and in which domain?"
+        }
+      ]
     },
     {
       "id": "T14",
       "family": "resource_grid",
       "split": "dev",
       "kind": "technical",
-      "prompt": "Using Table 4.2-1, compare mu=0 and mu=3 subcarrier spacings and CP types.",
+      "prompt": "Compare NR numerologies mu=0 and mu=3: subcarrier spacing and cyclic prefix types.",
       "history": [],
       "fixture": null,
       "expected": [
@@ -485,7 +649,8 @@
         "mu=3: 120 kHz, normal CP."
       ],
       "forbidden": [
-        "Do not assign extended CP to mu=3 from this table."
+        "Do not assign extended CP to mu=3 from this table.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -505,14 +670,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR mu zero aur three ka subcarier spacing aur CP compare kr."
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "Using Table 4.2-1, compare mu=0 and mu=3 subcarrier spacings and CP types."
+        }
+      ]
     },
     {
       "id": "T15",
       "family": "channel_mapping",
       "split": "locked",
       "kind": "technical",
-      "prompt": "TS 38.212: map DL-SCH, BCH, PCH and DCI to physical channels.",
+      "prompt": "In NR, which physical channels carry DL-SCH, BCH, PCH and DCI?",
       "history": [],
       "fixture": null,
       "expected": [
@@ -521,7 +698,8 @@
         "DCI uses PDCCH."
       ],
       "forbidden": [
-        "Do not map PCH to PDCCH."
+        "Do not map PCH to PDCCH.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -541,14 +719,26 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR DL-SCH, BCH, PCH aur DCI konse physical channels use krte hain?"
+        },
+        {
+          "id": "source_hint",
+          "style": "source_hint",
+          "prompt": "TS 38.212: map DL-SCH, BCH, PCH and DCI to physical channels."
+        }
+      ]
     },
     {
       "id": "T16",
       "family": "mac_pdcp",
       "split": "dev",
       "kind": "technical",
-      "prompt": "Compare MAC multiplexing and PDCP header compression; give a source for each responsibility.",
+      "prompt": "Compare NR MAC multiplexing and PDCP header compression; give a source for each responsibility.",
       "history": [],
       "fixture": null,
       "expected": [
@@ -557,7 +747,8 @@
         "Cite each distinct claim to the matching specification."
       ],
       "forbidden": [
-        "Do not use one citation to falsely support both layers."
+        "Do not use one citation to falsely support both layers.",
+        "Do not request a document number or clause when the question is answerable from the configured NR corpus."
       ],
       "sources": [
         {
@@ -588,7 +779,14 @@
         "RET-01"
       ],
       "review_status": "assistant_source_checked_domain_review_pending",
-      "weight": 1
+      "weight": 1,
+      "variants": [
+        {
+          "id": "paraphrase",
+          "style": "natural",
+          "prompt": "NR MAC multiplexing vs PDCP header compression simple Hindi me samjha, dono ke sources bhi de."
+        }
+      ]
     },
     {
       "id": "B01",
@@ -1063,6 +1261,290 @@
           "sha256": "cc467076ffc5213aeea86e5ace2a31a939192627bc1a42f452f25f0dec9a0ebb",
           "url": "https://www.etsi.org/deliver/etsi_ts/138200_138299/138214/18.11.00_60/ts_138214v181100p.pdf",
           "anchor": "default number of 8 processes",
+          "verification": "text_checked"
+        }
+      ],
+      "requirements": [
+        "ORC-07"
+      ],
+      "review_status": "assistant_source_checked_domain_review_pending",
+      "weight": 1
+    },
+    {
+      "id": "B13",
+      "family": "resource_grid",
+      "split": "dev",
+      "kind": "behavior",
+      "prompt": "Resource block mein kitne subcarriers hote hain?",
+      "history": [],
+      "fixture": null,
+      "expected": [
+        "Use the declared NR corpus default; answer 12 consecutive subcarriers in frequency with supporting evidence.",
+        "Do not require the user to name a specification; identify the NR scope in the answer."
+      ],
+      "forbidden": [
+        "Do not ask for a TS number or release solely because the user omitted it."
+      ],
+      "sources": [
+        {
+          "spec": "38.211",
+          "version": "18.10.0",
+          "release": 18,
+          "clause": "4.4.4.1",
+          "pdf_page": 16,
+          "sha256": "15a8cc84cbdab7f92b4576ec7020608511c06cf834d99a02ae33980fd0db687e",
+          "url": "https://www.etsi.org/deliver/etsi_ts/138200_138299/138211/18.10.00_60/ts_138211v181000p.pdf",
+          "anchor": "consecutive subcarriers",
+          "verification": "text_and_visual"
+        }
+      ],
+      "requirements": [
+        "ORC-02",
+        "CTX-07"
+      ],
+      "review_status": "behavior_specification",
+      "weight": 1
+    },
+    {
+      "id": "B14",
+      "family": "resource_grid",
+      "split": "dev",
+      "kind": "behavior",
+      "prompt": "NR resource block mein 14 subcarriers hote hain na?",
+      "history": [],
+      "fixture": null,
+      "expected": [
+        "Correct the false premise: 12 consecutive subcarriers in frequency.",
+        "Support the correction from retrieved evidence."
+      ],
+      "forbidden": [
+        "Do not agree with 14 subcarriers."
+      ],
+      "sources": [
+        {
+          "spec": "38.211",
+          "version": "18.10.0",
+          "release": 18,
+          "clause": "4.4.4.1",
+          "pdf_page": 16,
+          "sha256": "15a8cc84cbdab7f92b4576ec7020608511c06cf834d99a02ae33980fd0db687e",
+          "url": "https://www.etsi.org/deliver/etsi_ts/138200_138299/138211/18.10.00_60/ts_138211v181000p.pdf",
+          "anchor": "consecutive subcarriers",
+          "verification": "text_and_visual"
+        }
+      ],
+      "requirements": [
+        "ORC-02",
+        "CTX-07"
+      ],
+      "review_status": "behavior_specification",
+      "weight": 1
+    },
+    {
+      "id": "B15",
+      "family": "ambiguous_empty",
+      "split": "dev",
+      "kind": "behavior",
+      "prompt": "NR timing bata.",
+      "history": [],
+      "fixture": null,
+      "expected": [
+        "Ask a focused clarification about the requested timing concept, e.g. slot duration versus HARQ timing.",
+        "Wait without generating an arbitrary technical answer."
+      ],
+      "forbidden": [
+        "Do not demand a specification number instead of asking about the intended concept."
+      ],
+      "sources": [],
+      "requirements": [
+        "ORC-02",
+        "CTX-07"
+      ],
+      "review_status": "behavior_specification",
+      "weight": 1
+    },
+    {
+      "id": "B16",
+      "family": "resource_grid",
+      "split": "dev",
+      "kind": "behavior",
+      "prompt": "NR resource block mein kitne subcarriers hote hain?",
+      "history": [],
+      "fixture": {
+        "type": "evidence_replacement",
+        "steps": [
+          "Return zero passages for every retrieval call in this isolated run."
+        ]
+      },
+      "expected": [
+        "With no supporting evidence available, disclose the evidence gap and abstain from a verified technical answer.",
+        "Stay within configured retrieval and run budgets."
+      ],
+      "forbidden": [
+        "Do not invent citations or publish a memorized answer as source-verified."
+      ],
+      "sources": [],
+      "requirements": [
+        "ORC-02",
+        "CTX-07"
+      ],
+      "review_status": "behavior_specification",
+      "weight": 1
+    },
+    {
+      "id": "B17",
+      "family": "resource_grid",
+      "split": "dev",
+      "kind": "behavior",
+      "prompt": "How many subcarriers are in an NR resource block?",
+      "history": [],
+      "fixture": {
+        "type": "evidence_replacement",
+        "steps": [
+          "Provide a valid current resource-block passage plus a synthetic distractor claiming 14 subcarriers with a stale corpus build binding.",
+          "Mark the distractor synthetic; do not alter original PDFs."
+        ]
+      },
+      "expected": [
+        "Prefer evidence bound to the active corpus version; answer only from supporting valid passages.",
+        "Exclude the synthetic stale passage from evidence used for publication."
+      ],
+      "forbidden": [
+        "Do not cite a stale or mismatched source binding."
+      ],
+      "sources": [
+        {
+          "spec": "38.211",
+          "version": "18.10.0",
+          "release": 18,
+          "clause": "4.4.4.1",
+          "pdf_page": 16,
+          "sha256": "15a8cc84cbdab7f92b4576ec7020608511c06cf834d99a02ae33980fd0db687e",
+          "url": "https://www.etsi.org/deliver/etsi_ts/138200_138299/138211/18.10.00_60/ts_138211v181000p.pdf",
+          "anchor": "consecutive subcarriers",
+          "verification": "text_and_visual"
+        }
+      ],
+      "requirements": [
+        "ORC-02",
+        "CTX-07"
+      ],
+      "review_status": "behavior_specification",
+      "weight": 1
+    },
+    {
+      "id": "B18",
+      "family": "resource_grid",
+      "split": "dev",
+      "kind": "behavior",
+      "prompt": "Aur subcarriers kitne hain?",
+      "history": [
+        {
+          "role": "user",
+          "text": "Hum NR resource block ki baat kar rahe hain."
+        },
+        {
+          "role": "assistant",
+          "text": "Theek hai, NR resource block ke baare mein poochho."
+        }
+      ],
+      "fixture": null,
+      "expected": [
+        "Resolve the subject as the NR resource block from exact history.",
+        "Retrieve current evidence and answer 12 consecutive subcarriers in frequency."
+      ],
+      "forbidden": [
+        "Do not ask which specification or repeat a resolved clarification."
+      ],
+      "sources": [
+        {
+          "spec": "38.211",
+          "version": "18.10.0",
+          "release": 18,
+          "clause": "4.4.4.1",
+          "pdf_page": 16,
+          "sha256": "15a8cc84cbdab7f92b4576ec7020608511c06cf834d99a02ae33980fd0db687e",
+          "url": "https://www.etsi.org/deliver/etsi_ts/138200_138299/138211/18.10.00_60/ts_138211v181000p.pdf",
+          "anchor": "consecutive subcarriers",
+          "verification": "text_and_visual"
+        }
+      ],
+      "requirements": [
+        "ORC-02",
+        "CTX-07"
+      ],
+      "review_status": "behavior_specification",
+      "weight": 1
+    },
+    {
+      "id": "C05",
+      "family": "rsrp_conditions",
+      "split": "dev",
+      "kind": "reviewer",
+      "prompt": "Review this candidate against the supplied source and original need.",
+      "history": [],
+      "fixture": {
+        "type": "reviewer_candidate",
+        "candidate_text": "SS-RSRP uses linear averaging of power in watts over resource elements carrying SSS.",
+        "prior_candidate_text": null,
+        "instruction": "Harness supplies valid bindings and citations; keep rubric hidden from tested C.",
+        "original_query": "Define SS-RSRP averaging and its power unit."
+      },
+      "expected": [
+        "Accept the supported averaging/unit claim when binding and evidence checks pass."
+      ],
+      "forbidden": [
+        "Do not invent a contradiction or reject merely because wording differs from the source."
+      ],
+      "sources": [
+        {
+          "spec": "38.215",
+          "version": "18.5.0",
+          "release": 18,
+          "clause": "5.1.1",
+          "pdf_page": 10,
+          "sha256": "1bb196dc2a5f903133d04acbbd4a003c6afe072a3473240c0e08c143bfab2e09",
+          "url": "https://www.etsi.org/deliver/etsi_ts/138200_138299/138215/18.05.00_60/ts_138215v180500p.pdf",
+          "anchor": "linear average",
+          "verification": "text_checked"
+        }
+      ],
+      "requirements": [
+        "ORC-07"
+      ],
+      "review_status": "assistant_source_checked_domain_review_pending",
+      "weight": 1
+    },
+    {
+      "id": "C06",
+      "family": "architecture_phy",
+      "split": "dev",
+      "kind": "reviewer",
+      "prompt": "Review this candidate against the supplied source and original need.",
+      "history": [],
+      "fixture": {
+        "type": "reviewer_candidate",
+        "candidate_text": "The 38.200 series describes Layer 1; 38.300 describes Layers 2 and 3.",
+        "prior_candidate_text": null,
+        "instruction": "Harness supplies an unrelated clause citation instead of the supporting architecture clause; all other bindings valid. Keep expected judgment hidden.",
+        "original_query": "Identify the specification series describing Layer 1 and Layers 2/3."
+      },
+      "expected": [
+        "Reject the candidate when its citation binding points to an unrelated clause, despite the plausible factual text."
+      ],
+      "forbidden": [
+        "Do not accept based on factual plausibility alone."
+      ],
+      "sources": [
+        {
+          "spec": "38.201",
+          "version": "18.0.0",
+          "release": 18,
+          "clause": "4.1.1",
+          "pdf_page": 7,
+          "sha256": "f33e4ab236e9c21450f54e20f99dd5e031a0d269bf27e69212bfe610fbdbbdf2",
+          "url": "https://www.etsi.org/deliver/etsi_ts/138200_138299/138201/18.00.00_60/ts_138201v180000p.pdf",
+          "anchor": "General protocol architecture",
           "verification": "text_checked"
         }
       ],

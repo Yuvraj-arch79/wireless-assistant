@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-02 — Natural-question evaluation 0.2.0
+
+- Replace source-hinted primary questions with 16 natural prompts; add 16 paraphrases and retain 14 hinted controls.
+- Expand to 40 base cases with ambiguity, false-premise, missing/stale evidence, history and reviewer citation checks.
+- Add input isolation and regression checks; retain source pins and pending domain/live acceptance.
+
 ## 2026-11-01 — Source-grounded evaluation baseline
 
 - Add 32 versioned cases: 16 technical, 12 conversation/failure scenarios and 4 reviewer challenges, covering all 12 pinned specifications.

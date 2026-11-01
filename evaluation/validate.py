@@ -19,18 +19,18 @@ def validate(raw_dir=None):
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     suite = json.loads((ROOT / 'evaluation/cases.json').read_text(encoding='utf-8'))
     docs = {d['spec']: d for d in manifest['documents']}
-    require(suite['schema_version'] == 1, 'Unsupported schema')
-    require(suite['suite_version'] == '0.1.0', 'Review validator for new suite version')
+    require(suite['schema_version'] == 2, 'Unsupported schema')
+    require(suite['suite_version'] == '0.2.0', 'Review validator for new suite version')
     require(suite['manifest_sha256'] == hashlib.sha256(manifest_path.read_bytes()).hexdigest(), 'Manifest changed; review source labels')
     require(suite['corpus_id'] == manifest['corpus_id'], 'Wrong corpus')
     cases = suite['cases']
-    require(len(cases) == 32, 'Version 0.1.0 has 32 cases')
+    require(len(cases) == 40, 'Version 0.2.0 has 40 cases')
     require(len({c['id'] for c in cases}) == len(cases), 'Duplicate IDs')
     require(len({c['prompt'] for c in cases if c['kind']=='technical'}) == 16, 'Duplicate technical questions')
     srs = (ROOT / 'docs/requirements/wireless-assistant-srs.md').read_text(encoding='utf-8')
     requirements = set(re.findall(r'^### ([A-Z]{2,3}-\d{2}) -', srs, re.M))
-    require({k: sum(c['kind'] == k for c in cases) for k in ('technical', 'behavior', 'reviewer')} == {'technical': 16, 'behavior': 12, 'reviewer': 4}, 'Wrong case inventory')
-    require(sum(c['split'] == 'dev' for c in cases) == 18, 'Wrong split inventory')
+    require({k: sum(c['kind'] == k for c in cases) for k in ('technical', 'behavior', 'reviewer')} == {'technical': 16, 'behavior': 18, 'reviewer': 6}, 'Wrong case inventory')
+    require(sum(c['split'] == 'dev' for c in cases) == 26, 'Wrong split inventory')
     families, evidence_splits, covered, pages, checked = {}, {}, set(), {}, set()
     for c in cases:
         require(c['kind'] in ('technical','behavior','reviewer'), 'Unknown kind')
@@ -41,6 +41,15 @@ def validate(raw_dir=None):
         require(c['weight'] == 1 and isinstance(c['history'],list), 'Invalid weight/history')
         if c['kind'] in ('technical','reviewer'):
             require(bool(c['sources']), 'Missing technical source')
+        variants = c.get('variants', [])
+        require(len({v['id'] for v in variants}) == len(variants), 'Duplicate variant ID')
+        if c['kind'] == 'technical':
+            require(not re.search(r'38\.\d{3}|(?:table|clause)\s+\d', c['prompt'], re.I), 'Source hint in natural question')
+            require(any(v['style'] == 'natural' for v in variants), 'Missing natural paraphrase')
+        for v in variants:
+            require(v['style'] in ('natural', 'source_hint') and v['prompt'].strip(), 'Invalid variant')
+            if v['style'] == 'natural':
+                require(not re.search(r'38\.\d{3}|(?:table|clause)\s+\d', v['prompt'], re.I), 'Hint in natural variant')
         if c['kind']=='reviewer':
             require(bool(c['fixture']['candidate_text']) and bool(c['fixture']['original_query']), 'Missing reviewer candidate/task')
         require(c['family'] not in families or families[c['family']]==c['split'], 'Family crosses splits')
