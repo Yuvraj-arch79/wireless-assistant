@@ -50,7 +50,7 @@ The inventory follows the owner's initial list. It is not every 38-series specif
 2. Retrieve each proposed PDF directly from its official version-specific URL. Check its cover number, version and Release, title and publication date. Compute SHA-256 and byte count from the original downloaded bytes; check page count with a PDF reader. Never derive hashes from extracted text or a regenerated PDF.
 3. Update the manifest, date and selection rationale. A release change needs an explicit scope/default-release decision, not an automatic download fallback.
 4. Run the offline tests, then `fetch` into a clean collection and `verify`. Record the manifest hash and result in the PR. Do not attach source PDFs or generated data to the PR.
-5. Before making the new source set active in the future chatbot, run parsing/retrieval and relevant answer-regression evaluations. Keep earlier evidence snapshots available for saved citations, as required by the LLD.
+5. Before making the new source set active in the chatbot, run parsing/retrieval and relevant answer-regression evaluations. Keep earlier evidence snapshots available for saved citations, as required by the LLD.
 
 Roll back by using the manifest and tool from the previous reviewed Git revision and its separate local collection. Source acquisition is never part of a user question. Providers/models, retrieval evaluation and application acceptance remain separate decisions.
 

@@ -2,8 +2,8 @@
 
 | Document control | Value |
 | --- | --- |
-| ID / revision | DESIGN-LLD-001 / 0.1 |
-| Date | 23 October 2026 |
+| ID / revision | DESIGN-LLD-001 / 0.2 (implementation alignment) |
+| Original design / updated | 23 October 2026 / 1 November 2026 |
 | Status | Design reference; v0.1.0 prototype implemented, full release acceptance pending; see [runtime verification](../implementation/verification.md) |
 | Requirements | [SRS 0.9.1](../requirements/wireless-assistant-srs.md), 94 requirements, T01–T30 |
 | Upstream basis | `3109b11170784a71ac3d21131700277b5ffdee93` |
@@ -17,7 +17,7 @@ The five problems in the [product brief](../product-brief.md) remain the product
 
 This design implements the SRS and the owner's recorded clarifications. Another useful clarification is permitted when essential meaning remains unclear; a previous question is never a reason to force a guessed answer. Design publication is not production acceptance, proof of perfect model judgment, or evidence of measured performance.
 
-The [12-document development source inventory and acquisition tool](../../corpus/README.md) are available as of 24 October 2026. Domain/default-release review, frameworks, model providers, retrieval implementation and operating values remain subject to [D01–D11](../decisions.md). SQLite DDL is an executable reference data design, not a benchmark-backed final stack selection. FastAPI, BM25/FTS, vector stores and RRF remain candidates. A selected implementation must preserve the behavior below even if its technology differs.
+The [12-document development source inventory and acquisition tool](../../corpus/README.md) are available as of 24 October 2026. The prototype now implements FastAPI, SQLite/FTS5, pdfplumber, Gemini generation/embeddings and BM25/cosine RRF retrieval. These are development choices, not benchmark-backed final selections. [D01–D11](../decisions.md) track domain/default-release acceptance, the Gemini/Groq/Mistral shortlist, operating-value tuning and remaining approval work. The reference design below states intended behavior; the [runtime verification](../implementation/verification.md) and handoff section 5 identify current implementation differences.
 
 ## 2. Components and end-to-end flow
 
@@ -93,7 +93,7 @@ Completion and cancellation may race. The first valid terminal commit wins. A ca
 
 ### 3.2 Reply and wait semantics
 
-Ask only for an essential missing detail after checking available context. Name the ambiguity and provide useful alternatives where known: “I could not tell which two procedures you mean. Please give their names or identify the earlier message.” Optional details do not force questioning.
+Ask only for an essential missing detail after checking available context. Closing mode does not permit unresolved essential user-detail gaps or uncertain intent to pass to B: a valid clarification may pause the run; bounded contract repair or exhausted budget can instead end it safely. Name the ambiguity and provide useful alternatives where known: “I could not tell which two procedures you mean. Please give their names or identify the earlier message.” Optional details do not force questioning.
 
 There is no fixed one-clarification-per-question limit. Each clarification needs a concrete unresolved item. Persist its ID, need version, missing requirement IDs and known alternatives. A substantive reply may justify another focused question; it never authorizes an autonomous question/reply loop.
 
@@ -107,7 +107,7 @@ A correction to the need creates an immutable new need version and invalidates a
 
 Persist original messages, waiting prompts and terminal results. Never report successful storage before the transaction commits. Disk-full/corruption errors disable further generation and expose a storage error; do not pretend the conversation was saved.
 
-Worker ownership has a lease/heartbeat and epoch. An independent supervisor expires abandoned active work and releases capacity; provider calls and parsers must be interruptible or isolated so a blocked task cannot prevent the supervisor and cancel endpoint from responding. A lost worker is not silently replayed because a provider may already have executed its call.
+The reference worker design uses a lease/heartbeat and epoch. The current local implementation uses an OS process lock, per-run epochs, a 0.2-second independent supervisor, active deadlines and a 10-second lost-dispatch check; it has no distributed lease/heartbeat service. An independent supervisor expires abandoned active work and releases capacity; provider calls and parsers must be interruptible or isolated so a blocked task cannot prevent the supervisor and cancel endpoint from responding. A lost worker is not silently replayed because a provider may already have executed its call.
 
 Fencing prevents stale publication but does not itself terminate a hung process. Reclaim a worker slot only after bounded cleanup confirms the worker has stopped; if cleanup fails, mark that capacity unavailable and reject new work rather than accumulate orphan workers. A remote provider may finish a request after local cancellation; ignore its result and retain conservative usage accounting. Local cancellation must not wait indefinitely for remote acknowledgment.
 
@@ -280,15 +280,16 @@ Model operations persist intent and quota reservation before dispatch. An operat
 
 ## 9. Complete local API and events
 
-Routes are the proposed application contract; they do not imply a selected web framework. Mutation endpoints require local-access validation, bounded input, an `Idempotency-Key`, and canonical request hashing. Receipts bind method, resource and body; reusing a key for another command is a conflict. Responses carry `request_id`, `run_id` when applicable, state/version, safe error code and retryability.
+The routes below are implemented by FastAPI in the development prototype. See [handoff section 5](implementation-guide.md#5-ui-api-payloads-and-events) for actual response fields and implementation differences from the original reference contract. Mutation endpoints require local-access validation, bounded input, an `Idempotency-Key`, and canonical request hashing. Receipts bind method, resource and body; reusing a key for another command is a conflict. Responses carry `request_id`, `run_id` when applicable, state/version, safe error code and retryability.
 
 | Method / path | Behavior |
 | --- | --- |
+| `GET /api/bootstrap` | UI CSRF token, application version and configured input-byte limit; no provider call |
 | `GET /api/health` | Liveness/readiness, storage and corpus compatibility, safe configured-service status; no secrets or paths |
 | `GET /api/corpus/status` | Read-only active/pinned inventory, versions, availability and explicit coverage gaps |
-| `GET /api/sessions?query=&cursor=&limit=` | Bounded saved-chat listing/search; stable pagination |
+| `GET /api/sessions?query=&cursor=&limit=` | Bounded saved-chat listing/search; integer offset pagination (refresh after list mutations) |
 | `POST /api/sessions` | Create chat once; no model call for a title |
-| `GET /api/sessions/{session_id}` | Title, preferences, active/waiting run and last saved state |
+| `GET /api/sessions/{session_id}` | Title, timestamps, state version and active/waiting run; no preferences API in this prototype |
 | `PATCH /api/sessions/{session_id}` | Rename with input and expected-version checks; no automatic generation |
 | `GET /api/sessions/{session_id}/messages?cursor=&limit=` | Exact visible conversation and pending clarification; bounded pagination |
 | `DELETE /api/sessions/{session_id}` | Fence work, make session inaccessible and purge linked/derived records; repeated deletion is safe |
@@ -343,6 +344,6 @@ Measure retrieval relevance and missed conditions; claim support and need covera
 
 Do not infer correctness from citations existing, similarity scores, model confidence, two-model agreement, valid JSON, or a documentation validator passing. Failures that escape the judge must remain measurable and reportable.
 
-Complete domain/default-release review of the pinned source inventory (#4), benchmark providers/retrieval/stack (#5), and record operating/evaluation approvals (#6) before the corresponding implementation stages. The evidence foundation (#7) follows its prerequisites. This LLD supplies concrete control and data behavior; it does not close those decisions, mark M1 complete, or invent test results.
+The owner authorized a prototype followed by measured iteration. Development choices and the implemented evidence foundation are recorded; domain/default-release review (#4), provider/retrieval benchmarks (#5), operating/evaluation acceptance (#6) and measured extraction fixes (#7) now gate pilot acceptance. Groq/Mistral adapters are pending. The LLD does not close those decisions, mark M1 complete or claim unexecuted tests.
 
 Rebuild the SRS PDF only when its source changes. This revision keeps SRS 0.9.1 intact: it makes its pause/resume, finite-budget, exact-version and recovery requirements concrete. Any later change to product behavior must update affected requirements, tests and decision records together.

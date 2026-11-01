@@ -1,10 +1,56 @@
 import json
 import time
 import threading
+import pytest
 from .conftest import post,create_chat,wait_run,collect,ready,clarify,draft,review,Script
 from wireless_assistant.common import uid,canonical,AppError
 from wireless_assistant.engine import Engine
 from wireless_assistant.store import Store
+
+
+@pytest.mark.parametrize('action', ['collect', 'ready_for_b'])
+@pytest.mark.parametrize('ambiguity', ['need', 'coverage', 'intent'])
+def test_closing_cannot_bypass_essential_clarification(client, monkeypatch, action, ambiguity):
+    engine=client.app.state.engine
+    original_closing=engine.closing
+    monkeypatch.setattr(engine, 'closing', lambda rid,w,state: bool(state['passage_ids']) or original_closing(rid,w,state))
+    def unresolved(payload):
+        result=collect(payload) if action=='collect' else ready(payload)
+        gap={'gap_id':'meaning','kind':'user_detail','requirement_ids':['r1'],
+             'reason':'Which numbering scheme does the user mean?','source_or_message_ids':[]}
+        if ambiguity=='need':result['need']['unresolved_gaps']=[gap]
+        elif ambiguity=='coverage':result['coverage_gaps']=[gap]
+        else:result['intent_relation']='uncertain'
+        return result
+    client.app_script.actions=[('A',collect),('A',unresolved),('A',clarify)]
+    sid=create_chat(client)
+    rid=post(client,f'/api/sessions/{sid}/messages',{'text':'Explain resource block numbering.'}).json()['data']['run_id']
+    waiting=wait_run(client,rid)
+    assert waiting['status']=='WAITING_USER',waiting
+    assert [role for role,_ in client.app_script.calls]==['A','A','A']
+    counters=json.loads(client.app.state.store.run(rid)['counters_json'])
+    assert counters['provider_calls']==3 and counters['format_repairs']==1
+    cid=waiting['pending_clarification']['clarification_id']
+    response=post(client,f'/api/runs/{rid}/clarifications/{cid}/reply',
+                  {'text':'Explain the definition first.','expected_run_version':waiting['state_version']})
+    assert response.status_code==202,response.text
+    assert wait_run(client,rid)['outcome']['kind']=='ACCEPTED'
+
+
+def test_unrepaired_closing_ambiguity_stops_without_writer(client, monkeypatch):
+    engine=client.app.state.engine
+    monkeypatch.setattr(engine, 'closing', lambda rid,w,state: bool(state['passage_ids']))
+    def unresolved(payload):
+        result=collect(payload)
+        result['intent_relation']='uncertain'
+        return result
+    client.app_script.actions=[('A',collect),('A',unresolved),('A',unresolved)]
+    sid=create_chat(client)
+    rid=post(client,f'/api/sessions/{sid}/messages',{'text':'Explain resource blocks.'}).json()['data']['run_id']
+    final=wait_run(client,rid)
+    assert final['status']=='FAILED' and final['outcome']['kind']=='INVALID_CONTRACT',final
+    assert [role for role,_ in client.app_script.calls]==['A','A','A']
+    assert all(m['role']!='assistant' for m in client.get(f'/api/sessions/{sid}/messages').json()['data']['items'])
 
 
 def test_complete_flow_exact_reviewed_answer_and_sources(client):

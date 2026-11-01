@@ -18,8 +18,8 @@ The first runnable prototype now covers ingestion, retrieval adapters, local cha
 
 | Order | Work | Result needed |
 | --- | --- | --- |
-| 1 | [Review source scope — #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) | Inventory/version lock exists; review default-release policy, missing dependencies and sample evidence before indexing |
-| 2 | [Select technology — #5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) | Benchmarked API, retrieval and local application choices |
+| 1 | [Review source scope — #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) | Inventory/version lock exists; validate the implemented default-release policy, missing dependencies and sample evidence before pilot acceptance |
+| 2 | [Select technology — #5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) | Add Groq/Mistral adapters to the existing Gemini path; benchmark the shortlist and retrieval before assigning A/B/C providers |
 | 3 | [Approve baseline — #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) | Reviewed requirements, operating decisions and evaluation plan |
 | 4 | [Build evidence foundation — #7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) | Implementation exists; evaluate real hybrid retrieval and repair measured parser gaps |
 
@@ -46,6 +46,6 @@ M2–M6 describe delivery stages, not a claim that matching GitHub milestones al
 
 Do not add dates, staffing commitments, completed tests or accuracy claims without evidence. Update this roadmap when a stage outcome changes; use issues for the detailed work and recorded results.
 
-## Tracking metadata correction
+## Tracking metadata status
 
-The existing M1 milestone description still contains the superseded phrase “multi-model answer synthesis.” Its intended replacement is “A collects context, B alone writes/revises, C reviews, and backend code controls delivery, with inline and end references.” The live description edit is pending authenticated milestone-edit access and is tracked in [issue #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6). The role contracts in the SRS, architecture and LLD are authoritative; M1 remains open.
+The live [M1 milestone](https://github.com/Yuvraj-arch79/wireless-assistant/milestone/1) now describes clarification, original query/history, A collecting context, B writing/revising, C reviewing and backend delivery. Verified from GitHub issue milestone metadata on 1 November 2026. The earlier pending-description warning was stale and has been removed. Its original objective of completing design before implementation describes the planning intent, not the current implementation status: the owner subsequently authorized a development prototype while acceptance stays open. M1 remains open for baseline/evaluation decisions in [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6).

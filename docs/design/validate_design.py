@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Validate design artifacts, not the future chatbot.
+"""Validate design artifacts, not chatbot runtime behavior.
 
 Run: python docs/design/validate_design.py
 Uses only the Python standard library. No provider calls or user data.
 """
 from pathlib import Path
+import ast
 import json
 import re
 import sqlite3
@@ -131,7 +132,7 @@ def validate_document_links():
     missing = []
     count = 0
     for path in [ROOT / 'README.md', ROOT / 'CONTRIBUTING.md', ROOT / 'CHANGELOG.md',
-                 *sorted((ROOT / 'docs').rglob('*.md'))]:
+                 ROOT / 'corpus/README.md', *sorted((ROOT / 'docs').rglob('*.md'))]:
         for target in re.findall(r'\]\(([^)]+)\)', path.read_text(encoding='utf-8')):
             if re.match(r'^[a-zA-Z]+:', target) or target.startswith('#'):
                 continue
@@ -142,13 +143,50 @@ def validate_document_links():
                     missing.append((str(path.relative_to(ROOT)), target))
     check(f'{count} local documentation file links resolve: {missing}', not missing)
 
-    # Syntax-check the illustrative JSON API payloads, without claiming that a
-    # runtime API/schema or model contract has been implemented.
+    # Syntax checks do not prove runtime behavior or model compliance.
     guide = (HERE / 'implementation-guide.md').read_text(encoding='utf-8')
     examples = re.findall(r'```json\n(.*?)\n```', guide, re.S)
     parsed = [json.loads(example) for example in examples]
     check('handoff API examples are valid JSON objects', len(parsed) == 2 and
           all(isinstance(example, dict) for example in parsed))
+
+
+def validate_api_documentation():
+    # Compare the complete documented route inventory with declarations, without
+    # importing the application or touching local user data.
+    def route_key(method, path):
+        return method.upper(), re.sub(r'\{[^}]+\}', '{id}', path.split('?')[0])
+    tree = ast.parse((ROOT / 'wireless_assistant/app.py').read_text(encoding='utf-8'))
+    implemented = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        for decorator in node.decorator_list:
+            if (isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Attribute)
+                    and isinstance(decorator.func.value, ast.Name) and decorator.func.value.id == 'app'
+                    and decorator.func.attr in ('get', 'post', 'patch', 'delete', 'put')
+                    and decorator.args and isinstance(decorator.args[0], ast.Constant)):
+                path = decorator.args[0].value
+                if path.startswith('/api/'):
+                    implemented.add(route_key(decorator.func.attr, path))
+    design = (HERE / 'system-design.md').read_text(encoding='utf-8')
+    documented = {route_key(method, path) for method, path in
+                  re.findall(r'^\| `(GET|POST|PATCH|DELETE|PUT) (/api/[^`]+)` \|', design, re.M)}
+    check('LLD API route inventory matches application declarations',
+          bool(implemented) and documented == implemented)
+    guide = (HERE / 'implementation-guide.md').read_text(encoding='utf-8')
+    expected = None
+    malformed = []
+    for number, line in enumerate(guide.splitlines(), 1):
+        if not line.startswith('|'):
+            expected = None
+            continue
+        columns = len(re.findall(r'(?<!\\)\|', line))
+        if expected is None:
+            expected = columns
+        elif columns != expected:
+            malformed.append(number)
+    check(f'handoff Markdown tables preserve columns: {malformed}', not malformed)
 
 
 def validate_schema():
@@ -275,6 +313,7 @@ def main():
     validate_config()
     validate_traceability()
     validate_document_links()
+    validate_api_documentation()
     validate_schema()
     print(f'PASS: {len(CHECKS)} document/configuration/database assertions.')
     print('These are design checks, not chatbot runtime, provider, quality or security test results.')

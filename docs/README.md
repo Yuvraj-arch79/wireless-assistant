@@ -25,7 +25,7 @@ The product brief preserves the five agreed user problems. The SRS is the detail
 
 SRS labels distinguish CONFIRMED behavior from PROPOSED implementation requirements. The decision register tracks unresolved settings and the approval work. Neither a merged document nor a check mark in a documentation task is evidence that application behavior has been implemented.
 
-Current baseline: **SRS v0.9.1, review draft**. The detailed design and implementation handoff document component contracts, a reference relational schema and explicitly provisional development limits. Prototype implementation and development technology choices are now recorded in the [setup](implementation/setup.md) and [verification](implementation/verification.md) guides. Formal baseline and product acceptance remain open.
+Current baseline: **SRS v0.9.1, review draft**. The detailed design and implementation handoff (revision 0.2) document component contracts, a reference relational schema and explicitly provisional development limits. Handoff section 5 describes current API responses; prototype differences from the broader reference design are stated explicitly. Prototype implementation and development technology choices are now recorded in the [setup](implementation/setup.md) and [verification](implementation/verification.md) guides. Formal baseline and product acceptance remain open.
 
 The dated SRS and historical PR/test records preserve their original decisions and results. Use the decision register and roadmap for current progress; the source tools and first chat-runtime implementation exist, while live-provider and domain evaluation remain pending.
 

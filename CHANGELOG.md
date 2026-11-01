@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-01 — Repository consistency and clarification guard
+
+- Synchronize current prototype/stack status, Gemini/Groq/Mistral shortlist, readiness instructions, immutable checkpoint tags and corrected M1 metadata.
+- Align the implementation handoff with current API response fields, deletion behavior, pagination and SSE; restore Markdown table columns and add route/table drift checks.
+- Prevent closing-mode collection or ready actions from reaching B with unresolved essential user-detail gaps or uncertain intent; bounded repair may ask clarification, otherwise the run stops.
+- Add seven controller regressions; record 70 passing offline tests and 98 design/structure assertions, with live provider/domain acceptance still pending.
+
 ## 2026-10-31 — Chat actions in the sidebar
 
 - Put accessible rename/delete icons beside every saved chat, available without opening it or scrolling to the header.

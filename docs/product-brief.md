@@ -68,7 +68,7 @@ Outside the first release:
 - Searching the web or downloading a new standard for every question.
 - Model training, local generative models, automatic paid fallback, public multi-user hosting, voice or image input.
 
-The [development source lock](../corpus/README.md) now pins the owner-listed 12 PHY/Layer-2 specifications to exact Release 18 PDFs. Domain coverage, supported question types and user-facing release-default policy remain under [issue #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4); source acquisition is implemented, while parsing and retrieval are pending.
+The [development source lock](../corpus/README.md) now pins the owner-listed 12 PHY/Layer-2 specifications to exact Release 18 PDFs. Domain coverage, supported question types and user-facing release-default policy remain under [issue #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4); source acquisition, parsing and retrieval adapters are implemented; real hybrid retrieval and domain-quality evaluation remain pending.
 
 ## Agreed Answering Responsibilities
 

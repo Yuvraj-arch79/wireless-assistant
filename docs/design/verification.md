@@ -1,10 +1,10 @@
 # Design review, coverage and verification
 
-**Revision:** DESIGN-LLD-001 / 0.1, 23 October 2026.
+**Original review snapshot:** DESIGN-LLD-001 / 0.1, 23 October 2026. The current design/handoff is revision 0.2 (1 November implementation alignment); historical evidence below is retained.
 
 **Scope:** Design artifacts and reference database constraints. Application acceptance is pending.
 
-**Current progress, 31 October 2026:** A first implementation and offline runtime regression suite now exist; see [prototype verification](../implementation/verification.md) for results, gaps and reproduction. Full application acceptance remains open.
+**Current progress, 1 November 2026:** A first implementation and offline runtime regression suite now exist. The consistency audit adds a closing-mode clarification guard and checks the documented route inventory and handoff table structure; see [prototype verification](../implementation/verification.md) for results, gaps and reproduction. Full application acceptance remains open.
 
 **Historical progress, 24 October 2026:** [PR #9](https://github.com/Yuvraj-arch79/wireless-assistant/pull/9) implemented source acquisition for the [12 pinned PDFs](../../corpus/README.md). Live download/verification and 22 offline acquisition tests passed. The review basis and executed-check counts below record the 23 October design snapshot; they are historical evidence, not current inventory/link counts. Application acceptance remains pending.
 
