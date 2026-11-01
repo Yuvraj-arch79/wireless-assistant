@@ -9,6 +9,7 @@ The agreed product scope is unchanged. This checkpoint implements the local UI/b
 | Check | Result / boundary |
 | --- | --- |
 | Offline Python suite (original checkpoint) | 63 tests passed locally, including 22 acquisition tests and 41 runtime tests; 9 unittest subtests also passed. Browser test is separate and opt-in. Later audit validation is recorded below rather than replacing historical results. |
+| Evaluation-source validation (1 November 2026) | [32-case candidate suite](../../evaluation/README.md): all 12 PDF SHA-256/size pins and 13 cited pages/anchors checked locally with Poppler; 3 table/formula pages also inspected visually. Domain approval and live trials remain pending. |
 | Design assertions | Run `python docs/design/validate_design.py`; these remain structural/document/database checks, separate from runtime tests. |
 | Real source ingestion | All 12 manifest-pinned PDFs verified and parsed with pdfplumber 0.11.10 / `pdfplumber-clause-v2`; 6,921 passages, 2,710 marked excluded/unreadable, 3 oversized-table warnings. Front matter is included in the exclusion count. |
 | Real lexical retrieval probes | RLC functions, PDCP compression and MAC prioritization returned relevant clauses. The resource-block definition probe did not return the desired definition in the top 3. These four exploratory probes are not a held-out benchmark. |

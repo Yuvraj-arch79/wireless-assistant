@@ -10,6 +10,7 @@ Read these documents in order if you are new to the project.
 | [System design and LLD](design/system-design.md) | What are the precise states, limits, role contracts, history rules, APIs and recovery behavior? |
 | [Implementation handoff](design/implementation-guide.md) | What data crosses each component boundary, what do API payloads contain, and in what order should implementation proceed? |
 | [Run the prototype](implementation/setup.md) | How do I install, prepare sources, configure the API, run, back up and roll back? |
+| [Evaluation baseline](../evaluation/README.md) | Which questions, source references and rubrics will evaluate retrieval, answers, control behavior and C? |
 | [Prototype verification](implementation/verification.md) | What has actually been tested, and what remains unverified? |
 | [Corpus setup and source lock](../corpus/README.md) | How can another developer obtain and verify the exact same 12 source documents without storing PDFs in Git? |
 | [Design changes and verification](design/verification.md) | Which gaps were corrected, how are all 94 requirements covered, and which checks remain pending? |
