@@ -1,4 +1,5 @@
 name: Provider readiness
+# Explicit one-call Groq dispatch requested by owner, 2 November 2026.
 on:
   workflow_dispatch:
     inputs:
@@ -64,3 +65,4 @@ jobs:
           WA_EVAL_GEMINI_MODEL: ${{ vars.WA_EVAL_GEMINI_MODEL }}
           WA_EVAL_GROQ_MODEL: ${{ vars.WA_EVAL_GROQ_MODEL }}
           WA_EVAL_MISTRAL_MODEL: ${{ vars.WA_EVAL_MISTRAL_MODEL }}
+
