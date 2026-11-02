@@ -1,0 +1,57 @@
+# Live provider readiness
+
+Run `python -m evaluation.readiness` from the repository root after installing
+`requirements.lock`. The [GitHub workflow](../.github/workflows/provider-readiness.yml)
+also runs on relevant main-branch changes or manual dispatch. It never runs with
+secrets on pull requests. Keys are available only to the probe step.
+
+This is the first gate before the full 40-case evaluation: distinguish missing
+credentials, inaccessible models, quota/network failure and malformed responses
+before spending a comparison budget. It is not the full benchmark or a winner
+selection. Runtime adapters/assignments remain unchanged (Gemini only).
+
+Repository Actions secrets: `GEMINI_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`.
+Metadata requests do not generate answers. Possession of a key does not establish
+free billing. Only after confirming **all three accounts have billing disabled or
+are constrained to free usage**, set the repository Actions **variable**
+`WA_FREE_TIER_CONFIRMED=1`. Otherwise inference is explicitly blocked and the job
+fails with a useful summary; this is not a passing live evaluation. This preserves
+the runtime's existing free-only guard. Do not put key values in variables.
+
+Optional Actions variables: `WA_EVAL_GEMINI_MODEL`, `WA_EVAL_GROQ_MODEL`,
+`WA_EVAL_MISTRAL_MODEL`. Defaults are listed in `providers.py` and checked against
+each provider's model metadata endpoint before generation. Mistral's `latest`
+alias is a readiness candidate, not a reproducibly pinned benchmark winner.
+No model substitution occurs on failure. Metadata availability does not prove
+generation quota, price or model quality.
+
+The one-trial smoke uses development case B01 with no corpus evidence, the
+production A instruction/schema and a synthetic original-message reference.
+Only user input reaches A; no gold labels or expected sources. It checks schema,
+clarify action and original-reference binding. It is a reduced isolated A input,
+not a complete production run. No B/C, tools, embeddings or retrieval execute.
+A schema pass does not establish that the question is a useful clarification.
+
+Limits: 3 providers, at most 6 HTTP calls (one metadata plus one inference each),
+zero retries, 25 seconds per killable call, 180 seconds total active budget,
+2 MiB response cap and 2,000 output tokens per generation. Workflow timeout is
+6 minutes including setup. No redirects, paid fallback or provider-controlled
+tool execution. Provider order is shuffled with a fixed recorded seed.
+
+The Actions summary contains only fixed provider identifiers and sanitized
+status codes. No raw responses, authorization headers, API keys or reasoning
+are printed/uploaded. `data/evaluation/readiness.json` contains configuration
+identity, suite/prompt hashes, limits and timings locally; it remains ignored.
+The workflow summary is retained with the exact commit/run. Missing/blocked and
+failed calls stay in the report and make the readiness job fail.
+
+After readiness passes: add production Groq/Mistral selection adapters and an
+end-to-end fixture executor, run the preregistered development trials, calibrate
+source-linked grading, then freeze configuration before locked evaluation.
+Do not select A/B/C roles from this one ambiguous-question smoke.
+
+Official contracts checked 2 November 2026:
+[Gemini models](https://ai.google.dev/api/models),
+[Groq API](https://console.groq.com/docs/api-reference),
+[Mistral models](https://docs.mistral.ai/api/endpoint/models),
+[Mistral chat](https://docs.mistral.ai/api/endpoint/chat).
