@@ -11,7 +11,7 @@ on:
         description: Provider to test (confirmation is scoped to each provider)
         type: choice
         options: [gemini, groq, mistral, all]
-        default: gemini
+        default: groq
   push:
     branches: [main]
     paths:
@@ -47,9 +47,9 @@ jobs:
           fi
         env:
           WA_EVAL_MODE: ${{ inputs.mode || 'readiness' }}
-          WA_EVAL_PROVIDER: ${{ inputs.provider || 'gemini' }}
-          GEMINI_API_KEY: ${{ (inputs.provider == '' || inputs.provider == 'gemini' || inputs.provider == 'all') && secrets.GEMINI_API_KEY || '' }}
-          GROQ_API_KEY: ${{ (inputs.provider == 'groq' || inputs.provider == 'all') && secrets.GROQ_API_KEY || '' }}
+          WA_EVAL_PROVIDER: ${{ inputs.provider || 'groq' }}
+          GEMINI_API_KEY: ${{ (inputs.provider == 'gemini' || inputs.provider == 'all') && secrets.GEMINI_API_KEY || '' }}
+          GROQ_API_KEY: ${{ (inputs.provider == '' || inputs.provider == 'groq' || inputs.provider == 'all') && secrets.GROQ_API_KEY || '' }}
           MISTRAL_API_KEY: ${{ (inputs.provider == 'mistral' || inputs.provider == 'all') && secrets.MISTRAL_API_KEY || '' }}
           # Owner confirmed Gemini Free tier on 2 November 2026. Set variable to 0 to revoke.
           WA_GEMINI_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}

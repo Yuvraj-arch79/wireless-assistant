@@ -6,7 +6,7 @@ from wireless_assistant.common import AppError, canonical, load_json
 
 BASES = {'gemini': 'https://generativelanguage.googleapis.com/v1beta/',
          'groq': 'https://api.groq.com/openai/v1/', 'mistral': 'https://api.mistral.ai/v1/'}
-MODELS = {'gemini': 'gemini-3.1-flash-lite', 'groq': 'llama-3.3-70b-versatile', 'mistral': 'mistral-small-latest'}
+MODELS = {'gemini': 'gemini-3.1-flash-lite', 'groq': 'openai/gpt-oss-20b', 'mistral': 'mistral-small-latest'}
 MAX_BYTES = 2 * 1024 * 1024
 
 
@@ -50,6 +50,14 @@ def request(provider, method, path, body=None):
 
 def probe(provider, model):
     # Metadata only: no inference, no model output or key included in the result.
+    if provider == 'groq':
+        data = request(provider, 'GET', 'models')
+        entries = data.get('data')
+        if not isinstance(entries, list) or len(entries) > 1000:
+            raise AppError('CATALOG_FORMAT', 'Invalid model catalog.')
+        if not any(isinstance(entry, dict) and entry.get('id') == model and entry.get('active') is not False for entry in entries):
+            raise AppError('MODEL_UNAVAILABLE', 'Selected model is absent or inactive in the accessible catalog.')
+        return {'model_access': True}
     data = request(provider, 'GET', 'models/' + model)
     found = data.get('name', '').removeprefix('models/') if provider == 'gemini' else data.get('id')
     if found != model:

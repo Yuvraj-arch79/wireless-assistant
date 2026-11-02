@@ -78,8 +78,8 @@ def run(output, selected=None):
         output.write_text(canonical(report)+'\n',encoding='utf-8')
     report['complete'] = all(r['metadata']=='pass' and r['generation']=='pass' for r in report['results'])
     output.write_text(canonical(report)+'\n',encoding='utf-8')
-    lines = ['## Provider readiness (not model accuracy)', '', '| Provider | Metadata | A clarification smoke |', '| --- | --- | --- |']
-    lines += [f"| {r['provider']} | {r['metadata']} | {r['generation']} |" for r in report['results']]
+    lines = ['## Provider readiness (not model accuracy)', '', '| Provider | Selected model | Metadata | A clarification smoke |', '| --- | --- | --- | --- |']
+    lines += [f"| {r['provider']} | {r.get('model', 'invalid')} | {r['metadata']} | {r['generation']} |" for r in report['results']]
     lines += ['', 'No B/C, retrieval, technical-answer quality or A/B/C assignment is accepted by this smoke test.']
     summary='\n'.join(lines)+'\n'
     print(summary)

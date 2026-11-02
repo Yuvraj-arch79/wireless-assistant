@@ -22,7 +22,7 @@ The workflow records that confirmation for Gemini only. Set the Gemini repositor
 Actions variable to `0` to revoke it if billing changes. Groq/Mistral have no
 implicit confirmation. Keys remain secrets; confirmation/model settings are variables.
 
-Automatic runs and manual default runs select **Gemini only**, inject only its
+Automatic runs and manual default runs now select **Groq only**, inject only its
 key, and make at most two requests. Select a different provider or `all` in the
 manual workflow only when needed. CLI equivalent:
 `python -m evaluation.readiness --provider gemini` (set the provider-specific
@@ -108,3 +108,20 @@ no settings are silently changed after failure. Default workflow runs return to
 normal two-call readiness; the diagnostic matrix is manual-only. Original
 failures remain in Actions history. Production runtime model defaults, B/C and
 technical-answer quality remain unvalidated and unchanged.
+
+## Groq migration — 2 November 2026
+
+The owner requested Groq testing after intermittent Gemini errors. The previous
+`llama-3.3-70b-versatile` returned 404; Groq's official deprecation record retires
+it for free/developer tiers from 16 August 2026. Evaluation now explicitly selects
+`openai/gpt-oss-20b` and verifies it against the authenticated `/models` catalog
+before inference. No substitution is made when the selected ID is absent/inactive.
+Reference: https://console.groq.com/docs/deprecations
+
+Default Actions runs now select Groq, inject only its secret and retain the
+per-provider guard. Groq free-plan confirmation has not been inferred from the
+Gemini confirmation or the existence of its key. If the Actions variable
+`WA_GROQ_FREE_TIER_CONFIRMED` is absent, metadata can run but inference remains
+blocked until the account's free-only status is confirmed. Production chat is
+still Gemini-only; this change is evaluation access, not a completed Groq runtime
+integration or final A/B/C assignment. Readiness summaries now identify the model.
