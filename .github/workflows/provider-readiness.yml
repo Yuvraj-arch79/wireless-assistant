@@ -1,6 +1,12 @@
 name: Provider readiness
 on:
   workflow_dispatch:
+    inputs:
+      provider:
+        description: Provider to test (confirmation is scoped to each provider)
+        type: choice
+        options: [gemini, groq, mistral, all]
+        default: gemini
   push:
     branches: [main]
     paths:
@@ -26,12 +32,16 @@ jobs:
       - run: python -m pip install -r requirements.lock
       - run: python evaluation/validate.py
       - name: Metadata access and optional free-only A smoke
-        run: python -m evaluation.readiness
+        run: python -m evaluation.readiness --provider "$WA_EVAL_PROVIDER"
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
-          WA_FREE_TIER_CONFIRMED: ${{ vars.WA_FREE_TIER_CONFIRMED }}
+          WA_EVAL_PROVIDER: ${{ inputs.provider || 'gemini' }}
+          GEMINI_API_KEY: ${{ (inputs.provider == '' || inputs.provider == 'gemini' || inputs.provider == 'all') && secrets.GEMINI_API_KEY || '' }}
+          GROQ_API_KEY: ${{ (inputs.provider == 'groq' || inputs.provider == 'all') && secrets.GROQ_API_KEY || '' }}
+          MISTRAL_API_KEY: ${{ (inputs.provider == 'mistral' || inputs.provider == 'all') && secrets.MISTRAL_API_KEY || '' }}
+          # Owner confirmed Gemini Free tier on 2 November 2026. Set variable to 0 to revoke.
+          WA_GEMINI_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
+          WA_GROQ_FREE_TIER_CONFIRMED: ${{ vars.WA_GROQ_FREE_TIER_CONFIRMED }}
+          WA_MISTRAL_FREE_TIER_CONFIRMED: ${{ vars.WA_MISTRAL_FREE_TIER_CONFIRMED }}
           WA_EVAL_GEMINI_MODEL: ${{ vars.WA_EVAL_GEMINI_MODEL }}
           WA_EVAL_GROQ_MODEL: ${{ vars.WA_EVAL_GROQ_MODEL }}
           WA_EVAL_MISTRAL_MODEL: ${{ vars.WA_EVAL_MISTRAL_MODEL }}
