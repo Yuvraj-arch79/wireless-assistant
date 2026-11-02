@@ -92,3 +92,29 @@ def test_selection_fail_closed(tmp_path,selection):
     with patch.object(readiness,'bounded') as operation, pytest.raises(ValueError):
         readiness.run(tmp_path/'result.json',selection)
     operation.assert_not_called()
+
+
+def test_groq_catalog_supports_namespaced_model():
+    with patch.object(providers,'request',return_value={'data':[{'id':'openai/gpt-oss-20b','active':True}]}) as request:
+        assert providers.probe('groq','openai/gpt-oss-20b')['model_access']
+    request.assert_called_once_with('groq','GET','models')
+
+
+@pytest.mark.parametrize('data',[{'data':[]},{'data':[{'id':'openai/gpt-oss-20b','active':False}]},{'data':[{'id':'other'}]}])
+def test_missing_or_inactive_model_stops(data):
+    with patch.object(providers,'request',return_value=data), pytest.raises(AppError) as error:
+        providers.probe('groq','openai/gpt-oss-20b')
+    assert error.value.code=='MODEL_UNAVAILABLE'
+
+
+def test_groq_catalog_shape():
+    with patch.object(providers,'request',return_value={'data':None}), pytest.raises(AppError) as error:
+        providers.probe('groq','openai/gpt-oss-20b')
+    assert error.value.code=='CATALOG_FORMAT'
+
+
+def test_groq_default_and_override(monkeypatch):
+    monkeypatch.delenv('WA_EVAL_GROQ_MODEL',raising=False)
+    assert providers.configured_model('groq')=='openai/gpt-oss-20b'
+    monkeypatch.setenv('WA_EVAL_GROQ_MODEL','explicit-model')
+    assert providers.configured_model('groq')=='explicit-model'

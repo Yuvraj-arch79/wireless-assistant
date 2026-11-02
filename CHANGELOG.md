@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-02 — Groq model-access migration
+
+- Replace the retired evaluation Llama ID with GPT-OSS 20B and verify presence/activity against Groq’s accessible model catalog.
+- Select Groq alone in default readiness runs, report the selected model, and preserve its independent free-only guard. Production chat assignment remains unchanged.
+
 ## 2026-11-02 — Verified Gemini readiness profile
 
 - Default evaluation readiness to Gemini 3.1 Flash-Lite/minimal after tiny JSON and three A-schema live trials passed; retain explicit overrides and failure history.
