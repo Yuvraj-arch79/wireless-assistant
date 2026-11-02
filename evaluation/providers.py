@@ -6,7 +6,7 @@ from wireless_assistant.common import AppError, canonical, load_json
 
 BASES = {'gemini': 'https://generativelanguage.googleapis.com/v1beta/',
          'groq': 'https://api.groq.com/openai/v1/', 'mistral': 'https://api.mistral.ai/v1/'}
-MODELS = {'gemini': 'gemini-3.8-flash', 'groq': 'llama-3.3-70b-versatile', 'mistral': 'mistral-small-latest'}
+MODELS = {'gemini': 'gemini-3.1-flash-lite', 'groq': 'llama-3.3-70b-versatile', 'mistral': 'mistral-small-latest'}
 MAX_BYTES = 2 * 1024 * 1024
 
 
@@ -68,6 +68,8 @@ def generate(provider, model, system, payload, output_tokens=2000, thinking=None
     if not free_confirmed(provider):
         raise AppError('FREE_TIER_NOT_CONFIRMED', 'Free-only accounts must be confirmed before inference.')
     if provider == 'gemini':
+        if thinking is None and model == 'gemini-3.1-flash-lite':
+            thinking = {'thinkingLevel': 'minimal'}
         data = request(provider, 'POST', 'models/' + model + ':generateContent', {
             'systemInstruction': {'parts':[{'text':system}]},
             'contents':[{'role':'user','parts':[{'text':canonical(payload)}]}],
