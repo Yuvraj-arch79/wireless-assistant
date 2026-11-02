@@ -71,7 +71,7 @@ Official contracts checked 2 November 2026:
 
 The Gemini workflow now compares a tiny JSON request and A's production schema
 on three prespecified profiles: configured baseline/default thinking,
-Gemini 3.8 Flash/low thinking, and Gemini 2.5 Flash/thinkingBudget 0.
+Gemini 3.8 Flash/low thinking, and Gemini 3.1 Flash-Lite/minimal thinking.
 The latter two are isolated diagnostic alternatives, not production fallback.
 Official parameter contract: https://ai.google.dev/gemini-api/docs/generate-content/thinking
 
@@ -84,3 +84,10 @@ summary. Only status and duration are printed, never response bodies or reasonin
 Gemini-only secret and confirmation. Workflow timeout is 10 minutes with setup.
 Existing two-call readiness remains available via its CLI and for other providers.
 A passing diagnostic does not validate B/C, domain answers or a production change.
+
+The initial diagnostic (PR #19) found baseline tiny/A read timeouts, a low-thinking
+tiny HTTP error and A read timeout, and 2.5 Flash generation 404s despite metadata
+access. The next bounded diagnostic verifies `generateContent` capability before
+inference, exposes only numeric HTTP status, and replaces the rejected 2.5 probe
+with the documented 3.1 Flash-Lite minimal-thinking candidate. No working profile
+or root cause is assumed from metadata alone.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-02 — Gemini generation capability checks
+
+- Require metadata to advertise generateContent and retain numeric HTTP error status for diagnosis.
+- Replace the generation-rejected 2.5 diagnostic with a prespecified 3.1 Flash-Lite candidate; no production model assignment changes.
+
 ## 2026-11-02 — Gemini timeout diagnosis
 
 - Compare tiny JSON and A-schema requests across prespecified thinking/model profiles under finite budgets; retain failures and require three A successes for a passing profile.

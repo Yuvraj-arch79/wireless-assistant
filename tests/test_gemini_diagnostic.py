@@ -46,3 +46,14 @@ def test_timeout_phase(monkeypatch,exception,code):
     with patch.object(httpx,'Client',side_effect=exception('private details')):
         with pytest.raises(AppError) as error: providers.probe('gemini','model')
     assert error.value.code==code and 'private' not in str(error.value)
+
+
+def test_metadata_access_without_generation_is_not_ready():
+    with patch.object(providers,'request',return_value={'name':'models/test','supportedGenerationMethods':['countTokens']}):
+        with pytest.raises(AppError) as error: providers.probe('gemini','test')
+    assert error.value.code=='METHOD_UNSUPPORTED'
+
+
+def test_generation_capability():
+    with patch.object(providers,'request',return_value={'name':'models/test','supportedGenerationMethods':['generateContent']}):
+        assert providers.probe('gemini','test')['model_access']

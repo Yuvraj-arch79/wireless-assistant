@@ -26,7 +26,7 @@ def request(provider, method, path, body=None):
         with httpx.Client(timeout=httpx.Timeout(20, connect=8), trust_env=False, follow_redirects=False) as client:
             with client.stream(method, BASES[provider] + path, headers=headers, json=body) as response:
                 if response.status_code != 200:
-                    code = {401:'AUTH',403:'AUTH',429:'QUOTA',404:'MODEL_UNAVAILABLE'}.get(response.status_code, 'HTTP_ERROR')
+                    code = {401:'AUTH',403:'AUTH',429:'QUOTA',404:'MODEL_UNAVAILABLE'}.get(response.status_code, 'HTTP_' + str(response.status_code))
                     raise AppError(code, 'Provider request failed.', response.status_code)
                 raw = bytearray()
                 for part in response.iter_bytes():
@@ -54,6 +54,8 @@ def probe(provider, model):
     found = data.get('name', '').removeprefix('models/') if provider == 'gemini' else data.get('id')
     if found != model:
         raise AppError('MODEL_ID_MISMATCH', 'Metadata did not match requested model.')
+    if provider == 'gemini' and 'generateContent' not in data.get('supportedGenerationMethods', []):
+        raise AppError('METHOD_UNSUPPORTED', 'Model metadata does not advertise generateContent.')
     return {'model_access': True}
 
 
