@@ -114,3 +114,8 @@ and calibrate graders on a fixed sample including correct, incorrect and abstain
 answers. Freeze selection before locked validation. These data and offline guards
 are ready; a production-shaped live runner, domain approval and actual model
 results remain pending. No company-internal benchmark equivalence is claimed.
+
+
+## Provider readiness gate
+
+[Live readiness instructions](READINESS.md) define bounded metadata checks and an optional free-only A clarification smoke across Gemini/Groq/Mistral. This is separate from the full trial harness and technical-quality benchmark, which remain pending.

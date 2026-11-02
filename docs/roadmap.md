@@ -51,3 +51,6 @@ Do not add dates, staffing commitments, completed tests or accuracy claims witho
 ## Tracking metadata status
 
 The live [M1 milestone](https://github.com/Yuvraj-arch79/wireless-assistant/milestone/1) now describes clarification, original query/history, A collecting context, B writing/revising, C reviewing and backend delivery. Verified from GitHub issue milestone metadata on 1 November 2026. The earlier pending-description warning was stale and has been removed. Its original objective of completing design before implementation describes the planning intent, not the current implementation status: the owner subsequently authorized a development prototype while acceptance stays open. M1 remains open for baseline/evaluation decisions in [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6).
+
+
+A [bounded provider readiness gate](../evaluation/READINESS.md) now precedes live comparisons. Its metadata/A smoke results are separate from full 40-case execution, domain approval and role assignment.

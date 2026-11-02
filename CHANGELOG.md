@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-02 — Bounded provider readiness
+
+- Add evaluation-only Gemini/Groq/Mistral metadata probes and an isolated production-schema A clarification smoke, with finite deadlines, no retries and sanitized status summaries.
+- Run through a main-branch/manual Actions workflow; inference requires explicit free-only account configuration. No role assignment or quality acceptance is implied.
+
 ## 2026-11-02 — Natural-question evaluation 0.2.0
 
 - Replace source-hinted primary questions with 16 natural prompts; add 16 paraphrases and retain 14 hinted controls.
@@ -86,3 +91,4 @@ This log tracks project documentation and design changes. SRS versions are docum
 - Add a 36-page specification, editable source and reproducible PDF renderer.
 - Define 94 requirements, 30 acceptance scenarios and traceability.
 - Distinguish confirmed behavior, proposed implementation details and open decisions.
+
