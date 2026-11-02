@@ -25,8 +25,8 @@ def payload_for(case):
             'budget':{'provider_calls':0}, 'envelope':{'round_number':0}}
 
 
-def smoke(provider, model, payload):
-    text = generate(provider, model, instructions('A'), payload)
+def smoke(provider, model, payload, thinking=None):
+    text = generate(provider, model, instructions('A'), payload, thinking=thinking)
     try:
         out = ADAPTERS['A'].validate_json(text).model_dump(mode='json')
     except Exception:

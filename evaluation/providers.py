@@ -34,6 +34,12 @@ def request(provider, method, path, body=None):
                     if len(raw) > MAX_BYTES:
                         raise AppError('RESPONSE_LIMIT', 'Response exceeded bound.')
                 return load_json(raw.decode('utf-8'))
+    except httpx.ConnectTimeout:
+        raise AppError('CONNECT_TIMEOUT', 'Connection timed out.') from None
+    except httpx.ReadTimeout:
+        raise AppError('READ_TIMEOUT', 'Response timed out.') from None
+    except httpx.WriteTimeout:
+        raise AppError('WRITE_TIMEOUT', 'Request write timed out.') from None
     except httpx.TimeoutException:
         raise AppError('TIMEOUT', 'Provider timed out.') from None
     except httpx.HTTPError:
@@ -55,7 +61,7 @@ def free_confirmed(provider):
     return os.getenv("WA_" + provider.upper() + "_FREE_TIER_CONFIRMED") == "1"
 
 
-def generate(provider, model, system, payload, output_tokens=2000):
+def generate(provider, model, system, payload, output_tokens=2000, thinking=None):
     # Billing status cannot be inferred from possession of a key or a model listing.
     if not free_confirmed(provider):
         raise AppError('FREE_TIER_NOT_CONFIRMED', 'Free-only accounts must be confirmed before inference.')
@@ -63,7 +69,8 @@ def generate(provider, model, system, payload, output_tokens=2000):
         data = request(provider, 'POST', 'models/' + model + ':generateContent', {
             'systemInstruction': {'parts':[{'text':system}]},
             'contents':[{'role':'user','parts':[{'text':canonical(payload)}]}],
-            'generationConfig':{'temperature':0,'maxOutputTokens':output_tokens,'responseMimeType':'application/json'}})
+            'generationConfig':{'temperature':0,'maxOutputTokens':output_tokens,'responseMimeType':'application/json',
+                **({'thinkingConfig': thinking} if thinking is not None else {})}})
         choices = data.get('candidates', [])
         if len(choices) != 1 or choices[0].get('finishReason') != 'STOP':
             raise AppError('INCOMPLETE', 'Blocked or truncated response.')
