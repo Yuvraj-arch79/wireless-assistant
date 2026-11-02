@@ -21,7 +21,7 @@ def test_no_paid_inference(monkeypatch):
     request.assert_not_called()
 
 
-@pytest.mark.parametrize('status,code',[(302,'HTTP_ERROR'),(401,'AUTH'),(429,'QUOTA'),(503,'HTTP_ERROR')])
+@pytest.mark.parametrize('status,code',[(302,'HTTP_302'),(401,'AUTH'),(429,'QUOTA'),(503,'HTTP_503')])
 def test_errors_are_safe_single_attempt(monkeypatch,status,code):
     monkeypatch.setenv('GROQ_API_KEY','do-not-print-this-secret')
     calls=[]

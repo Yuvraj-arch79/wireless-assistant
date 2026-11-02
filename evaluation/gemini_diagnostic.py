@@ -28,7 +28,7 @@ def run(output):
     # Prespecified diagnostic alternatives, never automatic production fallback.
     profiles=[('baseline',configured_model('gemini'),None),
               ('low','gemini-3.8-flash',{'thinkingLevel':'low'}),
-              ('flash25','gemini-2.5-flash',{'thinkingBudget':0})]
+              ('flashlite','gemini-3.1-flash-lite',{'thinkingLevel':'minimal'})]
     report={'kind':'gemini_diagnostic_not_quality','utc':now(),'commit':os.getenv('GITHUB_SHA','local'),
             'suite_hash':text_hash(raw),'prompt_hash':text_hash(instructions('A')),
             'limits':{'max_calls':15,'total_seconds':300,'call_seconds':25,'retries':0},'rows':[]}
