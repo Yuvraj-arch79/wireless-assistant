@@ -1,6 +1,6 @@
-# Evaluation baseline 0.1.0
+# Evaluation baseline 0.2.0
 
-32 versioned cases: **16 technical questions, 12 conversation/failure scenarios and 4 reviewer challenges**. All 12 pinned specifications are represented. The split has **18 development and 14 locked cases**. This completes the initial evaluation-question specification, not a live benchmark or full SRS acceptance.
+40 versioned cases: **16 technical questions, 18 conversation/failure scenarios and 6 reviewer challenges**. All 12 pinned specifications are represented. The split has **26 development and 14 locked cases**. This completes the initial evaluation-question specification, not a live benchmark or full SRS acceptance.
 
 [Case data](cases.json) is the executable-data source of truth: input/history, fixture instructions, required points, forbidden outcomes, SRS references, source version/hash, clause and 1-based PDF page. PDF page numbers count the cover; they differ from printed specification page numbers. Answers are graded for meaning, not exact wording. Technical expectations were checked against original PDF text; resource-block, numerology and channel-mapping pages were also visually inspected. A named domain reviewer has not approved this candidate suite.
 
@@ -42,7 +42,7 @@ Record these separately; do not collapse them into one flattering percentage:
 - **Source support:** supported substantive claims / all substantive claims; inspect inline and end citations against the exact version and clause. A fabricated citation or wrong release is a critical failure.
 - **Retrieval hit@5:** whether at least one of the top five passages supports a required source clause; for multi-source questions also report required-clause recall@5. Merely matching a document number is not a hit. Required clauses are starting references, not a ban on other valid support.
 - **Safety/control:** all relevant state/budget/publication checks must pass. Safe abstention earns a safety pass, but scores zero for unavailable technical-answer points; report abstention rate explicitly.
-- **Reviewer:** false-acceptance rate on C01/C02/C04 and false-objection rate on C03. The four seeds are diagnostic; do not infer general reviewer reliability from them.
+- **Reviewer:** false-acceptance rate on C01/C02/C04/C06 and false-objection rate on C03/C05. The six seeds are diagnostic; do not infer general reviewer reliability from them.
 - **Efficiency:** wall time, active processing time, provider calls, retries, quota failures and token accounting method. Report UTF-8 budget bounds separately from actual provider-reported tokens. Never label byte counts measured tokens.
 
 A trial is a strict pass only if every applicable expected criterion is met and no forbidden outcome occurs. Critical failures include fabricated evidence, silent release substitution, unreviewed answer publication, secret disclosure, lost cancel fencing or a budget reset. Any observed critical failure blocks a candidate configuration pending investigation. This is an engineering comparison gate; it does not approve proposed SRS numerical targets.
@@ -67,3 +67,50 @@ python evaluation/validate.py --raw-dir data/corpus/nr-l1-l2-rel18-2026-10-24/ra
 The second command requires Poppler `pdftotext`. It checks all source-file SHA-256/size pins and cited-page anchors/clauses, with bounded per-page extraction. It does not judge semantic correctness or run the chatbot. The first command needs only Python's standard library and runs in ordinary CI without PDFs or API keys.
 
 Changes to source versions, gold points, splits or grading require a suite-version update and PR review. Retain old suites through Git commits. Refresh source labels deliberately after a manifest change; do not auto-relabel. Track domain review in issue #4, provider comparisons in #5, evaluation acceptance in #6 and extraction gaps in #7.
+
+## Natural-question protocol (0.2.0)
+
+All 16 primary technical questions omit document, clause and table locators.
+Each has one natural paraphrase, including English, Hinglish and selected typos.
+14 also retain the former source-hinted wording as a diagnostic control.
+These are **40 cases and 30 variants**, not 70 independent knowledge questions.
+Run each wording in a fresh session with identical declared corpus configuration.
+The application default is the pinned NR Release 18 collection; it may state this
+scope without demanding a TS number. Clarify only when missing intent would
+materially change the answer. B13/B18 test unnecessary clarification; B15 tests
+real ambiguity. B14 tests false-premise correction; B16/B17 test absent/stale evidence.
+C05 balances reviewer rejection tests with another valid answer; C06 tests a
+plausible answer with an unrelated citation.
+
+`inputs.user_input` projects only prompt/history. Never send the full case JSON,
+expected/forbidden points, sources, family, split or fixture instructions to A/B.
+Reviewer candidates and supplied evidence need a separate production-contract
+adapter; this helper does not execute fixtures. The entire evaluation directory
+must be excluded from the production retrieval index. Expected sources are
+used by graders after retrieval, never as automatic search filters. Oracle-context
+B tests and source-hinted runs are diagnostic conditions with separate scores.
+
+Report primary natural results first, paraphrase robustness second, and the paired
+hinted-minus-natural result separately. Average variants within each base case
+before aggregate reporting; never let extra wordings inflate sample size. Report
+counts by split, kind, language/style, family and evidence availability. Include
+unnecessary-clarification rate on answerable questions and clarification success
+on ambiguous questions. Do not merge safe abstentions with successful answers.
+For reviewer results show the confusion matrix and raw counts, not only accuracy.
+
+This revision changes locked question wording before any reported live benchmark;
+the locked set remains publicly exposed and reserved by process only. Gold points
+and source pins from 0.1.0 are retained, not independently re-certified. Added
+source-based cases inherit that candidate status; ambiguous or disputed labels
+must be quarantined from release-quality scores until domain review resolves them.
+Record reviewer identity, review date, per-criterion decision and source rationale
+in the result artifact. Log every label correction with old/new suite hashes.
+
+Before live comparison, pre-register selected cases/variants, configurations,
+three trial indices, maximum calls, per-call/run timeouts and total budget. Stop
+at the first exhausted budget; retain incomplete runs in the report. Randomize
+configuration order with a recorded seed, blind provider identity during grading,
+and calibrate graders on a fixed sample including correct, incorrect and abstained
+answers. Freeze selection before locked validation. These data and offline guards
+are ready; a production-shaped live runner, domain approval and actual model
+results remain pending. No company-internal benchmark equivalence is claimed.
