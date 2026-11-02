@@ -89,6 +89,7 @@ def generate(provider, model, system, payload, output_tokens=2000, thinking=None
         text = ''.join(p.get('text','') for p in choices[0].get('content',{}).get('parts',[]) if not p.get('thought'))
     else:
         data = request(provider, 'POST', 'chat/completions', {'model':model,'temperature':0,'max_tokens':output_tokens,
+            **({'reasoning_effort':'low','include_reasoning':False} if provider == 'groq' and model == 'openai/gpt-oss-20b' else {}),
             'response_format':{'type':'json_object'},'messages':[{'role':'system','content':system},{'role':'user','content':canonical(payload)}]})
         choices = data.get('choices', [])
         if len(choices) != 1 or choices[0].get('finish_reason') != 'stop' or choices[0].get('message',{}).get('tool_calls'):

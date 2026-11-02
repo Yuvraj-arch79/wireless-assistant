@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-02 — Explicit single-call Groq smoke
+
+- Add a one-generation-call Groq mode using the previously verified model; no metadata refresh or retries.
+- Stop automatic API calls on ordinary pushes; preserve selected-provider gating, deadlines and explicit incomplete results.
+
 ## 2026-11-02 — Groq model-access migration
 
 - Replace the retired evaluation Llama ID with GPT-OSS 20B and verify presence/activity against Groq’s accessible model catalog.

@@ -125,3 +125,25 @@ Gemini confirmation or the existence of its key. If the Actions variable
 blocked until the account's free-only status is confirmed. Production chat is
 still Gemini-only; this change is evaluation access, not a completed Groq runtime
 integration or final A/B/C assignment. Readiness summaries now identify the model.
+
+## Explicit low-call Groq test
+
+The owner requested a low-call Groq response test under the project's free-only
+constraint. `--provider groq --generation-only` makes at most one generation call
+and no metadata call; the exact GPT-OSS 20B model was catalog-verified in run
+41456276615. Overrides to another model fail closed in this mode. The summary
+says `not_rechecked` for metadata rather than claiming a new metadata pass.
+
+Ordinary pushes now skip API tests. Manual workflow runs or an explicit
+`[groq-smoke]` merge marker are required. The authorized marker supplies the
+Groq inference guard for that bounded invocation only; it is not an independent
+billing inspection or a blanket plan confirmation. An explicit repository
+confirmation value `0` still revokes inference. No other provider is selected.
+There are no automatic retries or fallback and the call is killable after 25s
+(HTTP timeout 20s). Quota/429, 503 and timeout all stop the test. A rerun would
+consume another call and is not part of this one-call test. A smoke pass covers
+A's schema/clarification/binding only, not the full chatbot or B/C accuracy.
+
+The GPT-OSS 20B evaluation request uses explicit low reasoning effort and excludes
+reasoning text, per https://console.groq.com/docs/reasoning . The 2,000-output-token
+ceiling remains unchanged. This is not a technical-quality optimization claim.

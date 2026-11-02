@@ -118,3 +118,44 @@ def test_groq_default_and_override(monkeypatch):
     assert providers.configured_model('groq')=='openai/gpt-oss-20b'
     monkeypatch.setenv('WA_EVAL_GROQ_MODEL','explicit-model')
     assert providers.configured_model('groq')=='explicit-model'
+
+
+def test_groq_single_call_does_not_probe(tmp_path,monkeypatch):
+    monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED','1')
+    monkeypatch.delenv('WA_EVAL_GROQ_MODEL',raising=False)
+    with patch.object(readiness,'bounded',return_value={}) as call:
+        report=readiness.run(tmp_path/'r.json',['groq'],generation_only=True)
+    assert call.call_count==1 and call.call_args.args[0] is readiness.smoke
+    assert report['complete'] and report['limits']['calls']==1
+    assert report['results'][0]['metadata']=='not_rechecked'
+
+
+def test_single_call_quota_stops(tmp_path,monkeypatch):
+    monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED','1')
+    with patch.object(readiness,'bounded',side_effect=AppError('QUOTA','Quota')) as call:
+        report=readiness.run(tmp_path/'r.json',['groq'],generation_only=True)
+    assert call.call_count==1 and not report['complete']
+    assert report['results'][0]['generation']=='QUOTA'
+
+
+def test_single_call_refuses_changed_model(tmp_path,monkeypatch):
+    monkeypatch.setenv('WA_EVAL_GROQ_MODEL','another-model')
+    with patch.object(readiness,'bounded') as call:
+        report=readiness.run(tmp_path/'r.json',['groq'],generation_only=True)
+    call.assert_not_called(); assert not report['complete']
+
+
+def test_single_call_refuses_other_providers(tmp_path):
+    with patch.object(readiness,'bounded') as call, pytest.raises(ValueError):
+        readiness.run(tmp_path/'r.json',['groq','gemini'],generation_only=True)
+    call.assert_not_called()
+
+
+def test_groq_smoke_request_is_bounded_and_no_reasoning_text(monkeypatch):
+    monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED','1')
+    response={'choices':[{'finish_reason':'stop','message':{'content':'{}'}}]}
+    with patch.object(providers,'request',return_value=response) as request:
+        providers.generate('groq','openai/gpt-oss-20b','system',{})
+    body=request.call_args.args[3]
+    assert body['reasoning_effort']=='low' and body['include_reasoning'] is False
+    assert body['max_tokens']==2000 and 'tools' not in body
