@@ -38,10 +38,12 @@ def smoke(provider, model, payload, thinking=None):
     return {'schema_valid':True,'clarification':True}
 
 
-def run(output, selected=None):
+def run(output, selected=None, generation_only=False):
     selected = list(MODELS) if selected is None else list(selected)
     if not selected or len(set(selected)) != len(selected) or any(p not in MODELS for p in selected):
         raise ValueError("Select unique known providers")
+    if generation_only and selected != ["groq"]:
+        raise ValueError("One-call mode is restricted to Groq")
     suite_bytes = (ROOT/'evaluation/cases.json').read_bytes()
     suite = json.loads(suite_bytes)
     case = next(c for c in suite['cases'] if c['id']=='B01' and c['split']=='dev')
@@ -50,14 +52,21 @@ def run(output, selected=None):
     order = selected; random.Random(20261102).shuffle(order)
     report = {'kind':'provider_readiness_not_quality','utc':now(),'commit':os.getenv('GITHUB_SHA','local'),
         'suite_sha256':hashlib.sha256(suite_bytes).hexdigest(), 'case_id':'B01',
-        'prompt_sha256':text_hash(instructions('A')), 'seed':20261102, 'order':order,
-        'limits':{'calls':2 * len(order),'per_call_seconds':25,'total_seconds':180,'retries':0,'trials':1},'results':[]}
+        'prompt_sha256':text_hash(instructions('A')), 'seed':20261102, 'order':order, 'generation_only':generation_only,
+        'limits':{'calls':len(order) if generation_only else 2 * len(order),'per_call_seconds':25,'total_seconds':180,'retries':0,'trials':1},'results':[]}
     for provider in order:
         row = {'provider':provider,'metadata':'not_run','generation':'not_run'}
         report['results'].append(row)
         try:
             model = configured_model(provider); row['model']=model
-            for field, function, args in [('metadata',probe,(provider,model)), ('generation',smoke,(provider,model,payload))]:
+            if generation_only and model != 'openai/gpt-oss-20b':
+                raise AppError('MODEL_CONFIG', 'One-call mode requires the previously verified Groq model.')
+            operations = [('generation',smoke,(provider,model,payload))]
+            if not generation_only:
+                operations.insert(0, ('metadata',probe,(provider,model)))
+            else:
+                row['metadata'] = 'not_rechecked'
+            for field, function, args in operations:
                 if field == 'generation' and not free_confirmed(provider):
                     row[field] = 'FREE_TIER_NOT_CONFIRMED'; break
                 remaining = deadline - time.monotonic()
@@ -76,7 +85,7 @@ def run(output, selected=None):
             row['configuration'] = exc.code
         output.parent.mkdir(parents=True,exist_ok=True)
         output.write_text(canonical(report)+'\n',encoding='utf-8')
-    report['complete'] = all(r['metadata']=='pass' and r['generation']=='pass' for r in report['results'])
+    report['complete'] = all((generation_only or r['metadata']=='pass') and r['generation']=='pass' for r in report['results'])
     output.write_text(canonical(report)+'\n',encoding='utf-8')
     lines = ['## Provider readiness (not model accuracy)', '', '| Provider | Selected model | Metadata | A clarification smoke |', '| --- | --- | --- | --- |']
     lines += [f"| {r['provider']} | {r.get('model', 'invalid')} | {r['metadata']} | {r['generation']} |" for r in report['results']]
@@ -93,6 +102,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--provider', choices=[*MODELS, 'all'], default='all')
+    parser.add_argument('--generation-only', action='store_true')
     args = parser.parse_args()
-    result = run(ROOT/'data/evaluation/readiness.json', None if args.provider == 'all' else [args.provider])
+    result = run(ROOT/'data/evaluation/readiness.json', None if args.provider == 'all' else [args.provider], args.generation_only)
     sys.exit(0 if result['complete'] else 1)
