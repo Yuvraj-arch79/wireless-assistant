@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-02 — Isolated Gemini readiness
+
+- Scope free-only evaluation confirmations per provider and select Gemini alone by default in Actions, using the owner-confirmed Gemini Free tier.
+- Keep other provider keys absent from Gemini-only execution; validate selection and record the selected-provider call budget.
+
 ## 2026-11-02 — Bounded provider readiness
 
 - Add evaluation-only Gemini/Groq/Mistral metadata probes and an isolated production-schema A clarification smoke, with finite deadlines, no retries and sanitized status summaries.

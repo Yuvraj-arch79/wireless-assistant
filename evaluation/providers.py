@@ -51,9 +51,13 @@ def probe(provider, model):
     return {'model_access': True}
 
 
+def free_confirmed(provider):
+    return os.getenv("WA_" + provider.upper() + "_FREE_TIER_CONFIRMED") == "1"
+
+
 def generate(provider, model, system, payload, output_tokens=2000):
     # Billing status cannot be inferred from possession of a key or a model listing.
-    if os.getenv('WA_FREE_TIER_CONFIRMED') != '1':
+    if not free_confirmed(provider):
         raise AppError('FREE_TIER_NOT_CONFIRMED', 'Free-only accounts must be confirmed before inference.')
     if provider == 'gemini':
         data = request(provider, 'POST', 'models/' + model + ':generateContent', {

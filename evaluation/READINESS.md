@@ -11,12 +11,23 @@ before spending a comparison budget. It is not the full benchmark or a winner
 selection. Runtime adapters/assignments remain unchanged (Gemini only).
 
 Repository Actions secrets: `GEMINI_API_KEY`, `GROQ_API_KEY`, `MISTRAL_API_KEY`.
-Metadata requests do not generate answers. Possession of a key does not establish
-free billing. Only after confirming **all three accounts have billing disabled or
-are constrained to free usage**, set the repository Actions **variable**
-`WA_FREE_TIER_CONFIRMED=1`. Otherwise inference is explicitly blocked and the job
-fails with a useful summary; this is not a passing live evaluation. This preserves
-the runtime's existing free-only guard. Do not put key values in variables.
+Metadata requests do not generate answers. Free-only inference confirmation is
+**per provider**: `WA_GEMINI_FREE_TIER_CONFIRMED`,
+`WA_GROQ_FREE_TIER_CONFIRMED`, `WA_MISTRAL_FREE_TIER_CONFIRMED` must be `1`
+for the corresponding provider. The evaluation no longer uses the global flag;
+the application's separate existing runtime flag is unchanged.
+
+The owner confirmed Gemini Free tier on 2 November 2026 and authorized its test.
+The workflow records that confirmation for Gemini only. Set the Gemini repository
+Actions variable to `0` to revoke it if billing changes. Groq/Mistral have no
+implicit confirmation. Keys remain secrets; confirmation/model settings are variables.
+
+Automatic runs and manual default runs select **Gemini only**, inject only its
+key, and make at most two requests. Select a different provider or `all` in the
+manual workflow only when needed. CLI equivalent:
+`python -m evaluation.readiness --provider gemini` (set the provider-specific
+confirmation locally). The CLI default remains `all`; report `complete` applies
+only to its recorded selected providers, never to untested providers.
 
 Optional Actions variables: `WA_EVAL_GEMINI_MODEL`, `WA_EVAL_GROQ_MODEL`,
 `WA_EVAL_MISTRAL_MODEL`. Defaults are listed in `providers.py` and checked against
