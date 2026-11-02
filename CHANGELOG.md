@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-02 — Gemini timeout diagnosis
+
+- Compare tiny JSON and A-schema requests across prespecified thinking/model profiles under finite budgets; retain failures and require three A successes for a passing profile.
+- Separate connection/read/write timeouts without exposing provider payloads. Runtime settings and provider assignments remain unchanged.
+
 ## 2026-11-02 — Isolated Gemini readiness
 
 - Scope free-only evaluation confirmations per provider and select Gemini alone by default in Actions, using the owner-confirmed Gemini Free tier.

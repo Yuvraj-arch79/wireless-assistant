@@ -66,3 +66,21 @@ Official contracts checked 2 November 2026:
 [Groq API](https://console.groq.com/docs/api-reference),
 [Mistral models](https://docs.mistral.ai/api/endpoint/models),
 [Mistral chat](https://docs.mistral.ai/api/endpoint/chat).
+
+## Temporary Gemini diagnostic mode
+
+The Gemini workflow now compares a tiny JSON request and A's production schema
+on three prespecified profiles: configured baseline/default thinking,
+Gemini 3.8 Flash/low thinking, and Gemini 2.5 Flash/thinkingBudget 0.
+The latter two are isolated diagnostic alternatives, not production fallback.
+Official parameter contract: https://ai.google.dev/gemini-api/docs/generate-content/thinking
+
+At most 15 requests, 300 seconds total, 25 seconds per killable call, unchanged
+20-second HTTP timeout and no retries. A successful profile needs metadata, tiny
+JSON and three A trials to pass. Failed A profiles are not repeated. Auth/quota
+stops further requests. All observations, including failures, remain in the Actions
+summary. Only status and duration are printed, never response bodies or reasoning.
+`python -m evaluation.gemini_diagnostic` reproduces the diagnostic locally with
+Gemini-only secret and confirmation. Workflow timeout is 10 minutes with setup.
+Existing two-call readiness remains available via its CLI and for other providers.
+A passing diagnostic does not validate B/C, domain answers or a production change.
