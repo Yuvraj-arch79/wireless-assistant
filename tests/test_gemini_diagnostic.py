@@ -57,3 +57,16 @@ def test_metadata_access_without_generation_is_not_ready():
 def test_generation_capability():
     with patch.object(providers,'request',return_value={'name':'models/test','supportedGenerationMethods':['generateContent']}):
         assert providers.probe('gemini','test')['model_access']
+
+
+def test_verified_default_profile(monkeypatch):
+    monkeypatch.delenv('WA_EVAL_GEMINI_MODEL',raising=False)
+    monkeypatch.setenv('WA_GEMINI_FREE_TIER_CONFIRMED','1')
+    model=providers.configured_model('gemini')
+    assert model=='gemini-3.1-flash-lite'
+    response={'candidates':[{'finishReason':'STOP','content':{'parts':[{'text':'{"ok":true}'}]}}]}
+    with patch.object(providers,'request',return_value=response) as request:
+        providers.generate('gemini',model,'sys',{})
+    assert request.call_args.args[3]['generationConfig']['thinkingConfig']=={'thinkingLevel':'minimal'}
+    monkeypatch.setenv('WA_EVAL_GEMINI_MODEL','explicit-model')
+    assert providers.configured_model('gemini')=='explicit-model'

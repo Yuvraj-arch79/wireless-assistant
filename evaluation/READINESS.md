@@ -67,9 +67,9 @@ Official contracts checked 2 November 2026:
 [Mistral models](https://docs.mistral.ai/api/endpoint/models),
 [Mistral chat](https://docs.mistral.ai/api/endpoint/chat).
 
-## Temporary Gemini diagnostic mode
+## Optional Gemini diagnostic mode
 
-The Gemini workflow now compares a tiny JSON request and A's production schema
+Manual workflow mode `diagnostic` compares a tiny JSON request and A's production schema
 on three prespecified profiles: configured baseline/default thinking,
 Gemini 3.8 Flash/low thinking, and Gemini 3.1 Flash-Lite/minimal thinking.
 The latter two are isolated diagnostic alternatives, not production fallback.
@@ -91,3 +91,20 @@ access. The next bounded diagnostic verifies `generateContent` capability before
 inference, exposes only numeric HTTP status, and replaces the rejected 2.5 probe
 with the documented 3.1 Flash-Lite minimal-thinking candidate. No working profile
 or root cause is assumed from metadata alone.
+
+## Verified readiness configuration — 2 November 2026
+
+[Live diagnostic](https://github.com/Yuvraj-arch79/wireless-assistant/actions/runs/41421674256/job/125198428522):
+Gemini 3.8 default thinking returned a tiny-request read timeout and an A HTTP 503;
+low thinking returned HTTP 503 for both. Gemini 3.1 Flash-Lite/minimal passed
+metadata, tiny JSON and all three A trials (about 3.3 seconds each).
+This points to availability/latency of the tested 3.8 configuration in this run,
+not a demonstrated prompt-size defect; the provider's internal root cause is unknown.
+
+Normal readiness now explicitly defaults to `gemini-3.1-flash-lite` with minimal
+thinking. This is an evidence-based evaluation configuration, not an automatic
+fallback or a final A/B/C assignment. Explicit model variables still override it;
+no settings are silently changed after failure. Default workflow runs return to
+normal two-call readiness; the diagnostic matrix is manual-only. Original
+failures remain in Actions history. Production runtime model defaults, B/C and
+technical-answer quality remain unvalidated and unchanged.

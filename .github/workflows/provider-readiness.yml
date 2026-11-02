@@ -2,6 +2,11 @@ name: Provider readiness
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: Normal readiness or explicit bounded Gemini diagnosis
+        type: choice
+        options: [readiness, diagnostic]
+        default: readiness
       provider:
         description: Provider to test (confirmation is scoped to each provider)
         type: choice
@@ -35,12 +40,13 @@ jobs:
       - name: Metadata access and optional free-only A smoke
         shell: bash
         run: |
-          if [ "$WA_EVAL_PROVIDER" = "gemini" ]; then
+          if [ "$WA_EVAL_PROVIDER" = "gemini" ] && [ "$WA_EVAL_MODE" = "diagnostic" ]; then
             python -m evaluation.gemini_diagnostic
           else
             python -m evaluation.readiness --provider "$WA_EVAL_PROVIDER"
           fi
         env:
+          WA_EVAL_MODE: ${{ inputs.mode || 'readiness' }}
           WA_EVAL_PROVIDER: ${{ inputs.provider || 'gemini' }}
           GEMINI_API_KEY: ${{ (inputs.provider == '' || inputs.provider == 'gemini' || inputs.provider == 'all') && secrets.GEMINI_API_KEY || '' }}
           GROQ_API_KEY: ${{ (inputs.provider == 'groq' || inputs.provider == 'all') && secrets.GROQ_API_KEY || '' }}

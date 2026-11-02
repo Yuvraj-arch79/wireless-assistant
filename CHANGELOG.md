@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-02 — Verified Gemini readiness profile
+
+- Default evaluation readiness to Gemini 3.1 Flash-Lite/minimal after tiny JSON and three A-schema live trials passed; retain explicit overrides and failure history.
+- Keep the wider diagnostic matrix manual-only. Runtime role assignment and technical-quality acceptance remain pending.
+
 ## 2026-11-02 — Gemini generation capability checks
 
 - Require metadata to advertise generateContent and retain numeric HTTP error status for diagnosis.
