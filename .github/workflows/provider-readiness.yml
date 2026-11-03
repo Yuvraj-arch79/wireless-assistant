@@ -1,12 +1,12 @@
 name: Provider readiness
-# Explicit one-call Groq dispatch requested by owner, 2 November 2026.
+# Explicit bounded Groq contract check requested by owner, 3 November 2026.
 on:
   workflow_dispatch:
     inputs:
       mode:
         description: Normal readiness or explicit bounded Gemini diagnosis
         type: choice
-        options: [single, readiness, diagnostic]
+        options: [single, contract, readiness, diagnostic]
         default: single
       provider:
         description: Provider to test (confirmation is scoped to each provider)
@@ -19,6 +19,7 @@ on:
       - 'evaluation/providers.py'
       - 'evaluation/readiness.py'
       - 'evaluation/gemini_diagnostic.py'
+      - 'evaluation/groq_contract.py'
       - '.github/workflows/provider-readiness.yml'
 permissions:
   contents: read
@@ -45,24 +46,25 @@ jobs:
         run: |
           if [ "$WA_EVAL_MODE" = "single" ]; then
             python -m evaluation.readiness --provider "$WA_EVAL_PROVIDER" --generation-only
+          elif [ "$WA_EVAL_MODE" = "contract" ] && [ "$WA_EVAL_PROVIDER" = "groq" ]; then
+            python -m evaluation.groq_contract
           elif [ "$WA_EVAL_PROVIDER" = "gemini" ] && [ "$WA_EVAL_MODE" = "diagnostic" ]; then
             python -m evaluation.gemini_diagnostic
           else
             python -m evaluation.readiness --provider "$WA_EVAL_PROVIDER"
           fi
         env:
-          WA_EVAL_MODE: ${{ inputs.mode || 'single' }}
+          WA_EVAL_MODE: ${{ inputs.mode || 'contract' }}
           WA_EVAL_PROVIDER: ${{ inputs.provider || 'groq' }}
           GEMINI_API_KEY: ${{ (inputs.provider == 'gemini' || inputs.provider == 'all') && secrets.GEMINI_API_KEY || '' }}
           GROQ_API_KEY: ${{ (inputs.provider == '' || inputs.provider == 'groq' || inputs.provider == 'all') && secrets.GROQ_API_KEY || '' }}
           MISTRAL_API_KEY: ${{ (inputs.provider == 'mistral' || inputs.provider == 'all') && secrets.MISTRAL_API_KEY || '' }}
           # Owner confirmed Gemini Free tier on 2 November 2026. Set variable to 0 to revoke.
           WA_GEMINI_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
-          # Explicit owner request: one Groq test under the project's free-only constraint.
+          # Explicit owner request: at most two Groq contract calls under the project's free-only constraint.
           # This bounded invocation is not a billing inspection or blanket account confirmation.
           WA_GROQ_FREE_TIER_CONFIRMED: ${{ vars.WA_GROQ_FREE_TIER_CONFIRMED || (github.event_name == 'push' && contains(github.event.head_commit.message, '[groq-smoke]') && '1') || '' }}
           WA_MISTRAL_FREE_TIER_CONFIRMED: ${{ vars.WA_MISTRAL_FREE_TIER_CONFIRMED }}
           WA_EVAL_GEMINI_MODEL: ${{ vars.WA_EVAL_GEMINI_MODEL }}
           WA_EVAL_GROQ_MODEL: ${{ vars.WA_EVAL_GROQ_MODEL }}
           WA_EVAL_MISTRAL_MODEL: ${{ vars.WA_EVAL_MISTRAL_MODEL }}
-
