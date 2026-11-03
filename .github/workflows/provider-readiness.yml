@@ -47,7 +47,7 @@ jobs:
           if [ "$WA_EVAL_MODE" = "single" ]; then
             python -m evaluation.readiness --provider "$WA_EVAL_PROVIDER" --generation-only
           elif [ "$WA_EVAL_MODE" = "contract" ] && [ "$WA_EVAL_PROVIDER" = "groq" ]; then
-            python -m evaluation.groq_contract
+            python -m evaluation.groq_contract --strict-only
           elif [ "$WA_EVAL_PROVIDER" = "gemini" ] && [ "$WA_EVAL_MODE" = "diagnostic" ]; then
             python -m evaluation.gemini_diagnostic
           else
@@ -61,7 +61,7 @@ jobs:
           MISTRAL_API_KEY: ${{ (inputs.provider == 'mistral' || inputs.provider == 'all') && secrets.MISTRAL_API_KEY || '' }}
           # Owner confirmed Gemini Free tier on 2 November 2026. Set variable to 0 to revoke.
           WA_GEMINI_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
-          # Explicit owner request: at most two Groq contract calls under the project's free-only constraint.
+          # Explicit owner request: one strict-schema diagnostic call under the project's free-only constraint.
           # This bounded invocation is not a billing inspection or blanket account confirmation.
           WA_GROQ_FREE_TIER_CONFIRMED: ${{ vars.WA_GROQ_FREE_TIER_CONFIRMED || (github.event_name == 'push' && contains(github.event.head_commit.message, '[groq-smoke]') && '1') || '' }}
           WA_MISTRAL_FREE_TIER_CONFIRMED: ${{ vars.WA_MISTRAL_FREE_TIER_CONFIRMED }}

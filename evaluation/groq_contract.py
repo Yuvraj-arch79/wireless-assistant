@@ -68,7 +68,7 @@ def strict_generate(role, payload):
         'reasoning_effort': 'low', 'include_reasoning': False,
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_' + role, 'strict': True, 'schema': wire_schema(role)}},
         'messages': [{'role': 'system', 'content': COMMON + ROLES[role] + '\nTransport: wrap the role output in an object with the single key result. The supplied JSON schema defines that envelope.'},
-                     {'role': 'user', 'content': canonical(payload)}]})
+                     {'role': 'user', 'content': canonical(payload)}]}, diagnostics=True)
     choices = result.get('choices', [])
     if len(choices) != 1 or choices[0].get('finish_reason') != 'stop' or choices[0].get('message', {}).get('tool_calls'):
         raise AppError('INCOMPLETE', 'No complete plain response.')
@@ -93,18 +93,20 @@ def live(mode, payload):
     return result
 
 
-def run(payload):
-    report = {'maximum_calls': 2, 'attempts': 0, 'retries': 0, 'results': []}
+def run(payload, strict_only=False):
+    report = {'maximum_calls': 1 if strict_only else 2, 'attempts': 0, 'retries': 0, 'results': []}
     if not free_confirmed('groq'): return dict(report, status='FREE_TIER_NOT_CONFIRMED')
     if not os.getenv('GROQ_API_KEY'): return dict(report, status='KEY_MISSING')
     deadline = time.monotonic() + 55
-    for mode in ('diagnose', 'strict'):
+    for mode in (('strict',) if strict_only else ('diagnose', 'strict')):
         remaining = deadline - time.monotonic()
         if remaining <= 0: return dict(report, status='OPERATION_TIMEOUT')
         start = time.monotonic()
         report['attempts'] += 1
         try: result = bounded(live, (mode, payload), min(25, remaining))
-        except AppError as error: result = {'status': error.code, 'issues': []}
+        except AppError as error:
+            result = {'status': error.code, 'issues': []}
+            if error.code == 'HTTP_400': result['detail'] = error.message
         result.update(mode=mode, seconds=round(time.monotonic() - start, 3))
         report['results'].append(result)
         if result['status'] not in ('pass', 'CONTRACT_INVALID', 'INVALID_JSON', 'INVALID_ENVELOPE'):
@@ -113,7 +115,11 @@ def run(payload):
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--strict-only', action='store_true')
+    args = parser.parse_args()
     suite = json.loads((ROOT / 'evaluation/cases.json').read_text(encoding='utf-8'))
-    report = run(payload_for(next(c for c in suite['cases'] if c['id'] == 'B01')))
+    report = run(payload_for(next(c for c in suite['cases'] if c['id'] == 'B01')), strict_only=args.strict_only)
     print(json.dumps(report, ensure_ascii=True, indent=2))
     raise SystemExit(0 if report['status'] == 'pass' else 1)

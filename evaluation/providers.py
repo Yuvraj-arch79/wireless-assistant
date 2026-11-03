@@ -17,7 +17,22 @@ def configured_model(provider):
     return model
 
 
-def request(provider, method, path, body=None):
+def safe_error_detail(raw):
+    # Only known protocol/schema words survive; never emit echoed input or keys.
+    try: error = load_json(raw.decode('utf-8')).get('error', {})
+    except (ValueError, UnicodeError, AttributeError): return 'unavailable'
+    if not isinstance(error, dict): return 'unavailable'
+    allowed = set("invalid_request_error invalid_json_schema json_validate_failed model_not_found unsupported schema json_schema response_format name strict properties additionalProperties required anyOf oneOf allOf type null object array integer number string boolean enum items defs ref result reasoning_effort include_reasoning max_tokens temperature messages model value invalid missing must be is are not supported allowed expected found failed to generate JSON please adjust your prompt field parameter argument request validation error for with at in the a an of and or cannot contains exceed maximum depth limit too many complex nested false true low medium high".split())
+    parts = []
+    for field in ('type', 'code', 'param', 'message'):
+        value = error.get(field)
+        if isinstance(value, str):
+            words = re.findall(r'[A-Za-z_]+|[0-9]+', value[:1000])
+            parts.append(field + ': ' + ' '.join(word if word in allowed else '<redacted>' for word in words))
+    return '; '.join(parts)[:1500] or 'unavailable'
+
+
+def request(provider, method, path, body=None, *, diagnostics=False):
     key = os.getenv(provider.upper() + '_API_KEY')
     if not key:
         raise AppError('KEY_MISSING', 'Provider key is absent.')
@@ -27,7 +42,14 @@ def request(provider, method, path, body=None):
             with client.stream(method, BASES[provider] + path, headers=headers, json=body) as response:
                 if response.status_code != 200:
                     code = {401:'AUTH',403:'AUTH',429:'QUOTA',404:'MODEL_UNAVAILABLE'}.get(response.status_code, 'HTTP_' + str(response.status_code))
-                    raise AppError(code, 'Provider request failed.', response.status_code)
+                    detail = 'Provider request failed.'
+                    if diagnostics and response.status_code == 400:
+                        raw_error = bytearray()
+                        for part in response.iter_bytes():
+                            raw_error.extend(part)
+                            if len(raw_error) > 65536: break
+                        if len(raw_error) <= 65536: detail = safe_error_detail(raw_error)
+                    raise AppError(code, detail, response.status_code)
                 raw = bytearray()
                 for part in response.iter_bytes():
                     raw.extend(part)

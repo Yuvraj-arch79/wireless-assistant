@@ -80,3 +80,19 @@ def test_revocation_prevents_call(monkeypatch):
     call.assert_not_called()
     with patch('evaluation.groq_contract.request') as call, pytest.raises(AppError): strict_generate('A',{})
     call.assert_not_called()
+
+
+def test_strict_only_makes_one_attempt(monkeypatch):
+    monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED','1'); monkeypatch.setenv('GROQ_API_KEY','fixture')
+    with patch('evaluation.groq_contract.bounded',return_value={'status':'pass','issues':[]}) as call:
+        result=run({},strict_only=True)
+    assert result['attempts']==result['maximum_calls']==call.call_count==1
+    assert call.call_args.args[1][0]=='strict'
+
+
+def test_error_details_do_not_echo_input():
+    from evaluation.providers import safe_error_detail
+    raw=json.dumps({'error':{'type':'invalid_request_error','message':'schema anyOf not supported PRIVATE_KEY gsk_ABC123','failed_generation':'PRIVATE_REPLY'}}).encode()
+    detail=safe_error_detail(raw)
+    assert 'schema anyOf not supported' in detail
+    assert 'PRIVATE' not in detail and 'gsk' not in detail and 'ABC' not in detail
