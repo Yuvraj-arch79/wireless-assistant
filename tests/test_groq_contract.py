@@ -130,3 +130,23 @@ def test_prompt_keeps_original_branch_rules(monkeypatch):
     system=call.call_args.args[3]['messages'][0]['content']
     assert 'original role contract' in system and 'never null' in system
     assert 'AClarify' in system and 'OriginalRef' in system
+
+
+def test_a_wire_cannot_emit_null_need_or_coverage():
+    props=wire_schema('A')['properties']['result']['properties']
+    assert props['need']=={'$ref':'#/$defs/Need'}
+    assert props['coverage_gaps']=={'type':'array','items':{'$ref':'#/$defs/Gap'}}
+
+
+def test_out_of_scope_preserves_need_and_rejects_nonempty_extra_coverage():
+    value=valid_a()
+    value.update(action='out_of_scope',scope_reason='Unrelated request',clarification=None,requests=None)
+    assert inspect_response(json.dumps({'result':value}),'A',True)['status']=='pass'
+    value['coverage_gaps']=[{'unexpected':'must not be discarded'}]
+    assert inspect_response(json.dumps({'result':value}),'A',True)['status']=='CONTRACT_INVALID'
+
+
+@pytest.mark.parametrize('field',['need','coverage_gaps'])
+def test_null_selected_field_still_fails_backend(field):
+    value=valid_a();value[field]=None
+    assert inspect_response(json.dumps({'result':value}),'A',True)['status']=='CONTRACT_INVALID'
