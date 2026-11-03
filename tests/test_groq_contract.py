@@ -121,3 +121,12 @@ def test_wire_action_union_is_flat():
     assert result['type']=='object' and 'anyOf' not in result
     assert set(result['properties']['action']['enum'])=={'clarify','collect','ready_for_b','out_of_scope'}
     assert 'anyOf' not in result['properties']['requests']['anyOf'][0]['items']
+
+
+def test_prompt_keeps_original_branch_rules(monkeypatch):
+    monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED','1')
+    response={'choices':[{'finish_reason':'stop','message':{'content':'{"result":{}}'}}]}
+    with patch('evaluation.groq_contract.request',return_value=response) as call: strict_generate('A',{})
+    system=call.call_args.args[3]['messages'][0]['content']
+    assert 'original role contract' in system and 'never null' in system
+    assert 'AClarify' in system and 'OriginalRef' in system
