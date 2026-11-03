@@ -104,3 +104,20 @@ def test_discriminator_precedes_shared_fields():
         assert next(iter(schema[name]['properties']))=='action'
     for name in ['Search','Expand','HistorySearch','HistoryFetch']:
         assert next(iter(schema[name]['properties']))=='kind'
+
+
+def test_flat_wire_restores_original_contract_and_rejects_extra_data():
+    value=valid_a(); value.update(requests=None,scope_reason=None)
+    assert inspect_response(json.dumps({'result':value}),'A',True)['status']=='pass'
+    value['scope_reason']='Unexpected non-null field'
+    assert inspect_response(json.dumps({'result':value}),'A',True)['status']=='CONTRACT_INVALID'
+    value['scope_reason']=None; value['unrecognized']=None
+    assert inspect_response(json.dumps({'result':value}),'A',True)['status']=='CONTRACT_INVALID'
+
+
+def test_wire_action_union_is_flat():
+    schema=wire_schema('A')
+    result=schema['properties']['result']
+    assert result['type']=='object' and 'anyOf' not in result
+    assert set(result['properties']['action']['enum'])=={'clarify','collect','ready_for_b','out_of_scope'}
+    assert 'anyOf' not in result['properties']['requests']['anyOf'][0]['items']
