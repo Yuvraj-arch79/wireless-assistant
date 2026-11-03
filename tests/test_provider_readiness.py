@@ -115,7 +115,7 @@ def test_groq_catalog_shape():
 
 def test_groq_default_and_override(monkeypatch):
     monkeypatch.delenv('WA_EVAL_GROQ_MODEL',raising=False)
-    assert providers.configured_model('groq')=='openai/gpt-oss-20b'
+    assert providers.configured_model('groq')=='openai/gpt-oss-120b'
     monkeypatch.setenv('WA_EVAL_GROQ_MODEL','explicit-model')
     assert providers.configured_model('groq')=='explicit-model'
 
@@ -159,3 +159,15 @@ def test_groq_smoke_request_is_bounded_and_no_reasoning_text(monkeypatch):
     body=request.call_args.args[3]
     assert body['reasoning_effort']=='low' and body['include_reasoning'] is False
     assert body['max_tokens']==2000 and 'tools' not in body
+
+
+def test_readiness_uses_verified_strict_path():
+    with patch('evaluation.groq_contract.live',return_value={'status':'pass','issues':[]}) as call:
+        assert readiness.smoke('groq','openai/gpt-oss-120b',{})['schema_valid']
+    call.assert_called_once_with('strict',{})
+
+
+def test_readiness_does_not_bypass_semantic_failure():
+    with patch('evaluation.groq_contract.live',return_value={'status':'GAP_BINDING_UNKNOWN','issues':[]}):
+        with pytest.raises(AppError) as error: readiness.smoke('groq','openai/gpt-oss-120b',{})
+    assert error.value.code=='GAP_BINDING_UNKNOWN'

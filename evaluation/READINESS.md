@@ -162,3 +162,12 @@ Owner authorized GitHub use without another PR. Six HTTP generation requests wer
 
 The helper remains evaluation-only and is **not promoted into normal readiness or production chat**. Production remains Gemini-only. Groq A is not validated; B/C, real-source retrieval, domain answer accuracy and reliability remain untested. The next fix must address selected-action type constraints in the wire representation, with backend validation retained. Do not treat prompt-only instructions as schema enforcement.
 
+
+
+## Latest Groq result — corrected strict adapter, 3 November 2026
+
+The A clarification smoke now **passes** on `openai/gpt-oss-120b`: [live job](https://github.com/Yuvraj-arch79/wireless-assistant/actions/runs/41614318207/job/125843817726), 1.842 seconds, one call, zero retries. Normal Groq readiness now uses that same strict adapter and model; explicit unsupported model overrides fail closed. Production chat remains Gemini-only pending separate runtime integration and B/C evaluation.
+
+This follow-up used five bounded requests: 20B concrete fields exposed an empty requirements list; restoring length bounds exposed overlapping primitive union alternatives; merging their allowed bounds produced an invalid JSON response on 20B; 120B passed schema/reference validation but failed clarification binding; enforcing a nonempty binding list passed on 120B. There were no automatic retries or metadata calls, and no quota error in these trials. The adapter now preserves original size/value bounds, requires concrete A need and coverage, and keeps original backend checks. Only empty out-of-scope coverage transport padding is removed; actual findings are not discarded.
+
+The prior failed trials below/above are historical evidence, not the latest status. This is one successful A-case, not a full A/B/C benchmark, sustained availability guarantee, 3GPP technical accuracy result or account quota measurement. No provider switch or new key is currently needed for this validated A configuration. Full live B/C and production integration remain open.

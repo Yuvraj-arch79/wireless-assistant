@@ -26,6 +26,15 @@ def payload_for(case):
 
 
 def smoke(provider, model, payload, thinking=None):
+    if provider == 'groq':
+        from evaluation.groq_contract import MODEL, live
+        if model != MODEL:
+            raise AppError('MODEL_CONFIG', 'Groq strict readiness requires the live-verified model.')
+        result = live('strict', payload)
+        if result['status'] != 'pass':
+            raise AppError(result['status'], 'Groq A contract or semantic validation failed.')
+        return {'schema_valid': True, 'clarification': True}
+
     text = generate(provider, model, instructions('A'), payload, thinking=thinking)
     try:
         out = ADAPTERS['A'].validate_json(text).model_dump(mode='json')
@@ -59,7 +68,7 @@ def run(output, selected=None, generation_only=False):
         report['results'].append(row)
         try:
             model = configured_model(provider); row['model']=model
-            if generation_only and model != 'openai/gpt-oss-20b':
+            if generation_only and model != 'openai/gpt-oss-120b':
                 raise AppError('MODEL_CONFIG', 'One-call mode requires the previously verified Groq model.')
             operations = [('generation',smoke,(provider,model,payload))]
             if not generation_only:

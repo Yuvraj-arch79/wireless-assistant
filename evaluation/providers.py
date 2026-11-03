@@ -6,7 +6,7 @@ from wireless_assistant.common import AppError, canonical, load_json
 
 BASES = {'gemini': 'https://generativelanguage.googleapis.com/v1beta/',
          'groq': 'https://api.groq.com/openai/v1/', 'mistral': 'https://api.mistral.ai/v1/'}
-MODELS = {'gemini': 'gemini-3.1-flash-lite', 'groq': 'openai/gpt-oss-20b', 'mistral': 'mistral-small-latest'}
+MODELS = {'gemini': 'gemini-3.1-flash-lite', 'groq': 'openai/gpt-oss-120b', 'mistral': 'mistral-small-latest'}
 MAX_BYTES = 2 * 1024 * 1024
 
 
@@ -111,7 +111,7 @@ def generate(provider, model, system, payload, output_tokens=2000, thinking=None
         text = ''.join(p.get('text','') for p in choices[0].get('content',{}).get('parts',[]) if not p.get('thought'))
     else:
         data = request(provider, 'POST', 'chat/completions', {'model':model,'temperature':0,'max_tokens':output_tokens,
-            **({'reasoning_effort':'low','include_reasoning':False} if provider == 'groq' and model == 'openai/gpt-oss-20b' else {}),
+            **({'reasoning_effort':'low','include_reasoning':False} if provider == 'groq' and model in ('openai/gpt-oss-20b', 'openai/gpt-oss-120b') else {}),
             'response_format':{'type':'json_object'},'messages':[{'role':'system','content':system},{'role':'user','content':canonical(payload)}]})
         choices = data.get('choices', [])
         if len(choices) != 1 or choices[0].get('finish_reason') != 'stop' or choices[0].get('message',{}).get('tool_calls'):
