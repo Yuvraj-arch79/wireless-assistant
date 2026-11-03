@@ -73,3 +73,9 @@ def test_local_validation_reason_is_retained():
     with patch.object(b,'request',return_value=reply):r=b.generate(b.payload())
     assert r['status']=='INVALID_CONTRACT'
     assert 'Citation references' in r['validation_error']
+
+
+def test_citation_contract_is_explicit():
+    defs=b.schema()['$defs']
+    assert 'NOT from evidence' in defs['Citation']['properties']['claim_anchor']['description']
+    assert 'References' in defs['BDraft']['properties']['answer_markdown']['description']
