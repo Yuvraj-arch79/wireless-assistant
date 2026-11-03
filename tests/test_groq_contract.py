@@ -96,3 +96,11 @@ def test_error_details_do_not_echo_input():
     detail=safe_error_detail(raw)
     assert 'schema anyOf not supported' in detail
     assert 'PRIVATE' not in detail and 'gsk' not in detail and 'ABC' not in detail
+
+
+def test_discriminator_precedes_shared_fields():
+    schema=wire_schema('A')['$defs']
+    for name in ['AClarify','ACollect','AReady','AOut']:
+        assert next(iter(schema[name]['properties']))=='action'
+    for name in ['Search','Expand','HistorySearch','HistoryFetch']:
+        assert next(iter(schema[name]['properties']))=='kind'

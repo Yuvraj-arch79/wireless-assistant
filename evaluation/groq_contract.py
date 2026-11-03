@@ -27,6 +27,12 @@ def wire_schema(role):
             elif key in ('type', '$ref', 'enum', 'required', 'additionalProperties'): out[key] = value
         if out.get('type') == 'object':
             out['additionalProperties'] = False
+            # Put the distinguishing literal before common fields in union branches.
+            properties = out.get('properties', {})
+            discriminators = [k for k, v in properties.items() if len(v.get('enum', [])) == 1]
+            if discriminators:
+                first = discriminators[0]
+                out['properties'] = {first: properties[first], **{k: v for k, v in properties.items() if k != first}}
             out['required'] = list(out.get('properties', {}))
         return out
     source = convert(ADAPTERS[role].json_schema())
