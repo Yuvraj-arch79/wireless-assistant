@@ -150,3 +150,11 @@ def test_out_of_scope_preserves_need_and_rejects_nonempty_extra_coverage():
 def test_null_selected_field_still_fails_backend(field):
     value=valid_a();value[field]=None
     assert inspect_response(json.dumps({'result':value}),'A',True)['status']=='CONTRACT_INVALID'
+
+
+def test_wire_preserves_original_bounds():
+    defs=wire_schema('A')['$defs']
+    assert defs['Need']['properties']['requirements']['minItems']==1
+    assert defs['Need']['properties']['requirements']['maxItems']==16
+    assert defs['Requirement']['properties']['description']['minLength']==1
+    assert defs['OriginalRef']['properties']['start_offset']['minimum']==0

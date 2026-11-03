@@ -47,7 +47,7 @@ def wire_schema(role):
                 out['anyOf'] = [convert(child) for child in value]
             elif key == 'items': out[key] = convert(value)
             elif key == 'const': out['enum'] = [value]
-            elif key in ('type', '$ref', 'enum', 'required', 'additionalProperties'): out[key] = value
+            elif key in ('type', '$ref', 'enum', 'required', 'additionalProperties', 'minItems', 'maxItems', 'minLength', 'maxLength', 'minimum', 'maximum', 'pattern'): out[key] = value
         if out.get('type') == 'object':
             out['additionalProperties'] = False
             # Put the distinguishing literal before common fields in union branches.
@@ -129,7 +129,7 @@ def strict_generate(role, payload):
         'model': MODEL, 'temperature': 0, 'max_tokens': 2000,
         'reasoning_effort': 'low', 'include_reasoning': False,
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_' + role, 'strict': True, 'schema': wire_schema(role)}},
-        'messages': [{'role': 'system', 'content': instructions(role) + '\nThe JSON schema above is the original role contract. In the transport schema, nullable padding exists ONLY for fields belonging to other actions. For the selected action, every original required field must retain its original type. In A clarify, need is a complete object even when the topic is ambiguous, clarification is an object, and coverage_gaps is an array (possibly empty), never null. Represent an unknown comparison topic honestly in the need and bind the missing detail to the supplied original reference; do not guess entities.\nTransport: wrap the role output in an object with the single key result. The supplied JSON schema defines that envelope. Set nullable fields that do not belong to the selected action or request kind to null. A always requires a concrete need and a coverage_gaps array; for out_of_scope describe the original request honestly in need and use empty coverage_gaps.'},
+        'messages': [{'role': 'system', 'content': instructions(role) + '\nThe JSON schema above is the original role contract. In the transport schema, nullable padding exists ONLY for fields belonging to other actions. For the selected action, every original required field must retain its original type. In A clarify, need is a complete object even when the topic is ambiguous, clarification is an object, and coverage_gaps is an array (possibly empty), never null. Even for an ambiguous question, need.requirements must contain at least one requirement describing the actual requested task, with established_by copied from supplied original references; ambiguity is not an empty requirement list. Represent an unknown comparison topic honestly in the need and bind the missing detail to the supplied original reference; do not guess entities.\nTransport: wrap the role output in an object with the single key result. The supplied JSON schema defines that envelope. Set nullable fields that do not belong to the selected action or request kind to null. A always requires a concrete need and a coverage_gaps array; for out_of_scope describe the original request honestly in need and use empty coverage_gaps.'},
                      {'role': 'user', 'content': canonical(payload)}]}, diagnostics=True)
     choices = result.get('choices', [])
     if len(choices) != 1 or choices[0].get('finish_reason') != 'stop' or choices[0].get('message', {}).get('tool_calls'):
