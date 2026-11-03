@@ -78,6 +78,7 @@ def wire_schema(role):
     if role == 'A':
         # Every in-scope action needs these fields. Require concrete values on
         # the wire, including a minimal honest need for out_of_scope.
+        definitions['Clarification']['properties']['missing_requirement_ids']['minItems'] = 1
         source['properties']['need'] = {'$ref': '#/$defs/Need'}
         source['properties']['coverage_gaps'] = {'type': 'array', 'items': {'$ref': '#/$defs/Gap'}}
     return {'type': 'object', 'properties': {'result': source}, 'required': ['result'],
@@ -169,7 +170,8 @@ def live(mode, payload):
             validate_need(output['need'], payload['original_context'])
             ids = {r['req_id'] for r in output['need']['requirements']}
             missing = output['clarification']['missing_requirement_ids']
-            if not missing or not set(missing) <= ids: raise AppError('GAP_BINDING', 'Invalid missing requirement binding.')
+            if not missing: raise AppError('GAP_BINDING_EMPTY', 'Missing requirement binding is empty.')
+            if not set(missing) <= ids: raise AppError('GAP_BINDING_UNKNOWN', 'Missing requirement binding uses an unknown ID.')
         except AppError as error: result['status'] = error.code
     return result
 

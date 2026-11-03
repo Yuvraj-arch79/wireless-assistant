@@ -173,3 +173,7 @@ def test_json_failure_categories_without_response_data():
     assert inspect_response('{"private":NaN}','A')['json_error']=='non_finite'
     result=inspect_response('private broken reply','A')
     assert result['json_error']=='syntax' and 'private' not in json.dumps(result)
+
+
+def test_clarification_requires_a_requirement_binding():
+    assert wire_schema('A')['$defs']['Clarification']['properties']['missing_requirement_ids']['minItems']==1
