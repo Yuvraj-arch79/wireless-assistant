@@ -11,7 +11,7 @@ from wireless_assistant.contracts import ADAPTERS
 from wireless_assistant.prompts import COMMON, ROLES, instructions
 from wireless_assistant.validation import validate_need
 
-MODEL = 'openai/gpt-oss-20b'
+MODEL = 'openai/gpt-oss-120b'
 
 
 def wire_schema(role):
@@ -127,7 +127,12 @@ def safe_errors(error, role):
 
 def inspect_response(text, role, wrapped=False):
     try: value = load_json(text)
-    except (ValueError, TypeError): return {'status': 'INVALID_JSON', 'issues': []}
+    except (ValueError, TypeError) as error:
+        if isinstance(error, json.JSONDecodeError): detail = 'syntax'
+        elif str(error) == 'Duplicate JSON key': detail = 'duplicate_key'
+        elif str(error) == 'Non-finite JSON value': detail = 'non_finite'
+        else: detail = 'invalid_type'
+        return {'status': 'INVALID_JSON', 'issues': [], 'json_error': detail}
     if wrapped:
         if not isinstance(value, dict) or set(value) != {'result'}:
             return {'status': 'INVALID_ENVELOPE', 'issues': []}
@@ -170,7 +175,7 @@ def live(mode, payload):
 
 
 def run(payload, strict_only=False):
-    report = {'maximum_calls': 1 if strict_only else 2, 'attempts': 0, 'retries': 0, 'results': []}
+    report = {'model': MODEL, 'maximum_calls': 1 if strict_only else 2, 'attempts': 0, 'retries': 0, 'results': []}
     if not free_confirmed('groq'): return dict(report, status='FREE_TIER_NOT_CONFIRMED')
     if not os.getenv('GROQ_API_KEY'): return dict(report, status='KEY_MISSING')
     deadline = time.monotonic() + 55

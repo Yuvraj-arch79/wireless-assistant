@@ -166,3 +166,10 @@ def test_overlapping_query_bounds_are_merged():
     query=req['properties']['query']['anyOf']
     strings=[x for x in query if x.get('type')=='string']
     assert strings==[{'type':'string','minLength':1,'maxLength':1000}]
+
+
+def test_json_failure_categories_without_response_data():
+    assert inspect_response('{"private":1,"private":2}','A')['json_error']=='duplicate_key'
+    assert inspect_response('{"private":NaN}','A')['json_error']=='non_finite'
+    result=inspect_response('private broken reply','A')
+    assert result['json_error']=='syntax' and 'private' not in json.dumps(result)
