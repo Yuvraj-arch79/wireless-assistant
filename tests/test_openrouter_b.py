@@ -79,3 +79,20 @@ def test_citation_contract_is_explicit():
     defs=b.schema()['$defs']
     assert 'NOT from evidence' in defs['Citation']['properties']['claim_anchor']['description']
     assert 'References' in defs['BDraft']['properties']['answer_markdown']['description']
+
+
+def test_reference_rendering_preserves_claims_and_uses_source_metadata():
+    d=draft();d['answer_markdown']=d['answer_markdown'].split('\n\nReferences')[0]
+    original=d['answer_markdown'];p=b.payload()
+    rendered=b.render_references(d,p['evidence'])
+    assert rendered['answer_markdown'].split('\n\nReferences')[0]==original
+    assert 'TS 38.201 v18.0.0, clause 4.1.1' in rendered['answer_markdown']
+    assert d['answer_markdown']==original
+    assert b.assess(d,p)['status']=='pass'
+
+
+@pytest.mark.parametrize('field',['passage_ids','claim_anchor','marker'])
+def test_reference_renderer_does_not_repair_invalid_citations(field):
+    d=draft();d['answer_markdown']=d['answer_markdown'].split('\n\nReferences')[0]
+    d['citations'][0][field]=['invented'] if field=='passage_ids' else 'invented'
+    with pytest.raises(AppError):b.render_references(d,b.payload()['evidence'])

@@ -1,4 +1,5 @@
 """Two bounded B trials; pinned free model, no retries or paid fallback."""
+import copy
 import json
 import os
 import re
@@ -97,6 +98,29 @@ def generate(p):
 
 
 
+def render_references(out,evidence):
+    """Deterministic presentation from cited, verified metadata; never edits claims."""
+    if out.get('action')!='submit_draft':return out
+    answer=out['answer_markdown']
+    if re.search(r'(?im)^\s*(?:#+\s*)?References\s*:?\s*$',answer):return out
+    sources={p['passage_id']:p for p in evidence};entries=[];seen=set()
+    for citation in out['citations']:
+        marker=citation['marker']
+        if marker in seen or marker not in answer or citation['claim_anchor'] not in answer:
+            raise AppError('INVALID_CONTRACT','Invalid inline citation or claim anchor before reference rendering.')
+        seen.add(marker)
+        if not citation['passage_ids'] or any(pid not in sources or sources[pid]['unreadable'] for pid in citation['passage_ids']):
+            raise AppError('INVALID_CONTRACT','Citation references missing or unreadable evidence.')
+        labels=[]
+        for pid in citation['passage_ids']:
+            p=sources[pid];label='TS '+p['spec_number']+' v'+p['document_version']+', clause '+p['clause_id']
+            if label not in labels:labels.append(label)
+        entries.append(marker+' '+ '; '.join(labels)+'.')
+    result=copy.deepcopy(out)
+    result['answer_markdown']=answer.rstrip()+'\n\nReferences\n'+'\n'.join(entries)
+    return result
+
+
 def assess(out,p):
     if not p['evidence']:
         if out['action']!='cannot_answer':raise AppError('UNSUPPORTED_ANSWER','No-evidence closing case must decline.')
@@ -105,13 +129,16 @@ def assess(out,p):
         if set().union(*(set(g['requirement_ids']) for g in gaps))!=ids:raise AppError('COVERAGE','Refusal must cover both requirements.')
         return {'status':'pass','action':'cannot_answer','reasons':[g['reason'] for g in gaps]}
     if out['action']!='submit_draft':raise AppError('WRONG_ACTION','Supported question requires a draft.')
+    raw_answer=out['answer_markdown']
+    out=render_references(out,p['evidence'])
+    rendered=out['answer_markdown']!=raw_answer
     validate_draft(out,p['need'],p['evidence'],None)
     if set(out['covered_requirements'])!={'r1','r2'} or out['unresolved_requirements']:raise AppError('COVERAGE','Both requirements must be answered.')
     answer=out['answer_markdown'];statements=re.split(r'[\n;]+|(?<=[.!?])\s+',answer)
     l1=any(re.search(r'Layer\s*1|physical',s,re.I) and '38.200' in s for s in statements)
     l23=any(re.search(r'Layers?\s*2\s*(?:and|&|/|,)\s*3',s,re.I) and '38.300' in s for s in statements)
     if not l1 or not l23:raise AppError('FACT_CHECK','Layer-to-series mapping not established.')
-    return {'status':'pass','action':'submit_draft','answer_markdown':answer,'checks':['schema','citations','coverage','two source mappings'],'review_required':'Read full answer; automated checks are not a domain truth oracle.'}
+    return {'status':'pass','action':'submit_draft','answer_markdown':answer,'references_rendered_from_evidence':rendered,'checks':['schema','citations','coverage','two source mappings'],'review_required':'Read full answer; automated checks are not a domain truth oracle.'}
 
 
 def run():
