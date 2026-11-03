@@ -147,3 +147,18 @@ A's schema/clarification/binding only, not the full chatbot or B/C accuracy.
 The GPT-OSS 20B evaluation request uses explicit low reasoning effort and excludes
 reasoning text, per https://console.groq.com/docs/reasoning . The 2,000-output-token
 ceiling remains unchanged. This is not a technical-quality optimization claim.
+
+## Groq contract result — 3 November 2026
+
+Owner authorized GitHub use without another PR. Six HTTP generation requests were dispatched in bounded runs (2 + 1 + 1 + 1 + 1), with zero automatic retries or metadata calls. Three requests were rejected with HTTP 400; three returned content. No full chatbot success is claimed.
+
+- Initial JSON-object response failed the duplicate-aware JSON decoder (`INVALID_JSON`); the discarded body does not establish whether the cause was syntax, duplicate keys or a non-finite value.
+- Strict nested union schemas were rejected at `response_format.properties.result.anyOf`. Reordering discriminator fields did not resolve that rejection.
+- A flat wire schema was accepted. Original Pydantic contracts remain mandatory after removing only null padding for unselected branches; non-null extras and unknown fields are still rejected.
+- Both flat-schema live trials selected `clarify` but failed original validation: `clarify.need` (`model_type`) and `clarify.coverage_gaps` (`list_type`). Adding explicit original-contract instructions did not fix this. The wire schema permits null padding; these selected-action fields cannot be null. This remains an unresolved adapter/model contract mismatch.
+- [Final single-call job](https://github.com/Yuvraj-arch79/wireless-assistant/actions/runs/41573961752/job/125713078037) records the sanitized result. Raw output, hidden reasoning and secrets are not logged.
+
+`python -m evaluation.groq_contract --strict-only` makes at most one request; without the flag, the diagnostic comparison allows at most two. The Actions contract mode uses strict-only. Quota, authentication and transport failures stop immediately; each worker has a 25-second deadline. Ordinary pushes do not invoke providers.
+
+The helper remains evaluation-only and is **not promoted into normal readiness or production chat**. Production remains Gemini-only. Groq A is not validated; B/C, real-source retrieval, domain answer accuracy and reliability remain untested. The next fix must address selected-action type constraints in the wire representation, with backend validation retained. Do not treat prompt-only instructions as schema enforcement.
+
