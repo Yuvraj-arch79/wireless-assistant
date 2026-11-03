@@ -65,3 +65,11 @@ def test_missing_key_no_call(monkeypatch):
 def test_preflight_rejects_paid_or_unsupported():
     for price,parameters in [('1',['response_format','structured_outputs']),('0',[])]:
         with patch.object(b,'request',return_value={'data':[{'id':b.MODEL,'pricing':{'prompt':price,'completion':'0'},'supported_parameters':parameters}]}),pytest.raises(AppError):b.preflight()
+
+
+def test_local_validation_reason_is_retained():
+    d=draft();d['citations'][0]['passage_ids']=['wrong']
+    reply={'choices':[{'finish_reason':'stop','message':{'content':json.dumps({'result':d})}}]}
+    with patch.object(b,'request',return_value=reply):r=b.generate(b.payload())
+    assert r['status']=='INVALID_CONTRACT'
+    assert 'Citation references' in r['validation_error']

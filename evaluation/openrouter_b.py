@@ -87,7 +87,12 @@ def generate(p):
         out=ADAPTERS['B'].validate_python(obj['result']).model_dump(mode='json')
     except ValidationError as error:return {'status':'CONTRACT_INVALID','issues':safe_errors(error,'B')}
     except (ValueError,TypeError):return {'status':'INVALID_JSON','issues':[]}
-    return assess(out,p)
+    try:return assess(out,p)
+    except AppError as error:
+        # These messages come only from our deterministic local validators.
+        return {'status':error.code,'validation_error':error.message,
+                'draft_for_review':{k:out[k] for k in ('action','answer_markdown','citations','covered_requirements','unresolved_requirements','limitation_statement') if k in out}}
+
 
 
 def assess(out,p):
