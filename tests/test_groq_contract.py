@@ -158,3 +158,11 @@ def test_wire_preserves_original_bounds():
     assert defs['Need']['properties']['requirements']['maxItems']==16
     assert defs['Requirement']['properties']['description']['minLength']==1
     assert defs['OriginalRef']['properties']['start_offset']['minimum']==0
+
+
+def test_overlapping_query_bounds_are_merged():
+    schema=wire_schema('A')
+    req=schema['properties']['result']['properties']['requests']['anyOf'][0]['items']
+    query=req['properties']['query']['anyOf']
+    strings=[x for x in query if x.get('type')=='string']
+    assert strings==[{'type':'string','minLength':1,'maxLength':1000}]

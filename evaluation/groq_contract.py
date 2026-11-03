@@ -23,6 +23,20 @@ def wire_schema(role):
         for option in options:
             for item in option.get('anyOf', [option]):
                 if item not in flat: flat.append(item)
+        # Different action branches may allow strings with different bounds.
+        # Their overlapping anyOf alternatives confuse the provider compiler.
+        # Merge to their union of permitted bounds; backend checks the selected branch.
+        for kind in ('string', 'integer', 'number'):
+            group = [c for c in flat if c.get('type') == kind and 'enum' not in c]
+            if len(group) > 1:
+                merged = {'type': kind}
+                for lower in ('minLength', 'minimum'):
+                    if all(lower in c for c in group): merged[lower] = min(c[lower] for c in group)
+                for upper in ('maxLength', 'maximum'):
+                    if all(upper in c for c in group): merged[upper] = max(c[upper] for c in group)
+                if all(c.get('pattern') == group[0].get('pattern') for c in group) and 'pattern' in group[0]:
+                    merged['pattern'] = group[0]['pattern']
+                flat = [c for c in flat if c not in group] + [merged]
         return flat[0] if len(flat) == 1 else {'anyOf': flat}
     def convert(node):
         # Provider compiler rejects the nested discriminated object unions.
