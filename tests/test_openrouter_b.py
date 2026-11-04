@@ -113,7 +113,7 @@ def test_partial_disclosure_and_revision_guards():
     d['answer_markdown']+='\n'+d['limitation_statement']
     assert b.assess(d,b.case_payload('partial'))['status']=='pass'
     d['answer_markdown']=d['answer_markdown'].replace(d['limitation_statement'],'')
-    with pytest.raises(AppError):b.assess(d,b.case_payload('partial'))
+    assert d['limitation_statement'] in b.assess(d,b.case_payload('partial'))['answer_markdown']
     with pytest.raises(AppError):b.assess(draft(),b.case_payload('revision'))
     d=draft();d['revision_log']=[{'finding_id':'f1','disposition':'changed','target':'r1','reason':'Corrected series from evidence.','evidence_ids':['ts38201-4.1.1-p7']}]
     assert b.assess(d,b.case_payload('revision'))['status']=='pass'
@@ -132,3 +132,8 @@ def test_case_selection_does_not_repeat_completed_work(monkeypatch):
     with patch.object(b,'bounded',side_effect=[{}, {'status':'pass'}]) as call:r=b.run(('revision',))
     assert r['maximum_generation_calls']==1 and r['generation_attempts']==1 and call.call_count==2
     assert call.call_args.args[1][0]['_evaluation_case']=='revision'
+
+
+def test_missing_structured_limitation_cannot_be_invented():
+    d=draft();d['unresolved_requirements']=[{'req_id':'r3','reason':'No source'}];d['limitation_statement']=None
+    with pytest.raises(AppError):b.assess(d,b.case_payload('partial'))

@@ -124,6 +124,10 @@ def render_references(out,evidence):
     if out.get('action')!='submit_draft':return out
     out=copy.deepcopy(out)
     answer=out['answer_markdown']
+    limitation=out.get('limitation_statement')
+    if out.get('unresolved_requirements') and isinstance(limitation,str) and limitation and limitation not in answer:
+        answer=answer.rstrip()+'\n\nLimitations\n'+limitation
+        out['answer_markdown']=answer
     # Map exact citation-free text back to original offsets; no fuzzy matching.
     removed=set()
     for match in re.finditer(r'\s*\[[1-9][0-9]?\]',answer):removed.update(range(match.start(),match.end()))
