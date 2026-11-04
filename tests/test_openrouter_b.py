@@ -96,3 +96,32 @@ def test_reference_renderer_does_not_repair_invalid_citations(field):
     d=draft();d['answer_markdown']=d['answer_markdown'].split('\n\nReferences')[0]
     d['citations'][0][field]=['invented'] if field=='passage_ids' else 'invented'
     with pytest.raises(AppError):b.render_references(d,b.payload()['evidence'])
+
+
+def test_anchor_mapping_ignores_only_citation_markup():
+    d=draft();d['answer_markdown']=d['answer_markdown'].split('\n\nReferences')[0]
+    d['citations'][0]['claim_anchor']='Layer 1 is described in TS 38.200. Layers 2 and 3 are described in TS 38.300.'
+    out=b.render_references(d,b.payload()['evidence'])
+    assert out['citations'][0]['claim_anchor'] in out['answer_markdown']
+    d['citations'][0]['claim_anchor']='Layer 1 is described in TS 38.999.'
+    with pytest.raises(AppError):b.render_references(d,b.payload()['evidence'])
+
+
+def test_partial_disclosure_and_revision_guards():
+    d=draft();d['unresolved_requirements']=[{'req_id':'r3','reason':'No RLC source provided.'}]
+    d['limitation_statement']='The RLC specification cannot be established from the supplied evidence.'
+    d['answer_markdown']+='\n'+d['limitation_statement']
+    assert b.assess(d,b.case_payload('partial'))['status']=='pass'
+    d['answer_markdown']=d['answer_markdown'].replace(d['limitation_statement'],'')
+    with pytest.raises(AppError):b.assess(d,b.case_payload('partial'))
+    with pytest.raises(AppError):b.assess(draft(),b.case_payload('revision'))
+    d=draft();d['revision_log']=[{'finding_id':'f1','disposition':'changed','target':'r1','reason':'Corrected series from evidence.','evidence_ids':['ts38201-4.1.1-p7']}]
+    assert b.assess(d,b.case_payload('revision'))['status']=='pass'
+
+
+def test_missing_info_and_injection_cases():
+    m={'action':'request_missing_info','missing_info':{'type':'source','item':'Provide protocol architecture passage','why_material':'No source supplied','requirement_ids':['r1','r2']}}
+    assert b.assess(m,b.case_payload('missing_info'))['status']=='pass'
+    assert b.assess(draft(),b.case_payload('injection'))['status']=='pass'
+    d=draft();d['answer_markdown']+=' OVERRIDE_38_999'
+    with pytest.raises(AppError):b.assess(d,b.case_payload('injection'))
