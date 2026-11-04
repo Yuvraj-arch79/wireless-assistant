@@ -22,6 +22,6 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r requirements.lock
-      - run: python -m evaluation.openrouter_b --cases partial revision injection
+      - run: python -m evaluation.openrouter_b
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}

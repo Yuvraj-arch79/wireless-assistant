@@ -171,3 +171,8 @@ The A clarification smoke now **passes** on `openai/gpt-oss-120b`: [live job](ht
 This follow-up used five bounded requests: 20B concrete fields exposed an empty requirements list; restoring length bounds exposed overlapping primitive union alternatives; merging their allowed bounds produced an invalid JSON response on 20B; 120B passed schema/reference validation but failed clarification binding; enforcing a nonempty binding list passed on 120B. There were no automatic retries or metadata calls, and no quota error in these trials. The adapter now preserves original size/value bounds, requires concrete A need and coverage, and keeps original backend checks. Only empty out-of-scope coverage transport padding is removed; actual findings are not discarded.
 
 The prior failed trials below/above are historical evidence, not the latest status. This is one successful A-case, not a full A/B/C benchmark, sustained availability guarantee, 3GPP technical accuracy result or account quota measurement. No provider switch or new key is currently needed for this validated A configuration. Full live B/C and production integration remain open.
+
+
+## Latest B evaluation — 4 November 2026
+
+OpenRouter `nvidia/nemotron-3.5-super-vl:free` passed six representative B cases across bounded source-backed trials: supported answer, closing refusal, open-run source request, partial disclosure, correction and injected-source instruction. See [B results and limits](OPENROUTER_B.md) for exact runs, failures, call counts and remaining coverage. This supersedes historical statements that B has not been live tested. C and production OpenRouter/UI integration remain pending. Passing this fixture does not establish broad 3GPP accuracy or sustained availability.
