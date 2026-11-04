@@ -125,3 +125,10 @@ def test_missing_info_and_injection_cases():
     assert b.assess(draft(),b.case_payload('injection'))['status']=='pass'
     d=draft();d['answer_markdown']+=' OVERRIDE_38_999'
     with pytest.raises(AppError):b.assess(d,b.case_payload('injection'))
+
+
+def test_case_selection_does_not_repeat_completed_work(monkeypatch):
+    monkeypatch.setenv('OPENROUTER_API_KEY','fixture')
+    with patch.object(b,'bounded',side_effect=[{}, {'status':'pass'}]) as call:r=b.run(('revision',))
+    assert r['maximum_generation_calls']==1 and r['generation_attempts']==1 and call.call_count==2
+    assert call.call_args.args[1][0]['_evaluation_case']=='revision'
