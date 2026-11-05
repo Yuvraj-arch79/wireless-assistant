@@ -138,3 +138,11 @@ def test_regression_fixture_actually_loses_previously_correct_answer():
     assert '38.300 series describes Layers 2 and 3' in p['prior_candidate']['answer_markdown']
     assert '38.300' not in p['candidate']['answer_markdown']
     assert '38.200' in p['candidate']['answer_markdown']
+
+
+@pytest.mark.parametrize('field', ('lost_or_changed_requirement_ids', 'resulting_finding_ids'))
+def test_first_review_cannot_claim_regression(field):
+    out = review('unsupported')
+    out['regression_check'][field] = ['r1'] if field == 'lost_or_changed_requirement_ids' else ['f1']
+    with pytest.raises(AppError, match='First review cannot claim regression'):
+        c.assess(out, c.case_payload('unsupported'), 'unsupported')

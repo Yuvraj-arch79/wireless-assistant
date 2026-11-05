@@ -67,6 +67,7 @@ def validate_review(review, binding, candidate, need, evidence, prior_candidate,
         require(regression['status']=='checked' and regression['compared_candidate_id']==prior_candidate['candidate_id'],'Revision must check the prior candidate for regressions.')
     else:
         require(regression['status']=='not_applicable' and regression['compared_candidate_id'] is None,'First review must not claim a previous candidate.')
+        require(not regression['lost_or_changed_requirement_ids'] and not regression['resulting_finding_ids'],'First review cannot claim regression losses or findings.')
     require(set(regression['lost_or_changed_requirement_ids'])<=ids,'Regression references unknown requirements.')
     require(set(regression['resulting_finding_ids'])<={f['finding_id'] for f in findings},'Regression references unknown findings.')
     if regression['lost_or_changed_requirement_ids']:

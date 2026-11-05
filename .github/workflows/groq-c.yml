@@ -8,7 +8,7 @@ on:
         default: correct contradicted unsupported partial regression injection
   push:
     branches: [main]
-    paths: ['evaluation/groq_c.py', '.github/workflows/groq-c.yml']
+    paths: ['evaluation/groq_c.py', '.github/workflows/groq-c.yml', 'wireless_assistant/prompts.py', 'wireless_assistant/validation.py']
 permissions:
   contents: read
 concurrency:
@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r requirements.lock
-      - name: Six bounded C cases, stop on first failure
+      - name: Bounded C cases, stop on first failure
         shell: bash
         run: |
           read -r -a cases <<< "$WA_C_CASES"

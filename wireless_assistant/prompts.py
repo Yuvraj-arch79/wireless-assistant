@@ -55,9 +55,13 @@ For an extra unsupported claim, quote that claim as the target. Keep correctly a
 when reporting another error; every blocking finding must describe its own concrete evidence-based defect.
 No vague preferences as blocking objections. accepted has no unmet requirements and no blocking findings.
 partial_accepted requires useful satisfied requirements, accurately disclosed unmet requirements and B's existing limitation.
+Both accepted and partial_accepted MUST have zero blocking findings. An honestly disclosed source gap
+that only leaves a requirement unanswered is not itself a blocking error, even for a mandatory requirement;
+record it in unmet_requirements and use partial_accepted when the remaining supported answer is useful.
+A limitation excuses an omission, never an unsupported assertion. Any actual blocking error requires decision findings.
 Coverage on acceptance must agree exactly with B. If not, use findings so B revises it; do not silently fix B.
 For corrections compare with prior_candidate, check losses/new errors and revision_log; regression_check must be checked.
-On the first draft regression_check is not_applicable, compared_candidate_id null. Never accept stale bindings.
+On the first draft regression_check is not_applicable, compared_candidate_id null, and both regression lists are empty. General first-draft findings belong only in findings, not in regression_check. Never accept stale bindings.
 '''
 }
 
