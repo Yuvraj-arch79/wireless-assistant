@@ -124,3 +124,17 @@ def test_successive_cases_are_paced_within_one_budget(monkeypatch):
         result = c.run(('correct', 'partial'))
     assert result['status'] == 'pass' and call.call_count == 2
     sleep.assert_called_once_with(40)
+
+
+def test_model_input_never_contains_test_case_labels():
+    for name in c.CASES:
+        p = c.case_payload(name)
+        assert not any(name in p['reviewed_binding'][key] for key in ('candidate_id', 'need_id', 'evidence_set_id', 'context_id'))
+        assert '_evaluation_case' not in p and 'expected_decision' not in p
+
+
+def test_regression_fixture_actually_loses_previously_correct_answer():
+    p = c.case_payload('regression')
+    assert '38.300 series describes Layers 2 and 3' in p['prior_candidate']['answer_markdown']
+    assert '38.300' not in p['candidate']['answer_markdown']
+    assert '38.200' in p['candidate']['answer_markdown']

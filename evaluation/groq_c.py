@@ -25,8 +25,8 @@ PASSAGE = 'ts38201-4.1.1-p7'
 def draft():
     return render_references({
         'action': 'submit_draft',
-        'answer_markdown': 'Layer 1 is described in TS 38.200 [1]. Layers 2 and 3 are described in TS 38.300 [1].',
-        'citations': [{'marker': '[1]', 'claim_anchor': 'Layer 1 is described', 'passage_ids': [PASSAGE]}],
+        'answer_markdown': 'The TS 38.200 series describes Layer 1 (Physical Layer) [1]. The 38.300 series describes Layers 2 and 3 [1].',
+        'citations': [{'marker': '[1]', 'claim_anchor': 'series describes Layer 1', 'passage_ids': [PASSAGE]}],
         'covered_requirements': ['r1', 'r2'], 'unresolved_requirements': [],
         'limitation_statement': None, 'revision_log': [],
     }, b_payload('supported')['evidence'])
@@ -52,7 +52,7 @@ def case_payload(name):
         p['prior_candidate'] = dict(prior, candidate_id='prior-candidate')
         p['prior_review'] = {'findings': [{'finding_id': 'prior-f1', 'finding_type': 'contradicted_claim',
             'blocking': True, 'target_claim_or_req': 'r1', 'reason': 'Correct the Layer 1 series using the supplied evidence.', 'evidence_ids': [PASSAGE]}]}
-        candidate['answer_markdown'] = candidate['answer_markdown'].replace(' Layers 2 and 3 are described in TS 38.300 [1].', '')
+        candidate['answer_markdown'] = candidate['answer_markdown'].replace(' The 38.300 series describes Layers 2 and 3 [1].', '')
         candidate['revision_log'] = [{'finding_id': 'prior-f1', 'disposition': 'changed', 'target': 'r1',
             'reason': 'Corrected Layer 1 series from the source.', 'evidence_ids': [PASSAGE]}]
         # Deliberately false coverage declaration: semantic reviewer must catch the lost answer.
@@ -62,11 +62,12 @@ def case_payload(name):
     candidate = ADAPTERS['B'].validate_python(candidate).model_dump(mode='json')
     validate_draft(candidate, p['need'], p['evidence'], p['prior_review'])
     p['candidate'] = candidate
+    opaque_id = digest({'fixture_seed': name})[:20]
     p['reviewed_binding'] = {
-        'candidate_id': 'candidate-' + name, 'candidate_hash': digest(candidate),
-        'need_id': 'need-' + name, 'need_hash': digest(p['need']),
-        'evidence_set_id': 'evidence-' + name, 'evidence_hash': digest(p['evidence']),
-        'context_id': 'context-' + name, 'context_hash': digest(p['original_context']),
+        'candidate_id': 'candidate-' + opaque_id, 'candidate_hash': digest(candidate),
+        'need_id': 'need-' + opaque_id, 'need_hash': digest(p['need']),
+        'evidence_set_id': 'evidence-' + opaque_id, 'evidence_hash': digest(p['evidence']),
+        'context_id': 'context-' + opaque_id, 'context_hash': digest(p['original_context']),
     }
     return p
 
@@ -101,7 +102,7 @@ def generate(name, p):
         raise AppError('FREE_TIER_NOT_CONFIRMED', 'Free-only confirmation required.')
     response = request('groq', 'POST', 'chat/completions', {
         'model': MODEL, 'temperature': 0, 'max_tokens': 2000,
-        'reasoning_effort': 'low', 'include_reasoning': False,
+        'reasoning_effort': 'medium', 'include_reasoning': False,
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': wire_schema('C')}},
         'messages': [{'role': 'system', 'content': instructions('C') + '\nTransport: wrap your original C output in the single key result. Do not change or rewrite the supplied candidate.'},
                      {'role': 'user', 'content': canonical(p)}],
