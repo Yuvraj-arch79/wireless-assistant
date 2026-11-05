@@ -72,6 +72,8 @@ def test_c_transport_uses_original_contract_no_a_prompt_or_answer_changes(monkey
     body = call.call_args.args[3]
     assert body['model'] == 'openai/gpt-oss-120b' and body['response_format']['json_schema']['strict']
     assert 'In A clarify' not in body['messages'][0]['content'] and 'tools' not in body
+    assert 'JSON schema:' not in body['messages'][0]['content']  # avoid competing flat/enveloped schemas
+    assert body['response_format']['json_schema']['schema']['required'] == ['result']
 
 
 @pytest.mark.parametrize('code', ('QUOTA', 'AUTH', 'OPERATION_TIMEOUT', 'READ_TIMEOUT'))

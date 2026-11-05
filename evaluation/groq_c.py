@@ -12,7 +12,7 @@ from evaluation.providers import free_confirmed, request
 from wireless_assistant.bounded import bounded
 from wireless_assistant.common import AppError, canonical, digest
 from wireless_assistant.contracts import ADAPTERS
-from wireless_assistant.prompts import instructions
+from wireless_assistant.prompts import COMMON, ROLES
 from wireless_assistant.validation import require, validate_draft, validate_review
 
 MIN_INTERVAL_SECONDS = 40
@@ -104,7 +104,7 @@ def generate(name, p):
         'model': MODEL, 'temperature': 0, 'max_tokens': 2000,
         'reasoning_effort': 'medium', 'include_reasoning': False,
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': wire_schema('C')}},
-        'messages': [{'role': 'system', 'content': instructions('C') + '\nTransport: wrap your original C output in the single key result. Do not change or rewrite the supplied candidate.'},
+        'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nThe response_format schema is authoritative. Return exactly one top-level key, result, containing the complete C review object. Do not return the review fields at the top level. Do not change or rewrite the supplied candidate.'},
                      {'role': 'user', 'content': canonical(p)}],
     }, diagnostics=True)
     choices = response.get('choices', [])
