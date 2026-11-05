@@ -6,7 +6,7 @@ import copy
 import json
 import os
 import time
-from evaluation.groq_contract import MODEL, inspect_response, wire_schema
+from evaluation.groq_contract import inspect_response, wire_schema
 from evaluation.openrouter_b import case_payload as b_payload, render_references
 from evaluation.providers import free_confirmed, request
 from wireless_assistant.bounded import bounded
@@ -15,6 +15,7 @@ from wireless_assistant.contracts import ADAPTERS
 from wireless_assistant.prompts import COMMON, ROLES
 from wireless_assistant.validation import require, validate_draft, validate_review
 
+MODEL = 'qwen/qwen3.8-27b'
 MIN_INTERVAL_SECONDS = 40
 RUN_SECONDS = 360
 
@@ -122,9 +123,9 @@ def generate(name, p):
         raise AppError('FREE_TIER_NOT_CONFIRMED', 'Free-only confirmation required.')
     response = request('groq', 'POST', 'chat/completions', {
         'model': MODEL, 'temperature': 0, 'max_tokens': 2000,
-        'reasoning_effort': 'medium', 'include_reasoning': False,
-        'response_format': {'type': 'json_object'},
-        'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nReturn the complete C review JSON object directly, without a result wrapper. Do not change or rewrite the supplied candidate. The backend will reject any output that does not satisfy this exact schema:\n' + canonical(schema_for(p))},
+        'reasoning_effort': 'medium', 'reasoning_format': 'hidden',
+        'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': schema_for(p)}},
+        'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nReturn the original flat C review object directly, without a result wrapper, following the response_format schema. Do not rewrite the supplied candidate.'},
                      {'role': 'user', 'content': canonical(p)}],
     }, diagnostics=True)
     choices = response.get('choices', [])
@@ -145,7 +146,7 @@ def generate(name, p):
 def run(cases=CASES):
     if not cases or len(set(cases)) != len(cases) or any(c not in CASES for c in cases):
         raise ValueError('Invalid case selection')
-    report = {'model': MODEL, 'transport': 'json_object_with_strict_backend_validation', 'commit': os.getenv('GITHUB_SHA', 'local'), 'generation_attempts': 0,
+    report = {'model': MODEL, 'transport': 'json_schema_with_strict_backend_validation', 'commit': os.getenv('GITHUB_SHA', 'local'), 'generation_attempts': 0,
               'maximum_calls': len(cases), 'metadata_calls': 0, 'retries': 0,
               'minimum_start_interval_seconds': MIN_INTERVAL_SECONDS, 'run_deadline_seconds': RUN_SECONDS, 'results': []}
     if not free_confirmed('groq'):
