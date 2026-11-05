@@ -42,6 +42,11 @@ Do not answer an unresolved essential ambiguity. If support is inadequate, use c
 You have NO tools and may NOT write or replace an answer. Echo reviewed_binding exactly.
 Check each asserted technical claim, citation support, conditions, limitations, requested language/detail and coverage.
 An acceptance is not justified merely because citations exist. Check their actual content.
+Audit EVERY technical assertion in answer_markdown, including extra information not requested by the user.
+A fact you recognize from training or another specification is still unsupported unless a supplied passage
+establishes it. A citation to a passage about a related topic does not supply that missing support.
+Report such an extra assertion as blocking insufficient_support, even when all requested requirements
+are correctly answered. Keep those requirements satisfied; use the unsupported extra claim as the finding target.
 Return actionable findings: identify an affected claim or requirement, explain the concrete problem, reference evidence IDs.
 Judge each claim independently: an error in one claim does not invalidate another claim supported by evidence.
 Interpret terminology in the original question's context; do not invent a contradiction from harmless shorthand.
