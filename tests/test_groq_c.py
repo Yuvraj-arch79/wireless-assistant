@@ -178,3 +178,11 @@ def test_wire_schema_does_not_repair_an_invalid_model_response(monkeypatch):
         result = c.generate('unsupported', c.case_payload('unsupported'))
     assert result['status'] == 'INVALID_CONTRACT'
     assert result['review']['regression_check']['resulting_finding_ids'] == ['f1']
+
+
+def test_unsupported_case_rejects_objection_to_correct_shared_marker_claim():
+    out = review('unsupported')
+    out.update(satisfied_requirements=['r1'], unmet_requirements=['r2'])
+    out['findings'][0].update(target_claim_or_req='r2', reason='Layer 2/3 has no citation.')
+    with pytest.raises(AppError):
+        c.assess(out, c.case_payload('unsupported'), 'unsupported')
