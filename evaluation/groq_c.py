@@ -123,8 +123,8 @@ def generate(name, p):
     response = request('groq', 'POST', 'chat/completions', {
         'model': MODEL, 'temperature': 0, 'max_tokens': 2000,
         'reasoning_effort': 'medium', 'include_reasoning': False,
-        'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': schema_for(p)}},
-        'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nThe response_format schema is authoritative. Return the complete C review object directly: reviewed_binding, decision, satisfied_requirements, unmet_requirements, findings, regression_check. Do not add a result wrapper. Do not change or rewrite the supplied candidate.'},
+        'response_format': {'type': 'json_object'},
+        'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nReturn the complete C review JSON object directly, without a result wrapper. Do not change or rewrite the supplied candidate. The backend will reject any output that does not satisfy this exact schema:\n' + canonical(schema_for(p))},
                      {'role': 'user', 'content': canonical(p)}],
     }, diagnostics=True)
     choices = response.get('choices', [])
@@ -145,7 +145,7 @@ def generate(name, p):
 def run(cases=CASES):
     if not cases or len(set(cases)) != len(cases) or any(c not in CASES for c in cases):
         raise ValueError('Invalid case selection')
-    report = {'model': MODEL, 'commit': os.getenv('GITHUB_SHA', 'local'), 'generation_attempts': 0,
+    report = {'model': MODEL, 'transport': 'json_object_with_strict_backend_validation', 'commit': os.getenv('GITHUB_SHA', 'local'), 'generation_attempts': 0,
               'maximum_calls': len(cases), 'metadata_calls': 0, 'retries': 0,
               'minimum_start_interval_seconds': MIN_INTERVAL_SECONDS, 'run_deadline_seconds': RUN_SECONDS, 'results': []}
     if not free_confirmed('groq'):
