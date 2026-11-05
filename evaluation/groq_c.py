@@ -99,7 +99,9 @@ def assess(out, p, name):
 
 def schema_for(p):
     """Constrain backend-owned identities and review phase, never the decision."""
-    schema = copy.deepcopy(wire_schema('C'))
+    wrapped = wire_schema('C')
+    schema = copy.deepcopy(wrapped['properties']['result'])
+    schema['$defs'] = copy.deepcopy(wrapped['$defs'])
     definitions = schema['$defs']
     for field, value in p['reviewed_binding'].items():
         definitions['Binding']['properties'][field] = {'type': 'string', 'enum': [value]}
@@ -122,14 +124,14 @@ def generate(name, p):
         'model': MODEL, 'temperature': 0, 'max_tokens': 2000,
         'reasoning_effort': 'medium', 'include_reasoning': False,
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': schema_for(p)}},
-        'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nThe response_format schema is authoritative. Return exactly one top-level key, result, containing the complete C review object. Do not return the review fields at the top level. Do not change or rewrite the supplied candidate.'},
+        'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nThe response_format schema is authoritative. Return the complete C review object directly: reviewed_binding, decision, satisfied_requirements, unmet_requirements, findings, regression_check. Do not add a result wrapper. Do not change or rewrite the supplied candidate.'},
                      {'role': 'user', 'content': canonical(p)}],
     }, diagnostics=True)
     choices = response.get('choices', [])
     require(len(choices) == 1 and choices[0].get('finish_reason') == 'stop' and not choices[0].get('message', {}).get('tool_calls'), 'Incomplete or tool response.')
     raw = choices[0].get('message', {}).get('content')
     require(isinstance(raw, str) and bool(raw) and len(raw.encode('utf-8')) <= 65536, 'Missing or oversized response.')
-    result = inspect_response(raw, 'C', wrapped=True)
+    result = inspect_response(raw, 'C', wrapped=False)
     if result['status'] != 'pass':
         return result
     out = result['value']

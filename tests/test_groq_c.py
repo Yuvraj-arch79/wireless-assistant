@@ -65,7 +65,7 @@ def test_malformed_semantics_rejected(kind):
 def test_c_transport_uses_original_contract_no_a_prompt_or_answer_changes(monkeypatch):
     monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
     p = c.case_payload('correct'); before = copy.deepcopy(p)
-    response = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps({'result': review()})}}]}
+    response = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(review())}}]}
     with patch.object(c, 'request', return_value=response) as call:
         assert c.generate('correct', p)['status'] == 'pass'
     assert p == before and call.call_count == 1
@@ -73,7 +73,8 @@ def test_c_transport_uses_original_contract_no_a_prompt_or_answer_changes(monkey
     assert body['model'] == 'openai/gpt-oss-120b' and body['response_format']['json_schema']['strict']
     assert 'In A clarify' not in body['messages'][0]['content'] and 'tools' not in body
     assert 'JSON schema:' not in body['messages'][0]['content']  # avoid competing flat/enveloped schemas
-    assert body['response_format']['json_schema']['schema']['required'] == ['result']
+    assert set(body['response_format']['json_schema']['schema']['required']) == set(ADAPTERS['C'].json_schema()['required'])
+    assert 'result' not in body['response_format']['json_schema']['schema']['properties']
 
 
 @pytest.mark.parametrize('code', ('QUOTA', 'AUTH', 'OPERATION_TIMEOUT', 'READ_TIMEOUT'))
@@ -152,7 +153,7 @@ def test_first_review_cannot_claim_regression(field):
 
 def test_wire_constraints_bind_first_review_without_setting_its_verdict():
     p = c.case_payload('unsupported'); schema = c.schema_for(p)
-    assert schema['properties']['result']['properties']['decision']['enum'] == ['accepted', 'partial_accepted', 'findings']
+    assert schema['properties']['decision']['enum'] == ['accepted', 'partial_accepted', 'findings']
     for key, value in p['reviewed_binding'].items():
         assert schema['$defs']['Binding']['properties'][key]['enum'] == [value]
     regression = schema['$defs']['Regression']['properties']
@@ -172,7 +173,7 @@ def test_wire_revision_allows_findings_and_binds_the_actual_prior_candidate():
 def test_wire_schema_does_not_repair_an_invalid_model_response(monkeypatch):
     monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
     out = review('unsupported'); out['regression_check']['resulting_finding_ids'] = ['f1']
-    response = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps({'result': out})}}]}
+    response = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(out)}}]}
     with patch.object(c, 'request', return_value=response):
         result = c.generate('unsupported', c.case_payload('unsupported'))
     assert result['status'] == 'INVALID_CONTRACT'
