@@ -49,6 +49,10 @@ against the passage separately: sharing a marker does not make an unsupported ex
 Preserve conditions, limitations,
 language/detail and version scope. A fact known from training is unsupported unless supplied evidence
 establishes it. A related-topic citation does not establish an extra assertion.
+Finding types have distinct meanings: contradicted_claim ONLY when a supplied passage establishes
+an incompatible fact; insufficient_support when the supplied passages do not establish an assertion.
+Absence of support is NOT a contradiction. Use missing_user_requirement for an undisclosed omission
+or false coverage, and presentation_problem for a concrete presentation defect.
 Judge each claim independently; a wrong claim never makes another supported claim wrong.
 Interpret harmless shorthand in the question's context, without inventing contradictions.
 
