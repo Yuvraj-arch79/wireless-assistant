@@ -148,3 +148,32 @@ def test_first_review_cannot_claim_regression(field):
     out['regression_check'][field] = ['r1'] if field == 'lost_or_changed_requirement_ids' else ['f1']
     with pytest.raises(AppError, match='First review cannot claim regression'):
         c.assess(out, c.case_payload('unsupported'), 'unsupported')
+
+
+def test_wire_constraints_bind_first_review_without_setting_its_verdict():
+    p = c.case_payload('unsupported'); schema = c.schema_for(p)
+    assert schema['properties']['result']['properties']['decision']['enum'] == ['accepted', 'partial_accepted', 'findings']
+    for key, value in p['reviewed_binding'].items():
+        assert schema['$defs']['Binding']['properties'][key]['enum'] == [value]
+    regression = schema['$defs']['Regression']['properties']
+    assert regression['status']['enum'] == ['not_applicable']
+    assert regression['compared_candidate_id'] == {'type': 'null'}
+    assert regression['resulting_finding_ids']['maxItems'] == regression['lost_or_changed_requirement_ids']['maxItems'] == 0
+
+
+def test_wire_revision_allows_findings_and_binds_the_actual_prior_candidate():
+    schema = c.schema_for(c.case_payload('regression'))
+    regression = schema['$defs']['Regression']['properties']
+    assert regression['status']['enum'] == ['checked']
+    assert regression['compared_candidate_id']['enum'] == ['prior-candidate']
+    assert 'maxItems' not in regression['resulting_finding_ids']
+
+
+def test_wire_schema_does_not_repair_an_invalid_model_response(monkeypatch):
+    monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
+    out = review('unsupported'); out['regression_check']['resulting_finding_ids'] = ['f1']
+    response = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps({'result': out})}}]}
+    with patch.object(c, 'request', return_value=response):
+        result = c.generate('unsupported', c.case_payload('unsupported'))
+    assert result['status'] == 'INVALID_CONTRACT'
+    assert result['review']['regression_check']['resulting_finding_ids'] == ['f1']

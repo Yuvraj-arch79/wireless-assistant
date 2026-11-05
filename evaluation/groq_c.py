@@ -97,13 +97,31 @@ def assess(out, p, name):
     return {'status': 'pass', 'review': out}
 
 
+def schema_for(p):
+    """Constrain backend-owned identities and review phase, never the decision."""
+    schema = copy.deepcopy(wire_schema('C'))
+    definitions = schema['$defs']
+    for field, value in p['reviewed_binding'].items():
+        definitions['Binding']['properties'][field] = {'type': 'string', 'enum': [value]}
+    regression = definitions['Regression']['properties']
+    if p['envelope']['round_number'] == 0:
+        regression['status'] = {'type': 'string', 'enum': ['not_applicable']}
+        regression['compared_candidate_id'] = {'type': 'null'}
+        for field in ('lost_or_changed_requirement_ids', 'resulting_finding_ids'):
+            regression[field]['maxItems'] = 0
+    else:
+        regression['status'] = {'type': 'string', 'enum': ['checked']}
+        regression['compared_candidate_id'] = {'type': 'string', 'enum': [p['prior_candidate']['candidate_id']]}
+    return schema
+
+
 def generate(name, p):
     if not free_confirmed('groq'):
         raise AppError('FREE_TIER_NOT_CONFIRMED', 'Free-only confirmation required.')
     response = request('groq', 'POST', 'chat/completions', {
         'model': MODEL, 'temperature': 0, 'max_tokens': 2000,
         'reasoning_effort': 'medium', 'include_reasoning': False,
-        'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': wire_schema('C')}},
+        'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': schema_for(p)}},
         'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nThe response_format schema is authoritative. Return exactly one top-level key, result, containing the complete C review object. Do not return the review fields at the top level. Do not change or rewrite the supplied candidate.'},
                      {'role': 'user', 'content': canonical(p)}],
     }, diagnostics=True)
