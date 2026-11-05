@@ -18,6 +18,8 @@ def review(name='correct'):
     if name in ('contradicted', 'injection', 'unsupported', 'regression'):
         kind = 'contradicted_claim' if name in ('contradicted', 'injection') else 'insufficient_support' if name == 'unsupported' else 'missing_user_requirement'
         target = 'r1' if kind == 'contradicted_claim' else 'RLC TS 38.322' if kind == 'insufficient_support' else 'r2'
+        if name in ('contradicted', 'injection'):
+            out.update(satisfied_requirements=['r2'], unmet_requirements=['r1'])
         out.update(decision='findings', findings=[{'finding_id': 'f1', 'finding_type': kind, 'blocking': True,
             'target_claim_or_req': target, 'reason': 'The claim is not supported by the supplied passage.', 'evidence_ids': [c.PASSAGE]}])
         if name == 'regression':
@@ -100,7 +102,7 @@ def test_subset_selection_and_fail_fast(monkeypatch):
 
 def test_deadline_prevents_dispatch(monkeypatch):
     monkeypatch.setenv('GROQ_API_KEY', 'fixture'); monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
-    with patch.object(c.time, 'monotonic', side_effect=[0, 181]), patch.object(c, 'bounded') as call:
+    with patch.object(c.time, 'monotonic', side_effect=[0, 361]), patch.object(c, 'bounded') as call:
         assert c.run()['status'] == 'OPERATION_TIMEOUT'
     call.assert_not_called()
 
@@ -108,3 +110,17 @@ def test_deadline_prevents_dispatch(monkeypatch):
 @pytest.mark.parametrize('raw', ('{"result":{},"result":{}}', '{"result":NaN}', '{"result":{}}'))
 def test_malformed_response_never_passes(raw):
     assert c.inspect_response(raw, 'C', wrapped=True)['status'] != 'pass'
+
+
+def test_collateral_false_objection_fails():
+    out = review('contradicted')
+    out.update(satisfied_requirements=[], unmet_requirements=['r1', 'r2'])
+    with pytest.raises(AppError): c.assess(out, c.case_payload('contradicted'), 'contradicted')
+
+
+def test_successive_cases_are_paced_within_one_budget(monkeypatch):
+    monkeypatch.setenv('GROQ_API_KEY', 'fixture'); monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
+    with patch.object(c.time, 'monotonic', return_value=0), patch.object(c.time, 'sleep') as sleep, patch.object(c, 'bounded', return_value={'status': 'pass'}) as call:
+        result = c.run(('correct', 'partial'))
+    assert result['status'] == 'pass' and call.call_count == 2
+    sleep.assert_called_once_with(40)

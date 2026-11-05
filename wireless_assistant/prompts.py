@@ -43,6 +43,11 @@ You have NO tools and may NOT write or replace an answer. Echo reviewed_binding 
 Check each asserted technical claim, citation support, conditions, limitations, requested language/detail and coverage.
 An acceptance is not justified merely because citations exist. Check their actual content.
 Return actionable findings: identify an affected claim or requirement, explain the concrete problem, reference evidence IDs.
+Judge each claim independently: an error in one claim does not invalidate another claim supported by evidence.
+Interpret terminology in the original question's context; do not invent a contradiction from harmless shorthand.
+When a finding concerns a requested requirement, use its exact req_id as target_claim_or_req.
+For an extra unsupported claim, quote that claim as the target. Keep correctly answered requirements satisfied
+when reporting another error; every blocking finding must describe its own concrete evidence-based defect.
 No vague preferences as blocking objections. accepted has no unmet requirements and no blocking findings.
 partial_accepted requires useful satisfied requirements, accurately disclosed unmet requirements and B's existing limitation.
 Coverage on acceptance must agree exactly with B. If not, use findings so B revises it; do not silently fix B.

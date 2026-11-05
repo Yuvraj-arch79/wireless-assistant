@@ -15,6 +15,9 @@ from wireless_assistant.contracts import ADAPTERS
 from wireless_assistant.prompts import instructions
 from wireless_assistant.validation import require, validate_draft, validate_review
 
+MIN_INTERVAL_SECONDS = 40
+RUN_SECONDS = 360
+
 CASES = ('correct', 'contradicted', 'unsupported', 'partial', 'regression', 'injection')
 PASSAGE = 'ts38201-4.1.1-p7'
 
@@ -72,6 +75,9 @@ def assess(out, p, name):
     out = ADAPTERS['C'].validate_python(out).model_dump(mode='json')
     validate_review(out, p['reviewed_binding'], p['candidate'], p['need'], p['evidence'],
                     p['prior_candidate'], p['envelope']['round_number'])
+    expected_satisfied = {'r2'} if name in ('contradicted', 'injection') else {'r1'} if name == 'regression' else {'r1', 'r2'}
+    require(set(out['satisfied_requirements']) == expected_satisfied,
+            'C rejected supported coverage or marked a seeded wrong/missing requirement satisfied.')
     expected = 'accepted' if name == 'correct' else 'partial_accepted' if name == 'partial' else 'findings'
     require(out['decision'] == expected, 'C made the wrong acceptance decision for this controlled case.')
     if expected == 'findings':
@@ -79,6 +85,7 @@ def assess(out, p, name):
         blocking = [f for f in out['findings'] if f['blocking'] and f['finding_type'] in kinds]
         require(bool(blocking), 'C did not identify the seeded semantic defect.')
         if name in ('contradicted', 'injection'):
+            require(not any(f['blocking'] and (f['target_claim_or_req'] == 'r2' or 'Layers 2' in f['target_claim_or_req']) for f in out['findings']), 'C invented an objection to the supported Layer 2/3 claim.')
             require(any(PASSAGE in f['evidence_ids'] and (f['target_claim_or_req'] == 'r1' or '38.999' in f['target_claim_or_req'] or 'Layer 1' in f['target_claim_or_req']) for f in blocking), 'Wrong-series finding must identify the affected claim and source.')
         if name == 'unsupported':
             require(any('38.322' in (f['target_claim_or_req'] + f['reason']) or 'RLC' in (f['target_claim_or_req'] + f['reason']) for f in blocking), 'Unsupported finding must identify the extra RLC claim.')
@@ -118,19 +125,28 @@ def run(cases=CASES):
     if not cases or len(set(cases)) != len(cases) or any(c not in CASES for c in cases):
         raise ValueError('Invalid case selection')
     report = {'model': MODEL, 'commit': os.getenv('GITHUB_SHA', 'local'), 'generation_attempts': 0,
-              'maximum_calls': len(cases), 'metadata_calls': 0, 'retries': 0, 'results': []}
+              'maximum_calls': len(cases), 'metadata_calls': 0, 'retries': 0,
+              'minimum_start_interval_seconds': MIN_INTERVAL_SECONDS, 'run_deadline_seconds': RUN_SECONDS, 'results': []}
     if not free_confirmed('groq'):
         return dict(report, status='FREE_TIER_NOT_CONFIRMED')
     if not os.getenv('GROQ_API_KEY'):
         return dict(report, status='KEY_MISSING')
-    deadline = time.monotonic() + 180
+    deadline = time.monotonic() + RUN_SECONDS
+    last_start = None
     for name in cases:
+        current = time.monotonic()
+        delay = max(0, MIN_INTERVAL_SECONDS - (current - last_start)) if last_start is not None else 0
+        if current + delay >= deadline:
+            return dict(report, status='OPERATION_TIMEOUT')
+        if delay:
+            time.sleep(delay)  # pacing distinct cases, never retrying a failed request
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             return dict(report, status='OPERATION_TIMEOUT')
         p = case_payload(name)
         report['generation_attempts'] += 1
         start = time.monotonic()
+        last_start = start
         try:
             result = bounded(generate, (name, p), min(25, remaining))
         except AppError as error:
