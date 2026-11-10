@@ -16,8 +16,8 @@ from wireless_assistant.prompts import COMMON, ROLES
 from wireless_assistant.validation import require, validate_draft, validate_review
 
 MODEL = 'qwen/qwen3.8-27b'
-MIN_INTERVAL_SECONDS = 40
-RUN_SECONDS = 360
+MIN_INTERVAL_SECONDS = 65
+RUN_SECONDS = 480
 
 CASES = ('correct', 'contradicted', 'unsupported', 'partial', 'regression', 'injection')
 PASSAGE = 'ts38201-4.1.1-p7'

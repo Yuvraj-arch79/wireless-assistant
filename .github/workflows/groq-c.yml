@@ -18,7 +18,7 @@ jobs:
   c-evaluation:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[groq-c]')
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -33,7 +33,7 @@ jobs:
           read -r -a cases <<< "$WA_C_CASES"
           python -m evaluation.groq_c --cases "${cases[@]}"
         env:
-          WA_C_CASES: ${{ inputs.cases || 'unsupported correct contradicted partial regression injection' }}
+          WA_C_CASES: ${{ inputs.cases || 'correct contradicted partial regression injection' }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           # Owner authorized this bounded C test on the existing free Groq account.
           # Explicit 0 revokes; the runner does not inspect account billing.

@@ -106,7 +106,7 @@ def test_subset_selection_and_fail_fast(monkeypatch):
 
 def test_deadline_prevents_dispatch(monkeypatch):
     monkeypatch.setenv('GROQ_API_KEY', 'fixture'); monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
-    with patch.object(c.time, 'monotonic', side_effect=[0, 361]), patch.object(c, 'bounded') as call:
+    with patch.object(c.time, 'monotonic', side_effect=[0, c.RUN_SECONDS + 1]), patch.object(c, 'bounded') as call:
         assert c.run()['status'] == 'OPERATION_TIMEOUT'
     call.assert_not_called()
 
@@ -127,7 +127,7 @@ def test_successive_cases_are_paced_within_one_budget(monkeypatch):
     with patch.object(c.time, 'monotonic', return_value=0), patch.object(c.time, 'sleep') as sleep, patch.object(c, 'bounded', return_value={'status': 'pass'}) as call:
         result = c.run(('correct', 'partial'))
     assert result['status'] == 'pass' and call.call_count == 2
-    sleep.assert_called_once_with(40)
+    sleep.assert_called_once_with(c.MIN_INTERVAL_SECONDS)
 
 
 def test_model_input_never_contains_test_case_labels():
