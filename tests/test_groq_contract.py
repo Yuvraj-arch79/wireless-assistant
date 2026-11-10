@@ -98,6 +98,25 @@ def test_error_details_do_not_echo_input():
     assert 'PRIVATE' not in detail and 'gsk' not in detail and 'ABC' not in detail
 
 
+def test_quota_transport_reports_safe_limit_without_identity(monkeypatch):
+    import httpx
+    from evaluation import providers
+    monkeypatch.setenv('GROQ_API_KEY', 'private-key')
+    raw = {'error': {'message': 'Rate limit on tokens per day (TPD) for org_SECRET: Limit 200000, Used 199000, Requested 4000. Key private-key', 'failed_generation': 'private answer'}}
+    headers = {'retry-after': '120', 'x-ratelimit-reset-tokens': '2m1.2s', 'x-ratelimit-remaining-tokens': 'private-key', 'authorization': 'private-key'}
+    client = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(429, json=raw, headers=headers)))
+    with patch.object(providers.httpx, 'Client', return_value=client), pytest.raises(AppError) as caught:
+        providers.request('groq', 'POST', 'chat/completions', {}, diagnostics=True)
+    assert caught.value.code == 'QUOTA'
+    assert json.loads(caught.value.message) == {'scope': 'TPD', 'limit': 200000, 'used': 199000, 'requested': 4000, 'retry-after': '120', 'x-ratelimit-reset-tokens': '2m1.2s'}
+
+
+@pytest.mark.parametrize('raw', [b'not json', b'[]', b'{"error":null}', b'{"error":{"message":[]}}'])
+def test_quota_malformed_body_has_no_private_output(raw):
+    from evaluation.providers import safe_quota_detail
+    assert json.loads(safe_quota_detail(raw, {'retry-after': 'private', 'x-ratelimit-reset-tokens': 'NaN'})) == {}
+
+
 def test_discriminator_precedes_shared_fields():
     schema=wire_schema('A')['$defs']
     for name in ['AClarify','ACollect','AReady','AOut']:

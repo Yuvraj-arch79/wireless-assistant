@@ -96,6 +96,17 @@ def test_missing_configuration_never_calls(monkeypatch, missing):
     call.assert_not_called()
 
 
+def test_quota_diagnostics_keep_only_counters(monkeypatch):
+    monkeypatch.setenv('GROQ_API_KEY', 'fixture'); monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
+    detail = {'scope': 'TPD', 'limit': 200000, 'used': 199000, 'requested': 4000,
+              'retry-after': '120', 'x-ratelimit-reset-tokens': '2m1.2s', 'private': 'secret'}
+    with patch.object(c, 'bounded', side_effect=AppError('QUOTA', json.dumps(detail))) as call:
+        result = c.run(('contradicted',))
+    assert call.call_count == 1 and result['results'][0]['quota']['scope'] == 'TPD'
+    assert result['results'][0]['quota']['requested'] == 4000
+    assert 'private' not in json.dumps(result) and 'secret' not in json.dumps(result)
+
+
 def test_subset_selection_and_fail_fast(monkeypatch):
     monkeypatch.setenv('GROQ_API_KEY', 'fixture'); monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
     with patch.object(c, 'bounded', return_value={'status': 'INVALID_CONTRACT'}) as call:

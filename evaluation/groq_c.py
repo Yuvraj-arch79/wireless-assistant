@@ -8,7 +8,7 @@ import os
 import time
 from evaluation.groq_contract import inspect_response, wire_schema
 from evaluation.openrouter_b import case_payload as b_payload, render_references
-from evaluation.providers import free_confirmed, request
+from evaluation.providers import free_confirmed, request, safe_quota_detail
 from wireless_assistant.bounded import bounded
 from wireless_assistant.common import AppError, canonical, digest
 from wireless_assistant.contracts import ADAPTERS
@@ -175,6 +175,20 @@ def run(cases=CASES):
             result = {'status': error.code}
             if error.code == 'HTTP_400':
                 result['detail'] = error.message  # transport whitelist, not raw provider text
+            if error.code == 'QUOTA':
+                # Revalidate the transport's serialized numeric whitelist.
+                try:
+                    detail = json.loads(error.message)
+                    if isinstance(detail, dict):
+                        safe = json.loads(safe_quota_detail(b'', detail))
+                        for field in ('limit', 'used', 'requested'):
+                            if type(detail.get(field)) is int and 0 <= detail[field] < 10**12:
+                                safe[field] = detail[field]
+                        if detail.get('scope') in ('TPM', 'TPD', 'RPM', 'RPD', 'ITPM', 'OTPM'):
+                            safe['scope'] = detail['scope']
+                        result['quota'] = safe
+                except (ValueError, TypeError):
+                    pass
         result.update(case=name, seconds=round(time.monotonic() - start, 3), input_sha256=digest(p))
         report['results'].append(result)
         if result['status'] != 'pass':

@@ -32,6 +32,27 @@ def safe_error_detail(raw):
     return '; '.join(parts)[:1500] or 'unavailable'
 
 
+def safe_quota_detail(raw, headers):
+    """Only numeric quota counters/durations; never echo identities or prompts."""
+    detail = {}
+    for name in ('retry-after', 'x-ratelimit-limit-requests', 'x-ratelimit-limit-tokens',
+                 'x-ratelimit-remaining-requests', 'x-ratelimit-remaining-tokens',
+                 'x-ratelimit-reset-requests', 'x-ratelimit-reset-tokens'):
+        value = headers.get(name, '')
+        if isinstance(value, str) and re.fullmatch(r'(?:[0-9]{1,12}(?:\.[0-9]{1,6})?(?:ms|s|m|h|d)?){1,5}', value):
+            detail[name] = value
+    try: error = load_json(raw.decode('utf-8')).get('error', {})
+    except (ValueError, UnicodeError, AttributeError): error = {}
+    message = error.get('message', '') if isinstance(error, dict) else ''
+    if isinstance(message, str):
+        for scope in ('TPM', 'TPD', 'RPM', 'RPD', 'ITPM', 'OTPM'):
+            if re.search(r'\b' + scope + r'\b', message[:4096]): detail['scope'] = scope
+        for label in ('Limit', 'Used', 'Requested'):
+            match = re.search(r'\b' + label + r'\s*:?\s*([0-9]{1,12})(?![0-9])\b', message[:4096], re.I)
+            if match: detail[label.lower()] = int(match.group(1))
+    return canonical(detail)
+
+
 def request(provider, method, path, body=None, *, diagnostics=False):
     key = os.getenv(provider.upper() + '_API_KEY')
     if not key:
@@ -43,12 +64,14 @@ def request(provider, method, path, body=None, *, diagnostics=False):
                 if response.status_code != 200:
                     code = {401:'AUTH',403:'AUTH',429:'QUOTA',404:'MODEL_UNAVAILABLE'}.get(response.status_code, 'HTTP_' + str(response.status_code))
                     detail = 'Provider request failed.'
-                    if diagnostics and response.status_code == 400:
+                    if diagnostics and response.status_code in (400, 429):
                         raw_error = bytearray()
                         for part in response.iter_bytes():
                             raw_error.extend(part)
                             if len(raw_error) > 65536: break
-                        if len(raw_error) <= 65536: detail = safe_error_detail(raw_error)
+                        if response.status_code == 429:
+                            detail = safe_quota_detail(raw_error if len(raw_error) <= 65536 else b'', response.headers)
+                        elif len(raw_error) <= 65536: detail = safe_error_detail(raw_error)
                     raise AppError(code, detail, response.status_code)
                 raw = bytearray()
                 for part in response.iter_bytes():
