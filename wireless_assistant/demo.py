@@ -6,8 +6,7 @@ BUILD = 'nr-series-demo-v1'
 DOCUMENT = 'nr-series-demo-document'
 PASSAGE = 'nr-series-demo-p7'
 TEXT = 'The TS 38.200 series describes the Layer 1 (Physical Layer) specifications. Layers 2 and 3 are described in the 38.300 series.'
-SOURCE = 'https://www.etsi.org/deliver/etsi_ts/138200/138299/138201/18.00.00_60/ts_138201v180000p.pdf'
-SOURCE = SOURCE.replace('138200/138299', '138200_138299')
+SOURCE = 'https://www.etsi.org/deliver/etsi_ts/138200_138299/138201/18.00.00_60/ts_138201v180000p.pdf'
 PDF_HASH = 'f33e4ab236e9c21450f54e20f99dd5e031a0d269bf27e69212bfe610fbdbbdf2'
 NOTICE = 'Limited live demo: one source excerpt, TS 38.201 v18.0.0, clause 4.1.1 (page 7). Covers Layer 1/2/3 specification series only. Full 12-document hybrid retrieval is a separate setup.'
 
@@ -31,9 +30,8 @@ def prepare(store):
         raise AppError('DEMO_CONFIG', 'Select the explicit demo command.')
     with store.transaction() as db:
         if db.execute('SELECT 1 FROM corpus_builds').fetchone():
-            existing = True
+            pass
         else:
-            existing = False
             insert(db,'corpus_builds',build_id=BUILD,fingerprint=digest(TEXT),manifest_json=canonical({'demo':True,'pdf_sha256':PDF_HASH}),config_json=canonical({'retrieval':'lexical_preview','demo':True}),status='VALIDATED',created_at=now())
             insert(db,'source_documents',document_id=DOCUMENT,build_id=BUILD,spec_number='38.201',title='Physical layer; general description (demo excerpt)',release='18',version='18.0.0',source_uri=SOURCE,file_hash=PDF_HASH,parser_config_hash='manually-verified-excerpt-v1')
             insert(db,'passages',passage_id=PASSAGE,document_id=DOCUMENT,build_id=BUILD,clause_id='4.1.1',clause_title='Layer 1 and Layer 2/3 specification series',page_location='7',content_text=TEXT,content_hash=text_hash(TEXT),structure_json=canonical({'kind':'text','cross_references':[]}),unreadable=0)

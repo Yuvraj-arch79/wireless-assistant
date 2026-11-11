@@ -55,6 +55,7 @@ class Settings(BaseModel):
                 values[field] = model
             values.setdefault('active_seconds', 300)
             values.setdefault('max_active', 1)
+            values.setdefault('role_input_bound', 48000)
         return values
 
     @model_validator(mode="after")
@@ -71,7 +72,7 @@ class Settings(BaseModel):
         data = self.model_dump(mode="json", exclude={"data_dir"})
         data["contract_version"] = "1"
         data["tokenizer_version"] = "utf8-byte-upper-bound-v1"
-        data["prompt_version"] = "abc-v1"
+        data["prompt_version"] = "abc-mixed-v1" if self.provider_profile == "groq_openrouter" else "abc-v1"
         return data
 
     @property

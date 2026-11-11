@@ -10,7 +10,7 @@ from .contracts import ADAPTERS
 from .corpus import Corpus, search_worker
 from .prompts import instructions
 from .provider import generate, embed
-from .role_provider import generate as generate_mixed, configured
+from .role_provider import generate as generate_mixed, configured, build_request
 from .store import Store, insert, row, TERMINAL
 from .validation import validate_need, validate_draft, validate_review, require
 from .local_tools import local_tool_worker
@@ -155,9 +155,14 @@ class Engine:
                 if self.workers.get(rid) is w:
                     self.workers.pop(rid,None)
 
+    def request_size(self,role,payload):
+        if self.settings.provider_profile=='groq_openrouter':
+            return token_bound(canonical(build_request(role,getattr(self.settings,'model_'+role.lower()),payload,self.settings.role_output_tokens)))
+        return token_bound(instructions(role)+canonical(payload))
+
     def call(self,rid,w,role,payload,validate=lambda value:None):
         system=instructions(role)
-        request_size=token_bound(system+canonical(payload))
+        request_size=self.request_size(role,payload)
         if request_size>self.settings.role_input_bound:
             raise AppError('CONTEXT_LIMIT','Required context is too large. Narrow the question; essential details were not dropped.',413)
         retry=False;repair=False
@@ -199,7 +204,7 @@ class Engine:
                 if counters['format_repairs']>=self.settings.max_repairs or repair:
                     raise AppError('INVALID_CONTRACT','The AI response failed validation; no unchecked draft was released.',502) from None
                 payload={**payload,'contract_error':str(exc)[:700]}
-                request_size=token_bound(system+canonical(payload))
+                request_size=self.request_size(role,payload)
                 if request_size>self.settings.role_input_bound:
                     raise AppError('CONTEXT_LIMIT','Required repair context exceeds the limit.',413)
                 repair=True

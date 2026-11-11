@@ -12,7 +12,9 @@ MODELS = {'A': 'openai/gpt-oss-120b', 'B': 'nvidia/nemotron-3.5-super-vl:free', 
 def configured(settings):
     if settings.provider_profile == 'gemini':
         return bool(os.getenv('GEMINI_API_KEY')) and os.getenv('WA_FREE_TIER_CONFIRMED') == '1'
-    return all(os.getenv(p + '_API_KEY') and os.getenv('WA_' + p + '_FREE_TIER_CONFIRMED') == '1' for p in ('GROQ', 'OPENROUTER'))
+    chat = all(os.getenv(p + '_API_KEY') and os.getenv('WA_' + p + '_FREE_TIER_CONFIRMED') == '1' for p in ('GROQ', 'OPENROUTER'))
+    embeddings = settings.demo_mode or (bool(os.getenv('GEMINI_API_KEY')) and os.getenv('WA_FREE_TIER_CONFIRMED') == '1')
+    return chat and embeddings
 
 
 def request(role, body):
@@ -46,7 +48,7 @@ def request(role, body):
         raise AppError('PROVIDER_FORMAT', 'Invalid provider JSON.', 502) from None
 
 
-def generate(role, model, system, payload, output_tokens):
+def build_request(role, model, payload, output_tokens):
     if role not in MODELS or model != MODELS[role]:
         raise AppError('MODEL_CONFIG', 'Unsupported role/model configuration.', 503)
     if role == 'A':
@@ -61,9 +63,13 @@ def generate(role, model, system, payload, output_tokens):
         prompt = COMMON + ROLES['C'] + '\nReturn the C review fields in the response_format schema directly, without a result wrapper. Do not echo reviewed_binding; the server binds this response to the exact input versions. Do not rewrite the supplied candidate.'
         schema = compact_c_schema(payload)
         extra = {'reasoning_effort': 'low', 'reasoning_format': 'hidden'}
-    result = request(role, {'model': model, 'temperature': 0, 'max_tokens': min(output_tokens, 900 if role == 'C' else 2000), **extra,
+    return {'model': model, 'temperature': 0, 'max_tokens': min(output_tokens, 900 if role == 'C' else 2000), **extra,
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_' + role, 'strict': True, 'schema': schema}},
-        'messages': [{'role': 'system', 'content': prompt}, {'role': 'user', 'content': canonical(payload)}]})
+        'messages': [{'role': 'system', 'content': prompt}, {'role': 'user', 'content': canonical(payload)}]}
+
+
+def generate(role, model, system, payload, output_tokens):
+    result = request(role, build_request(role, model, payload, output_tokens))
     choices = result.get('choices', [])
     if len(choices) != 1 or choices[0].get('finish_reason') != 'stop' or choices[0].get('message', {}).get('tool_calls'):
         raise AppError('PROVIDER_INCOMPLETE', 'Provider output was incomplete; no unchecked answer was released.', 502)

@@ -36,11 +36,12 @@ def run(engine_factory=None):
                 reviews=[dict(r) for r in db.execute('SELECT * FROM reviews WHERE run_id=?',(rid,))]
                 messages=[dict(r) for r in db.execute('SELECT * FROM messages WHERE session_id=? ORDER BY sequence',(sid,))]
                 operations=[dict(r) for r in db.execute('SELECT * FROM operations WHERE run_id=?',(rid,))]
+                retrievals=[json.loads(r['request_json']) for r in db.execute('SELECT request_json FROM retrieval_records WHERE run_id=?',(rid,))]
             answer=next((m['content_text'] for m in reversed(messages) if m['role']=='assistant'), '')
             accepted=any(r['decision'] in ('accepted','partial_accepted') for r in reviews)
             passed=result['status']=='COMPLETED' and accepted and '38.200' in answer and '38.300' in answer and '[1]' in answer
             return {'status':'pass' if passed else 'not_passed','run':result,'answer':answer,'accepted_review':accepted,
-                    'operation_kinds':[o['kind'] for o in operations], 'scope':'One pinned public source excerpt; real live A/B/C and local retrieval, not full hybrid corpus.'}
+                    'generation_attempts':sum(o['kind'] in ('A','B','C') for o in operations), 'retrieval_requests':retrievals, 'operation_kinds':[o['kind'] for o in operations], 'scope':'One pinned public source excerpt; real live A/B/C and local retrieval, not full hybrid corpus.'}
 
 
 if __name__=='__main__':

@@ -106,3 +106,18 @@ def test_compact_c_rebinds_only_server_owned_identity():
     assert 'reviewed_binding' not in compact_c_schema(p)['properties']
     out['unrecognized']='do not silently discard'
     assert inspect_c_response(canonical(out),p)['status']!='pass'
+
+
+def test_full_hybrid_profile_requires_embedding_credentials(monkeypatch):
+    monkeypatch.delenv('GEMINI_API_KEY',raising=False)
+    for name in ('GROQ','OPENROUTER'):
+        monkeypatch.setenv(name+'_API_KEY','fixture');monkeypatch.setenv('WA_'+name+'_FREE_TIER_CONFIRMED','1')
+    assert rp.configured(Settings(provider_profile='groq_openrouter',demo_mode=True))
+    assert not rp.configured(Settings(provider_profile='groq_openrouter'))
+
+
+def test_mixed_budget_counts_entire_wire_request(tmp_path):
+    s=Settings(data_dir=tmp_path,provider_profile='groq_openrouter')
+    engine=Engine(Store(s));p=case_payload('correct')
+    assert engine.request_size('A',p)==len(canonical(rp.build_request('A',rp.MODELS['A'],p,2000)).encode())
+    assert engine.request_size('A',p)<=s.role_input_bound

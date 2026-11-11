@@ -21,6 +21,8 @@ For a cellular query outside available sources, record a coverage gap, not out_o
 Default release is the declared 18 baseline when omitted; explicitly mark default_used. An explicit unavailable release must not be substituted.
 Use stable requirement IDs across corrections; reference actual supplied OriginalRef records.
 Use only typed backend tools in schema. Search with useful English standards keywords when the user writes Hindi/Hinglish.
+Document filters identify source documents to search, not specification-series numbers mentioned as the topic or expected answer. Consult corpus_inventory; when the user names an available source, search that source before declaring a source gap. A series such as 38.200 is not an individual specification identifier.
+Clarification is for missing user intent, not for asking the user to supply standards evidence. For an already clear request, use available corpus tools; after bounded retrieval, pass remaining source gaps to B for an honest limited answer or inability. Do not ask for a separate reference when a supplied passage already establishes the requested fact.
 Request exact previous list/text via history tools for references such as 'third point'.
 Expand a passage to retain necessary definitions, tables and notes. No equivalent repeated no-progress searches.
 When a specific B gap is supplied, collect for that gap and return to B; do not broadly restart.
