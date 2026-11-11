@@ -16,6 +16,8 @@ from wireless_assistant.prompts import COMMON, ROLES
 from wireless_assistant.validation import require, validate_draft, validate_review
 
 MODEL = 'qwen/qwen3.8-27b'
+OUTPUT_TOKENS = 900
+REASONING_EFFORT = 'low'
 MIN_INTERVAL_SECONDS = 65
 RUN_SECONDS = 480
 
@@ -122,8 +124,8 @@ def generate(name, p):
     if not free_confirmed('groq'):
         raise AppError('FREE_TIER_NOT_CONFIRMED', 'Free-only confirmation required.')
     response = request('groq', 'POST', 'chat/completions', {
-        'model': MODEL, 'temperature': 0, 'max_tokens': 2000,
-        'reasoning_effort': 'medium', 'reasoning_format': 'hidden',
+        'model': MODEL, 'temperature': 0, 'max_tokens': OUTPUT_TOKENS,
+        'reasoning_effort': REASONING_EFFORT, 'reasoning_format': 'hidden',
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': schema_for(p)}},
         'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nReturn the original flat C review object directly, without a result wrapper, following the response_format schema. Do not rewrite the supplied candidate.'},
                      {'role': 'user', 'content': canonical(p)}],
@@ -148,6 +150,7 @@ def run(cases=CASES):
         raise ValueError('Invalid case selection')
     report = {'model': MODEL, 'transport': 'json_schema_with_strict_backend_validation', 'commit': os.getenv('GITHUB_SHA', 'local'), 'generation_attempts': 0,
               'maximum_calls': len(cases), 'metadata_calls': 0, 'retries': 0,
+              'max_output_tokens': OUTPUT_TOKENS, 'reasoning_effort': REASONING_EFFORT,
               'minimum_start_interval_seconds': MIN_INTERVAL_SECONDS, 'run_deadline_seconds': RUN_SECONDS, 'results': []}
     if not free_confirmed('groq'):
         return dict(report, status='FREE_TIER_NOT_CONFIRMED')
