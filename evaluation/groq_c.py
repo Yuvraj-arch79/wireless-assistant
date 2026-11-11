@@ -2,7 +2,7 @@
 
 No A/B generation, connection probe, automatic retry or answer rewriting.
 """
-from wireless_assistant.provider_contracts import c_schema as schema_for
+from wireless_assistant.provider_contracts import c_schema as schema_for, compact_c_schema, inspect_c_response
 import copy
 import json
 import os
@@ -18,7 +18,7 @@ from wireless_assistant.validation import require, validate_draft, validate_revi
 
 MODEL = 'qwen/qwen3.8-27b'
 OUTPUT_TOKENS = 900
-REASONING_EFFORT = 'none'
+REASONING_EFFORT = 'low'
 MIN_INTERVAL_SECONDS = 65
 RUN_SECONDS = 480
 
@@ -109,15 +109,15 @@ def generate(name, p):
     response = request('groq', 'POST', 'chat/completions', {
         'model': MODEL, 'temperature': 0, 'max_tokens': OUTPUT_TOKENS,
         'reasoning_effort': REASONING_EFFORT, 'reasoning_format': 'hidden',
-        'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': schema_for(p)}},
-        'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nReturn the original flat C review object directly, without a result wrapper, following the response_format schema. Do not rewrite the supplied candidate.'},
+        'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_C', 'strict': True, 'schema': compact_c_schema(p)}},
+        'messages': [{'role': 'system', 'content': COMMON + ROLES['C'] + '\nReturn the C review fields in the response_format schema directly, without a result wrapper. Do not echo reviewed_binding; the server binds this response to the exact input versions. Do not rewrite the supplied candidate.'},
                      {'role': 'user', 'content': canonical(p)}],
     }, diagnostics=True)
     choices = response.get('choices', [])
     require(len(choices) == 1 and choices[0].get('finish_reason') == 'stop' and not choices[0].get('message', {}).get('tool_calls'), 'Incomplete or tool response.')
     raw = choices[0].get('message', {}).get('content')
     require(isinstance(raw, str) and bool(raw) and len(raw.encode('utf-8')) <= 65536, 'Missing or oversized response.')
-    result = inspect_response(raw, 'C', wrapped=False)
+    result = inspect_c_response(raw, p)
     if result['status'] != 'pass':
         return result
     out = result['value']

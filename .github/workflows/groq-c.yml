@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: provider-readiness
+  group: ${{ (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[groq-c]')) && 'provider-readiness' || github.run_id }}
   cancel-in-progress: false
 jobs:
   c-evaluation:
@@ -33,7 +33,7 @@ jobs:
           read -r -a cases <<< "$WA_C_CASES"
           python -m evaluation.groq_c --cases "${cases[@]}"
         env:
-          WA_C_CASES: ${{ inputs.cases || 'regression injection' }}
+          WA_C_CASES: ${{ inputs.cases || 'regression injection unsupported' }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           # Owner authorized this bounded C test on the existing free Groq account.
           # Explicit 0 revokes; the runner does not inspect account billing.

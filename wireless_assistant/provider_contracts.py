@@ -204,3 +204,22 @@ def c_schema(p):
         regression['compared_candidate_id'] = {'type': 'string', 'enum': [p['prior_candidate']['candidate_id']]}
     return schema
 
+
+def compact_c_schema(payload):
+    """Do not spend model output tokens echoing backend-owned hashes/IDs."""
+    schema=c_schema(payload)
+    del schema['properties']['reviewed_binding']
+    schema['required'].remove('reviewed_binding')
+    del schema['$defs']['Binding']
+    return schema
+
+
+def inspect_c_response(raw,payload):
+    try:
+        value=load_json(raw)
+        if not isinstance(value,dict) or 'reviewed_binding' in value:
+            return {'status':'INVALID_ENVELOPE','issues':[]}
+        value['reviewed_binding']=copy.deepcopy(payload['reviewed_binding'])
+    except (ValueError,TypeError):
+        return {'status':'INVALID_JSON','issues':[]}
+    return inspect_response(json.dumps(value),'C')

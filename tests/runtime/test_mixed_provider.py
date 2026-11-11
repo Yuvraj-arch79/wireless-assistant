@@ -17,13 +17,13 @@ from tests.runtime.conftest import collect
 def test_pinned_live_routes_keep_original_contract(role):
     p=case_payload('correct')
     value=collect(p) if role=='A' else p['candidate'] if role=='B' else review()
-    raw=canonical(value if role=='C' else {'result':value})
+    raw=canonical({k:v for k,v in value.items() if k!='reviewed_binding'} if role=='C' else {'result':value})
     with patch.object(rp,'request',return_value={'choices':[{'finish_reason':'stop','message':{'content':raw}}]}) as call:
         result=rp.generate(role,rp.MODELS[role],'',p,2000)
     assert json.loads(result['text'])==value
     body=call.call_args.args[1]
     assert body['model']==rp.MODELS[role] and body['response_format']['json_schema']['strict']
-    if role=='C':assert body['max_tokens']==900 and body['reasoning_effort']=='none'
+    if role=='C':assert body['max_tokens']==900 and body['reasoning_effort']=='low'
     if role=='B':assert body['provider']['max_price']=={'prompt':0,'completion':0,'request':0} and not body['provider']['allow_fallbacks']
 
 
@@ -88,9 +88,21 @@ def test_real_controller_demo_handoff_with_mock_http(monkeypatch):
             value=case_payload('correct')['candidate'];value['citations'][0]['passage_ids']=[p['evidence'][0]['passage_id']]
         else:
             value=runtime_review(p);value['satisfied_requirements']=['r1','r2']
-        raw=canonical(value if role=='C' else {'result':value})
+        raw=canonical({k:v for k,v in value.items() if k!='reviewed_binding'} if role=='C' else {'result':value})
         with patch.object(rp,'request',return_value={'choices':[{'finish_reason':'stop','message':{'content':raw}}]}):
             return rp.generate(role,rp.MODELS[role],'',p,2000)
     result=run(lambda store:Engine(store,role_transport=transport))
     assert result['status']=='pass',result
     assert calls==['A','A','B','C'] and result['accepted_review']
+
+
+def test_compact_c_rebinds_only_server_owned_identity():
+    from wireless_assistant.provider_contracts import inspect_c_response, compact_c_schema
+    p=case_payload('correct');out=review()
+    assert inspect_c_response(canonical(out),p)['status']=='INVALID_ENVELOPE'
+    del out['reviewed_binding']
+    restored=inspect_c_response(canonical(out),p)
+    assert restored['value']['reviewed_binding']==p['reviewed_binding']
+    assert 'reviewed_binding' not in compact_c_schema(p)['properties']
+    out['unrecognized']='do not silently discard'
+    assert inspect_c_response(canonical(out),p)['status']!='pass'

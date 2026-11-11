@@ -65,17 +65,17 @@ def test_malformed_semantics_rejected(kind):
 def test_c_transport_uses_original_contract_no_a_prompt_or_answer_changes(monkeypatch):
     monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
     p = c.case_payload('correct'); before = copy.deepcopy(p)
-    response = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(review())}}]}
+    response = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps({k:v for k,v in review().items() if k!='reviewed_binding'})}}]}
     with patch.object(c, 'request', return_value=response) as call:
         assert c.generate('correct', p)['status'] == 'pass'
     assert p == before and call.call_count == 1
     body = call.call_args.args[3]
     assert body['model'] == c.MODEL and body['response_format']['json_schema']['strict']
     assert body['reasoning_format'] == 'hidden' and 'include_reasoning' not in body
-    assert body['max_tokens'] == c.OUTPUT_TOKENS == 900 and body['reasoning_effort'] == 'none'
+    assert body['max_tokens'] == c.OUTPUT_TOKENS == 900 and body['reasoning_effort'] == 'low'
     assert 'In A clarify' not in body['messages'][0]['content'] and 'tools' not in body
     schema = body['response_format']['json_schema']['schema']
-    assert set(schema['required']) == set(ADAPTERS['C'].json_schema()['required'])
+    assert set(schema['required']) == set(ADAPTERS['C'].json_schema()['required'])-{'reviewed_binding'}
     assert 'result' not in schema['properties']
 
 
@@ -185,7 +185,7 @@ def test_wire_revision_allows_findings_and_binds_the_actual_prior_candidate():
 
 def test_wire_schema_does_not_repair_an_invalid_model_response(monkeypatch):
     monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
-    out = review('unsupported'); out['regression_check']['resulting_finding_ids'] = ['f1']
+    out = review('unsupported'); del out['reviewed_binding']; out['regression_check']['resulting_finding_ids'] = ['f1']
     response = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(out)}}]}
     with patch.object(c, 'request', return_value=response):
         result = c.generate('unsupported', c.case_payload('unsupported'))

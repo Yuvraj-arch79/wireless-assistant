@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: openrouter-b-evaluation
+  group: ${{ (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[openrouter-b]')) && 'provider-readiness' || github.run_id }}
   cancel-in-progress: false
 jobs:
   b-evaluation:

@@ -4,7 +4,7 @@ import httpx
 from .common import AppError, canonical, load_json
 from .contracts import ADAPTERS
 from .prompts import COMMON, ROLES, instructions
-from .provider_contracts import wire_schema, b_schema, c_schema, inspect_response, render_references
+from .provider_contracts import wire_schema, b_schema, compact_c_schema, inspect_c_response, inspect_response, render_references
 
 MODELS = {'A': 'openai/gpt-oss-120b', 'B': 'nvidia/nemotron-3.5-super-vl:free', 'C': 'qwen/qwen3.8-27b'}
 
@@ -58,9 +58,9 @@ def generate(role, model, system, payload, output_tokens):
         schema = b_schema()
         extra = {'reasoning': {'enabled': False}, 'provider': {'require_parameters': True, 'allow_fallbacks': False, 'max_price': {'prompt': 0, 'completion': 0, 'request': 0}}}
     else:
-        prompt = COMMON + ROLES['C'] + '\nReturn the original flat C review object directly, without a result wrapper, following the response_format schema. Do not rewrite the supplied candidate.'
-        schema = c_schema(payload)
-        extra = {'reasoning_effort': 'none', 'reasoning_format': 'hidden'}
+        prompt = COMMON + ROLES['C'] + '\nReturn the C review fields in the response_format schema directly, without a result wrapper. Do not echo reviewed_binding; the server binds this response to the exact input versions. Do not rewrite the supplied candidate.'
+        schema = compact_c_schema(payload)
+        extra = {'reasoning_effort': 'low', 'reasoning_format': 'hidden'}
     result = request(role, {'model': model, 'temperature': 0, 'max_tokens': min(output_tokens, 900 if role == 'C' else 2000), **extra,
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'wireless_' + role, 'strict': True, 'schema': schema}},
         'messages': [{'role': 'system', 'content': prompt}, {'role': 'user', 'content': canonical(payload)}]})
@@ -70,7 +70,7 @@ def generate(role, model, system, payload, output_tokens):
     raw = choices[0].get('message', {}).get('content')
     if not isinstance(raw, str) or not raw or len(raw.encode('utf-8')) > 65536:
         raise AppError('PROVIDER_FORMAT', 'Missing or oversized response.', 502)
-    parsed = inspect_response(raw, role, wrapped=role != 'C')
+    parsed = inspect_c_response(raw, payload) if role == 'C' else inspect_response(raw, role, wrapped=True)
     if parsed['status'] != 'pass':
         # Let the controller perform its single bounded format repair; no echoed private provider text.
         return {'text': '{}', 'usage': {}}
