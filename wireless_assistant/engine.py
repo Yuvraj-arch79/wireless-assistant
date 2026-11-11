@@ -10,6 +10,7 @@ from .contracts import ADAPTERS
 from .corpus import Corpus, search_worker
 from .prompts import instructions
 from .provider import generate, embed
+from .role_provider import generate as generate_mixed, configured
 from .store import Store, insert, row, TERMINAL
 from .validation import validate_need, validate_draft, validate_review, require
 from .local_tools import local_tool_worker
@@ -23,6 +24,7 @@ class Engine:
         self.require_ready=require_ready
         self.workers={};self.lock=threading.RLock();self.closed=threading.Event();self.degraded=False
         self.supervisor=None
+        self.provider_starts={}
 
     def start(self):
         self.store.recover()
@@ -49,10 +51,27 @@ class Engine:
         if self.closed.is_set() or self.degraded:
             raise AppError('WORKER_UNAVAILABLE','Processing is unavailable. Restart the application.',503)
         if self.require_ready:
-            if not os.environ.get('GEMINI_API_KEY') or os.environ.get('WA_FREE_TIER_CONFIRMED')!='1':
+            if not configured(self.settings):
                 raise AppError('PROVIDER_NOT_CONFIGURED','Configure the free API project on the server before starting AI chat.',503)
-            if not self.corpus.status()['ready']:
+            if not self.corpus_ready():
                 raise AppError('CORPUS_NOT_READY','Prepare and activate the hybrid corpus before starting AI chat.',503)
+
+    def corpus_ready(self):
+        if self.settings.demo_mode:
+            from .demo import ready
+            return ready(self.store)
+        return self.corpus.status()['ready']
+
+    def pace_provider(self, w, model):
+        # Shared across chats, repairs and resumed runs; waits consume the active deadline.
+        while not self.stopped(w):
+            with self.lock:
+                current=time.monotonic()
+                if current-self.provider_starts.get(model, -1e20)>=65:
+                    self.provider_starts[model]=current
+                    return
+            w['stop'].wait(0.1)
+        raise AppError('STOPPED','Processing stopped while waiting for provider capacity.',409)
 
     def launch(self,rid):
         with self.lock:
@@ -145,6 +164,8 @@ class Engine:
         while True:
             if self.stopped(w):
                 raise AppError('STOPPED','Processing stopped.',409)
+            if not self.role_transport and self.settings.provider_profile == 'groq_openrouter':
+                self.pace_provider(w, getattr(self.settings,'model_'+role.lower()))
             counters=json.loads(self.store.run(rid)['counters_json'])
             # Reserve one final B+C pair; repairs/retries cannot spend it as A.
             keep=2 if role=='A' else 1 if role=='B' else 0
@@ -156,7 +177,11 @@ class Engine:
                 if self.role_transport:
                     response=self.role_transport(role,payload)
                 else:
-                    response=bounded(generate,(getattr(self.settings,'model_'+role.lower()),system,payload,self.settings.role_output_tokens),min(self.settings.call_seconds,self.remaining(w)),lambda:self.stopped(w))
+                    function=generate_mixed if self.settings.provider_profile=='groq_openrouter' else generate
+                    args=(getattr(self.settings,'model_'+role.lower()),system,payload,self.settings.role_output_tokens)
+                    if self.settings.provider_profile=='groq_openrouter':
+                        args=(role,)+args
+                    response=bounded(function,args,min(self.settings.call_seconds,self.remaining(w)),lambda:self.stopped(w))
                 self.store.operation_done(rid,w['epoch'],op)
             except AppError as exc:
                 self.store.operation_done(rid,w['epoch'],op,exc.code)

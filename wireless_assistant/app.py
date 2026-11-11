@@ -180,13 +180,19 @@ def create_app(settings=None,engine_factory=None):
     def health():
         with store.read() as db:
             db.execute('SELECT 1')
-        provider=bool(os.environ.get('GEMINI_API_KEY')) and os.environ.get('WA_FREE_TIER_CONFIRMED')=='1'
+        from .role_provider import configured
+        provider=configured(settings)
         corpus=engine.corpus.status()
-        return success({'alive':True,'ready':provider and corpus['ready'] and not engine.degraded,
-                        'provider_configured':provider,'provider_live_tested':False,'corpus_ready':corpus['ready'],
+        return success({'alive':True,'ready':provider and engine.corpus_ready() and not engine.degraded,
+                        'provider_configured':provider,'provider_live_tested':False,'corpus_ready':engine.corpus_ready(),
+                        'demo_mode':settings.demo_mode,'provider_profile':settings.provider_profile,
                         'worker_available':not engine.degraded,'release':'18','version':'0.1.0'})
     @app.get('/api/corpus/status')
     def corpus_status():
+        if settings.demo_mode:
+            from .demo import NOTICE
+            result=engine.corpus.status()
+            return success({**result,'ready':engine.corpus_ready(),'demo_mode':True,'coverage_gaps':[NOTICE]})
         return success(engine.corpus.status())
     @app.post('/api/sessions')
     def create_session(body:NewSession,request:Request):

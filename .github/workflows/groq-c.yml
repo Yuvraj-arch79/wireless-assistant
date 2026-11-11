@@ -33,7 +33,7 @@ jobs:
           read -r -a cases <<< "$WA_C_CASES"
           python -m evaluation.groq_c --cases "${cases[@]}"
         env:
-          WA_C_CASES: ${{ inputs.cases || 'partial regression injection' }}
+          WA_C_CASES: ${{ inputs.cases || 'regression injection' }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           # Owner authorized this bounded C test on the existing free Groq account.
           # Explicit 0 revokes; the runner does not inspect account billing.

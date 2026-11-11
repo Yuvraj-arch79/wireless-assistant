@@ -1,6 +1,7 @@
 """Two-call, no-retry Groq contract diagnosis; never logs raw replies or keys."""
 import json
 import os
+from wireless_assistant.provider_contracts import wire_schema, normalize_wire, safe_errors, inspect_response
 import time
 from pydantic import ValidationError
 from evaluation.providers import free_confirmed, generate, request
@@ -14,133 +15,12 @@ from wireless_assistant.validation import validate_need
 MODEL = 'openai/gpt-oss-120b'
 
 
-def wire_schema(role):
-    original = ADAPTERS[role].json_schema()
-    def resolve(node):
-        return original['$defs'][node['$ref'].split('/')[-1]] if '$ref' in node else node
-    def union(options):
-        flat = []
-        for option in options:
-            for item in option.get('anyOf', [option]):
-                if item not in flat: flat.append(item)
-        # Different action branches may allow strings with different bounds.
-        # Their overlapping anyOf alternatives confuse the provider compiler.
-        # Merge to their union of permitted bounds; backend checks the selected branch.
-        for kind in ('string', 'integer', 'number'):
-            group = [c for c in flat if c.get('type') == kind and 'enum' not in c]
-            if len(group) > 1:
-                merged = {'type': kind}
-                for lower in ('minLength', 'minimum'):
-                    if all(lower in c for c in group): merged[lower] = min(c[lower] for c in group)
-                for upper in ('maxLength', 'maximum'):
-                    if all(upper in c for c in group): merged[upper] = max(c[upper] for c in group)
-                if all(c.get('pattern') == group[0].get('pattern') for c in group) and 'pattern' in group[0]:
-                    merged['pattern'] = group[0]['pattern']
-                flat = [c for c in flat if c not in group] + [merged]
-        return flat[0] if len(flat) == 1 else {'anyOf': flat}
-    def convert(node):
-        # Provider compiler rejects the nested discriminated object unions.
-        # Use a superset on the wire; original branch validation remains authoritative.
-        if 'oneOf' in node and 'discriminator' in node:
-            branches = [resolve(b) for b in node['oneOf']]
-            names = list(dict.fromkeys(k for b in branches for k in b['properties']))
-            properties = {}
-            for name in names:
-                choices = [convert(b['properties'][name]) for b in branches if name in b['properties']]
-                if len(choices) < len(branches): choices.append({'type': 'null'})
-                # Combine singleton action/kind enums instead of anyOf literals.
-                if all(c.get('type') == 'string' and 'enum' in c for c in choices):
-                    properties[name] = {'type': 'string', 'enum': list(dict.fromkeys(v for c in choices for v in c['enum']))}
-                else: properties[name] = union(choices)
-            return {'type': 'object', 'properties': properties, 'required': names, 'additionalProperties': False}
-        out = {}
-        for key, value in node.items():
-            if key in ('$defs', 'properties'):
-                out[key] = {name: convert(child) for name, child in value.items()}
-            elif key in ('oneOf', 'anyOf'):
-                out['anyOf'] = [convert(child) for child in value]
-            elif key == 'items': out[key] = convert(value)
-            elif key == 'const': out['enum'] = [value]
-            elif key in ('type', '$ref', 'enum', 'required', 'additionalProperties', 'minItems', 'maxItems', 'minLength', 'maxLength', 'minimum', 'maximum', 'pattern'): out[key] = value
-        if out.get('type') == 'object':
-            out['additionalProperties'] = False
-            # Put the distinguishing literal before common fields in union branches.
-            properties = out.get('properties', {})
-            discriminators = [k for k, v in properties.items() if len(v.get('enum', [])) == 1]
-            if discriminators:
-                first = discriminators[0]
-                out['properties'] = {first: properties[first], **{k: v for k, v in properties.items() if k != first}}
-            out['required'] = list(out.get('properties', {}))
-        return out
-    source = convert(original)
-    definitions = {name: convert(value) for name, value in original.get('$defs', {}).items()}
-    source.pop('$defs', None)
-    if role == 'A':
-        # Every in-scope action needs these fields. Require concrete values on
-        # the wire, including a minimal honest need for out_of_scope.
-        definitions['Clarification']['properties']['missing_requirement_ids']['minItems'] = 1
-        source['properties']['need'] = {'$ref': '#/$defs/Need'}
-        source['properties']['coverage_gaps'] = {'type': 'array', 'items': {'$ref': '#/$defs/Gap'}}
-    return {'type': 'object', 'properties': {'result': source}, 'required': ['result'],
-            'additionalProperties': False, '$defs': definitions}
 
 
-def normalize_wire(value, role):
-    """Remove only null fields belonging to other union branches; reject extras later."""
-    schema = ADAPTERS[role].json_schema()
-    def walk(value, node):
-        if '$ref' in node: node = schema['$defs'][node['$ref'].split('/')[-1]]
-        if isinstance(value, dict) and 'discriminator' in node:
-            tag = node['discriminator']['propertyName']
-            ref = node['discriminator']['mapping'].get(value.get(tag))
-            if ref:
-                branch = schema['$defs'][ref.split('/')[-1]]
-                allowed = branch.get('properties', {})
-                union_fields = set()
-                for variant in node['oneOf']:
-                    union_fields.update(schema['$defs'][variant['$ref'].split('/')[-1]]['properties'])
-                value = {k: v for k, v in value.items() if k in allowed or k not in union_fields or v is not None}
-                return walk(value, branch)
-        if isinstance(value, dict) and 'properties' in node:
-            return {k: walk(v, node['properties'].get(k, {})) for k, v in value.items()}
-        if isinstance(value, list) and 'items' in node: return [walk(v, node['items']) for v in value]
-        return value
-    # AOut has no coverage_gaps field; only the explicitly empty transport
-    # placeholder may be removed. Never discard actual findings.
-    if role == 'A' and isinstance(value, dict) and value.get('action') == 'out_of_scope' and value.get('coverage_gaps') == []:
-        value = {k: v for k, v in value.items() if k != 'coverage_gaps'}
-    return walk(value, schema)
 
 
-def safe_errors(error, role):
-    known = set()
-    def visit(node):
-        if isinstance(node, dict):
-            known.update(node.get('properties', {}))
-            if isinstance(node.get('const'), str): known.add(node['const'])
-            for child in node.values(): visit(child)
-        elif isinstance(node, list):
-            for child in node: visit(child)
-    visit(ADAPTERS[role].json_schema())
-    return [{'path': [p if isinstance(p, int) or p in known else '<unknown>' for p in item['loc']],
-             'type': item['type']} for item in error.errors(include_input=False, include_context=False, include_url=False)[:12]]
 
 
-def inspect_response(text, role, wrapped=False):
-    try: value = load_json(text)
-    except (ValueError, TypeError) as error:
-        if isinstance(error, json.JSONDecodeError): detail = 'syntax'
-        elif str(error) == 'Duplicate JSON key': detail = 'duplicate_key'
-        elif str(error) == 'Non-finite JSON value': detail = 'non_finite'
-        else: detail = 'invalid_type'
-        return {'status': 'INVALID_JSON', 'issues': [], 'json_error': detail}
-    if wrapped:
-        if not isinstance(value, dict) or set(value) != {'result'}:
-            return {'status': 'INVALID_ENVELOPE', 'issues': []}
-        value = normalize_wire(value['result'], role)
-    try: parsed = ADAPTERS[role].validate_python(value).model_dump(mode='json')
-    except ValidationError as error: return {'status': 'CONTRACT_INVALID', 'issues': safe_errors(error, role)}
-    return {'status': 'pass', 'issues': [], 'value': parsed}
 
 
 def strict_generate(role, payload):

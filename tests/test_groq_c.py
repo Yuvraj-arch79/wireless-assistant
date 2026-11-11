@@ -72,7 +72,7 @@ def test_c_transport_uses_original_contract_no_a_prompt_or_answer_changes(monkey
     body = call.call_args.args[3]
     assert body['model'] == c.MODEL and body['response_format']['json_schema']['strict']
     assert body['reasoning_format'] == 'hidden' and 'include_reasoning' not in body
-    assert body['max_tokens'] == c.OUTPUT_TOKENS == 900 and body['reasoning_effort'] == 'low'
+    assert body['max_tokens'] == c.OUTPUT_TOKENS == 900 and body['reasoning_effort'] == 'none'
     assert 'In A clarify' not in body['messages'][0]['content'] and 'tools' not in body
     schema = body['response_format']['json_schema']['schema']
     assert set(schema['required']) == set(ADAPTERS['C'].json_schema()['required'])

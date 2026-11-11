@@ -1,6 +1,7 @@
 """Two bounded B trials; pinned free model, no retries or paid fallback."""
 import copy
 import json
+from wireless_assistant.provider_contracts import b_schema as schema, render_references
 import os
 import re
 import time
@@ -50,15 +51,6 @@ def preflight():
     return {'model':MODEL,'zero_token_prices':True,'structured_outputs':True}
 
 
-def schema():
-    def walk(v):
-        if isinstance(v,list):return [walk(x) for x in v]
-        if not isinstance(v,dict):return v
-        return {('anyOf' if k=='oneOf' else k):walk(x) for k,x in v.items() if k not in ('discriminator','title')}
-    role=walk(ADAPTERS['B'].json_schema());defs=role.pop('$defs')
-    defs['Citation']['properties']['claim_anchor']['description']='Exact substring copied from your answer_markdown, NOT from evidence text. Choose words that actually appear in your answer.'
-    defs['BDraft']['properties']['answer_markdown']['description']='Include the answer with inline [1] citation AND a separate References section: [1] TS <spec_number> v<document_version>, clause <clause_id>. The same marker must occur in both places.'
-    return {'type':'object','properties':{'result':role},'required':['result'],'additionalProperties':False,'$defs':defs}
 
 
 def payload(empty=False):
@@ -119,43 +111,6 @@ def generate(p):
 
 
 
-def render_references(out,evidence):
-    """Deterministic presentation from cited, verified metadata; never edits claims."""
-    if out.get('action')!='submit_draft':return out
-    out=copy.deepcopy(out)
-    answer=out['answer_markdown']
-    limitation=out.get('limitation_statement')
-    if out.get('unresolved_requirements') and isinstance(limitation,str) and limitation and limitation not in answer:
-        answer=answer.rstrip()+'\n\nLimitations\n'+limitation
-        out['answer_markdown']=answer
-    # Map exact citation-free text back to original offsets; no fuzzy matching.
-    removed=set()
-    for match in re.finditer(r'\s*\[[1-9][0-9]?\]',answer):removed.update(range(match.start(),match.end()))
-    indices=[i for i in range(len(answer)) if i not in removed]
-    plain=''.join(answer[i] for i in indices)
-    for citation in out['citations']:
-        anchor=citation['claim_anchor']
-        if anchor not in answer:
-            start=plain.find(anchor)
-            if start>=0 and anchor:
-                citation['claim_anchor']=answer[indices[start]:indices[start+len(anchor)-1]+1]
-    if re.search(r'(?im)^\s*(?:#+\s*)?References\s*:?\s*$',answer):return out
-    sources={p['passage_id']:p for p in evidence};entries=[];seen=set()
-    for citation in out['citations']:
-        marker=citation['marker']
-        if marker in seen or marker not in answer or citation['claim_anchor'] not in answer:
-            raise AppError('INVALID_CONTRACT','Invalid inline citation or claim anchor before reference rendering.')
-        seen.add(marker)
-        if not citation['passage_ids'] or any(pid not in sources or sources[pid]['unreadable'] for pid in citation['passage_ids']):
-            raise AppError('INVALID_CONTRACT','Citation references missing or unreadable evidence.')
-        labels=[]
-        for pid in citation['passage_ids']:
-            p=sources[pid];label='TS '+p['spec_number']+' v'+p['document_version']+', clause '+p['clause_id']
-            if label not in labels:labels.append(label)
-        entries.append(marker+' '+ '; '.join(labels)+'.')
-    result=copy.deepcopy(out)
-    result['answer_markdown']=answer.rstrip()+'\n\nReferences\n'+'\n'.join(entries)
-    return result
 
 
 def assess(out,p):

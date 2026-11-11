@@ -1,5 +1,6 @@
 """Versioned development limits. Secrets never enter stored snapshots."""
 import os
+from typing import Literal
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .common import digest
@@ -11,9 +12,11 @@ class Settings(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     data_dir: Path = ROOT / "data" / "app"
     port: int = Field(default=8765, ge=1024, le=65535)
-    model_a: str = Field(default="gemini-3.8-flash", pattern=r"^[a-zA-Z0-9._-]+$")
-    model_b: str = Field(default="gemini-3.8-flash", pattern=r"^[a-zA-Z0-9._-]+$")
-    model_c: str = Field(default="gemini-3.8-flash", pattern=r"^[a-zA-Z0-9._-]+$")
+    provider_profile: Literal['gemini', 'groq_openrouter'] = 'gemini'
+    demo_mode: bool = False
+    model_a: str = Field(default="gemini-3.8-flash", pattern=r"^[a-zA-Z0-9._/:-]+$")
+    model_b: str = Field(default="gemini-3.8-flash", pattern=r"^[a-zA-Z0-9._/:-]+$")
+    model_c: str = Field(default="gemini-3.8-flash", pattern=r"^[a-zA-Z0-9._/:-]+$")
     embedding_model: str = "gemini-embedding-001"
     embedding_dimensions: int = Field(default=768, ge=128, le=3072)
     # Lexical preview is developer-only. Chat requires a compatible hybrid build.
@@ -38,6 +41,21 @@ class Settings(BaseModel):
     max_active: int = Field(default=2, ge=1, le=2)
     default_release: str = "18"
     config_version: str = "prototype-0.1"
+
+    @model_validator(mode="before")
+    @classmethod
+    def profile_defaults(cls, values):
+        if isinstance(values, dict) and values.get('provider_profile') == 'groq_openrouter':
+            from .role_provider import MODELS
+            values = dict(values)
+            for role, model in MODELS.items():
+                field = 'model_' + role.lower()
+                if field in values and values[field] != model:
+                    raise ValueError('Mixed profile uses the evaluated pinned role models')
+                values[field] = model
+            values.setdefault('active_seconds', 300)
+            values.setdefault('max_active', 1)
+        return values
 
     @model_validator(mode="after")
     def reserve_fits(self):
@@ -67,7 +85,7 @@ class Settings(BaseModel):
     @classmethod
     def environment(cls):
         args = {}
-        for field in ("data_dir", "port", "model_a", "model_b", "model_c"):
+        for field in ("data_dir", "port", "model_a", "model_b", "model_c", "provider_profile"):
             value = os.environ.get("WA_" + field.upper())
             if value:
                 args[field] = value

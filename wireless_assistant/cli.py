@@ -15,6 +15,7 @@ def main(argv=None):
     parser.add_argument('--data-dir',type=Path)
     sub=parser.add_subparsers(dest='command',required=True)
     sub.add_parser('serve')
+    sub.add_parser('demo', help='Live A/B/C on one pinned excerpt, in a separate data folder')
     sub.add_parser('status')
     sub.add_parser('builds')
     p=sub.add_parser('ingest')
@@ -30,9 +31,21 @@ def main(argv=None):
     settings=Settings.environment()
     if args.data_dir:
         settings=settings.model_copy(update={'data_dir':args.data_dir.absolute()})
+    if args.command=='demo':
+        values=settings.model_dump(exclude={'model_a','model_b','model_c','active_seconds','max_active'})
+        values.update(provider_profile='groq_openrouter',demo_mode=True,data_dir=args.data_dir.absolute() if args.data_dir else ROOT/'data'/'demo')
+        settings=Settings(**values)
     lock=None
     try:
-        if args.command=='serve':
+        if args.command in ('serve','demo'):
+            if args.command=='demo':
+                from .demo import prepare, NOTICE
+                from .app import ProcessLock
+                settings.data_dir.mkdir(parents=True,exist_ok=True)
+                demo_lock=ProcessLock(settings.data_dir/'server.lock')
+                try: prepare(Store(settings))
+                finally: demo_lock.close()
+                print(NOTICE)
             from .app import create_app
             import uvicorn
             uvicorn.run(create_app(settings),host='127.0.0.1',port=settings.port,workers=1,access_log=False,timeout_graceful_shutdown=5)

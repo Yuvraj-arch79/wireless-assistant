@@ -2,6 +2,7 @@
 
 No A/B generation, connection probe, automatic retry or answer rewriting.
 """
+from wireless_assistant.provider_contracts import c_schema as schema_for
 import copy
 import json
 import os
@@ -17,7 +18,7 @@ from wireless_assistant.validation import require, validate_draft, validate_revi
 
 MODEL = 'qwen/qwen3.8-27b'
 OUTPUT_TOKENS = 900
-REASONING_EFFORT = 'low'
+REASONING_EFFORT = 'none'
 MIN_INTERVAL_SECONDS = 65
 RUN_SECONDS = 480
 
@@ -100,24 +101,6 @@ def assess(out, p, name):
     return {'status': 'pass', 'review': out}
 
 
-def schema_for(p):
-    """Constrain backend-owned identities and review phase, never the decision."""
-    wrapped = wire_schema('C')
-    schema = copy.deepcopy(wrapped['properties']['result'])
-    schema['$defs'] = copy.deepcopy(wrapped['$defs'])
-    definitions = schema['$defs']
-    for field, value in p['reviewed_binding'].items():
-        definitions['Binding']['properties'][field] = {'type': 'string', 'enum': [value]}
-    regression = definitions['Regression']['properties']
-    if p['envelope']['round_number'] == 0:
-        regression['status'] = {'type': 'string', 'enum': ['not_applicable']}
-        regression['compared_candidate_id'] = {'type': 'null'}
-        for field in ('lost_or_changed_requirement_ids', 'resulting_finding_ids'):
-            regression[field]['maxItems'] = 0
-    else:
-        regression['status'] = {'type': 'string', 'enum': ['checked']}
-        regression['compared_candidate_id'] = {'type': 'string', 'enum': [p['prior_candidate']['candidate_id']]}
-    return schema
 
 
 def generate(name, p):

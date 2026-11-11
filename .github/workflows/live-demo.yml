@@ -1,0 +1,31 @@
+name: Live A-B-C demo
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['wireless_assistant/**', 'evaluation/live_demo.py', '.github/workflows/live-demo.yml']
+permissions:
+  contents: read
+concurrency:
+  group: provider-readiness
+  cancel-in-progress: false
+jobs:
+  live-demo:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[abc-demo]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.lock
+      - name: One live chat, at most six generations, no retries or repairs
+        run: python -m evaluation.live_demo
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          WA_GROQ_FREE_TIER_CONFIRMED: ${{ vars.WA_GROQ_FREE_TIER_CONFIRMED || '1' }}
+          WA_OPENROUTER_FREE_TIER_CONFIRMED: ${{ vars.WA_OPENROUTER_FREE_TIER_CONFIRMED || '1' }}
