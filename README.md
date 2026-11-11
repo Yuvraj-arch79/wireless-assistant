@@ -2,7 +2,7 @@
 
 A local development assistant for clear, relevant and verifiable answers from a prepared **3GPP cellular** collection, with context-aware follow-up questions.
 
-**Project stage:** First implementation checkpoint (v0.1.0); live provider and domain-quality acceptance remain pending.
+**Project stage:** Development prototype (v0.1.0). The [single-excerpt live A–B–C demo](docs/DEMO.md) passes; full-corpus and domain-quality acceptance remain pending.
 
 **SRS:** v0.9.1 — 94 requirements and 30 acceptance scenarios.
 
@@ -55,8 +55,8 @@ C's findings go to **B first**. A is called during correction only when B identi
 | Detailed design and failure handling | Documented; [changes, design checks and pending acceptance](docs/design/verification.md) |
 | Developer handoff | [Component connections, data contracts and implementation order](docs/design/implementation-guide.md) |
 | Source inventory | [12 version-pinned Release 18 PDFs and reproducible acquisition](corpus/README.md); domain/coverage review remains in [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
-| Technology choices and baseline approval | Gemini implemented; Gemini/Groq/Mistral shortlist recorded, Groq/Mistral adapters and role benchmark pending; baseline acceptance open: [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5), [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
-| Evaluation questions and scoring | [40 candidate cases with natural-question variants](evaluation/README.md), split discipline and grading contract prepared; domain approval and live trials pending |
+| Technology choices and baseline approval | Default Gemini and opt-in Groq A/C + OpenRouter B runtime profiles implemented; see [live demo setup](docs/DEMO.md) and [C evaluation limits](evaluation/GROQ_C.md). Full corpus/provider benchmark acceptance remains open: [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5), [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
+| Evaluation questions and scoring | [40 candidate cases with natural-question variants](evaluation/README.md), split discipline and grading contract prepared; targeted provider trials recorded, full benchmark and domain approval pending |
 | Parsing, indexing and retrieval | Implemented; real-corpus quality evaluation pending: [#7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) |
 | Runnable chatbot and product release | Development prototype available; needs local API key and prepared hybrid build; product acceptance pending |
 
@@ -84,3 +84,5 @@ python docs/design/validate_design.py
 ```
 
 Runtime tests use deterministic provider fixtures. Real corpus extraction was exercised; live generation, real embeddings, technical accuracy and full release acceptance remain unverified. The [verification record](docs/implementation/verification.md) separates those results and limitations. The setup guide also covers database backups, retained corpus builds and Git checkpoints.
+
+For a small live presentation with real A/B/C providers and one explicitly labeled source excerpt, follow [the demo guide](docs/DEMO.md). Existing full hybrid-corpus setup remains separate.

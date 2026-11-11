@@ -45,7 +45,7 @@ Owner labels below identify responsibilities; a named domain reviewer has not ye
 | SRS ID | Decision or review needed | Status | Responsible role | Required before | Work item |
 | --- | --- | --- | --- | --- | --- |
 | D01 | Exact specifications, releases and document versions | Development source lock recorded; domain/coverage review pending | Owner + domain reviewer | Pilot acceptance | [#4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) |
-| D02 | Providers/models for A, B and C | Gemini/Groq/Mistral shortlist confirmed; only Gemini adapter implemented; role assignment pending benchmark | Developer + owner | Multi-provider pilot | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
+| D02 | Providers/models for A, B and C | Default Gemini plus opt-in Groq A/C and free OpenRouter B implemented; [demo profile](DEMO.md) is provisional, broad benchmark and Mistral integration remain pending | Developer + owner | Multi-provider pilot | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
 | D03 | Embeddings, store, exact/semantic matching and reranking | FTS5 + Gemini vectors/RRF implemented; real hybrid evaluation pending | Developer | Retrieval acceptance | [#5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) |
 | D04 | Record the agreed two-correction policy in baseline approval | Agreed policy; approval record pending | Owner | Baseline approval | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |
 | D05 | Shared call, search, token, time and closing-reserve values | Runtime defaults implemented; measurement/tuning pending | Developer + owner | End-to-end pilot | [#6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) |

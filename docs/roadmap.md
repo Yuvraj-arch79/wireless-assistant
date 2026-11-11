@@ -12,7 +12,7 @@
 - The PDF and editable source are published together.
 - The initial 12 PHY/Layer-2 source PDFs have a [version/hash lock and download/verification tool](../corpus/README.md); the files stay local and outside Git.
 
-The [initial evaluation suite](../evaluation/README.md) now defines 40 candidate cases with natural-question variants and scoring rules. Domain review, a trial harness and live provider comparisons remain pending.
+The [initial evaluation suite](../evaluation/README.md) now defines 40 candidate cases with natural-question variants and scoring rules. Targeted provider trials and a live mixed-controller harness are implemented; domain review, full-corpus acceptance and comparative benchmarks remain pending.
 
 The first runnable prototype now covers ingestion, retrieval adapters, local chat and bounded A–B–C control. [Executed tests and limitations](implementation/verification.md) are recorded separately from full product acceptance. Real provider benchmarks and real hybrid retrieval quality remain unverified.
 
@@ -21,7 +21,7 @@ The first runnable prototype now covers ingestion, retrieval adapters, local cha
 | Order | Work | Result needed |
 | --- | --- | --- |
 | 1 | [Review source scope — #4](https://github.com/Yuvraj-arch79/wireless-assistant/issues/4) | Inventory/version lock exists; validate the implemented default-release policy, missing dependencies and sample evidence before pilot acceptance |
-| 2 | [Select technology — #5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) | Add Groq/Mistral adapters to the existing Gemini path; benchmark the shortlist and retrieval before assigning A/B/C providers |
+| 2 | [Select technology — #5](https://github.com/Yuvraj-arch79/wireless-assistant/issues/5) | Validate full-corpus behavior for the implemented Groq A/C + OpenRouter B profile; Mistral integration and comparative benchmarks remain optional pending work |
 | 3 | [Approve baseline — #6](https://github.com/Yuvraj-arch79/wireless-assistant/issues/6) | Reviewed requirements, operating decisions and evaluation plan |
 | 4 | [Build evidence foundation — #7](https://github.com/Yuvraj-arch79/wireless-assistant/issues/7) | Implementation exists; evaluate real hybrid retrieval and repair measured parser gaps |
 

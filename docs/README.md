@@ -28,7 +28,7 @@ SRS labels distinguish CONFIRMED behavior from PROPOSED implementation requireme
 
 Current baseline: **SRS v0.9.1, review draft**. The detailed design and implementation handoff (revision 0.2) document component contracts, a reference relational schema and explicitly provisional development limits. Handoff section 5 describes current API responses; prototype differences from the broader reference design are stated explicitly. Prototype implementation and development technology choices are now recorded in the [setup](implementation/setup.md) and [verification](implementation/verification.md) guides. Formal baseline and product acceptance remain open.
 
-The dated SRS and historical PR/test records preserve their original decisions and results. Use the decision register and roadmap for current progress; the source tools and first chat-runtime implementation exist, while live-provider and domain evaluation remain pending.
+The dated SRS and historical PR/test records preserve their original decisions and results. Use the decision register and roadmap for current progress; the source tools and first chat-runtime implementation exist, while broad provider/domain acceptance remains pending. See [the explicit live demo](DEMO.md) for the implemented mixed profile and its limited scope.
 
 ## Keeping the documents consistent
 

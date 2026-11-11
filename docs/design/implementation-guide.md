@@ -1,5 +1,7 @@
 # Implementation handoff
 
+**Current mixed-provider extension (11 November 2026):** Groq A/C and OpenRouter B connect through the existing controller. See [demo setup and verified scope](../DEMO.md); normal full-corpus chat retains the hybrid requirement. The dated implementation notes below describe their original checkpoint.
+
 **Baseline:** DESIGN-LLD-001 / 0.2, aligned with SRS 0.9.1. Updated 1 November 2026 for implemented API contracts and development status; product requirements unchanged.
 
 This is the entry point for an engineer implementing Wireless Assistant. Read the [product brief](../product-brief.md), then the [architecture overview](../architecture.md), [system design](system-design.md), and this guide. The [schema](schema.sql) specifies storage; [limits](limits.example.json) are provisional development settings; [verification](verification.md) contains requirement coverage and acceptance scenarios. These files form one design set. They describe the agreed target; the [prototype setup](../implementation/setup.md) and [runtime verification](../implementation/verification.md) record the implemented checkpoint and its limitations.

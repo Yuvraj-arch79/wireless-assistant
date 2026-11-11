@@ -1,6 +1,6 @@
 # Live A–B–C demo
 
-The mixed runtime profile connects **A: Groq GPT-OSS 120B**, **B: OpenRouter Nemotron 3.5 Super VL free**, and **C: Groq Qwen 3.8 27B** to the existing controller, database, citations, cancel/restart controls and chat UI. C uses 900 maximum output tokens and no separate reasoning tokens to fit the observed 1,000 OTPM account cap. This is a development profile; it is not a reliability certification.
+The mixed runtime profile connects **A: Groq GPT-OSS 120B**, **B: OpenRouter Nemotron 3.5 Super VL free**, and **C: Groq Qwen 3.8 27B** to the existing controller, database, citations, cancel/restart controls and chat UI. C uses 900 maximum output tokens and low reasoning effort to fit the observed 1,000 OTPM account cap. The server attaches exact request identity hashes instead of asking the model to echo them; original backend review validation still applies. This is a development profile; it is not a reliability certification.
 
 ## Quick presentation setup (Windows PowerShell)
 
@@ -30,4 +30,10 @@ For the existing full corpus, prepare and activate a compatible hybrid build usi
 
 ## Verification
 
-The `Live A-B-C demo` Actions workflow exercises one real API chat through the real application/controller and local excerpt retrieval. It allows at most six generation attempts, no format repairs or retries, and succeeds only after a persisted accepted C review plus a cited final answer. Ordinary pushes skip live calls; manual dispatch or an explicitly authorized `[abc-demo]` commit runs it. The C diagnostic workflow remains separate. Live results are pending until the linked Actions run completes.
+The `Live A-B-C demo` Actions workflow exercises one real API chat through the real application/controller and local excerpt retrieval. It allows at most six generation attempts, no format repairs or retries, and succeeds only after a persisted accepted C review plus a cited final answer. Ordinary pushes skip live calls; manual dispatch or an explicitly authorized `[abc-demo]` commit runs it. All [six targeted C checks](../evaluation/GROQ_C.md) passed on the final profile across two bounded runs. The C diagnostic workflow remains separate. **Live result: PASS**, [run 42984936792](https://github.com/Yuvraj-arch79/wireless-assistant/actions/runs/42984936792), 11 November 2026: **four generation calls (A → search → A → B → C), zero retries or repairs**, persisted accepted C review, and final cited answer:
+
+> TS 38.200 series describes Layer 1 (Physical Layer) specifications [1]. Layers 2 and 3 are described in the 38.300 series [1].
+>
+> References: [1] TS 38.201 v18.0.0, clause 4.1.1.
+
+The first integrated attempt paused because A confused a subject-series number with a source-document filter. A's source-selection instruction was corrected; the passing run searched the actual 38.201 document and did not require a user clarification. No answer was hard-coded into the controller or UI. Offline verification: **235 tests and 79 subtests passed**, one optional browser test skipped locally; **98 structural/design assertions passed**. Windows, Linux and Chromium CI passed on the live-tested commit. This establishes the small live demonstration, not full-corpus/domain acceptance.

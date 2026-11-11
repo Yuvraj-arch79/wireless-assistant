@@ -1,9 +1,10 @@
 # Live provider readiness
 
+Current reports: [OpenRouter B](OPENROUTER_B.md) and [Groq C](GROQ_C.md). Groq A passed one clarification smoke. Default routing remains Gemini; an opt-in mixed runtime and [explicit single-excerpt demo](../docs/DEMO.md) now connect the providers. The dated diagnostic entries below preserve earlier outcomes; use the linked reports for current B/C status.
+
 Run `python -m evaluation.readiness` from the repository root after installing
 `requirements.lock`. The [GitHub workflow](../.github/workflows/provider-readiness.yml)
-also runs on relevant main-branch changes or manual dispatch. It never runs with
-secrets on pull requests. Keys are available only to the probe step.
+invokes providers only on explicit authorized markers or manual dispatch. Ordinary pushes do not spend provider quota. It never runs with secrets on pull requests; keys are scoped to the evaluation step.
 
 This is the first gate before the full 40-case evaluation: distinguish missing
 credentials, inaccessible models, quota/network failure and malformed responses
@@ -175,4 +176,4 @@ The prior failed trials below/above are historical evidence, not the latest stat
 
 ## Latest B evaluation — 4 November 2026
 
-OpenRouter `nvidia/nemotron-3.5-super-vl:free` passed six representative B cases across bounded source-backed trials: supported answer, closing refusal, open-run source request, partial disclosure, correction and injected-source instruction. See [B results and limits](OPENROUTER_B.md) for exact runs, failures, call counts and remaining coverage. This supersedes historical statements that B has not been live tested. C and production OpenRouter/UI integration remain pending. Passing this fixture does not establish broad 3GPP accuracy or sustained availability.
+OpenRouter `nvidia/nemotron-3.5-super-vl:free` passed six representative B cases across bounded source-backed trials: supported answer, closing refusal, open-run source request, partial disclosure, correction and injected-source instruction. See [B results and limits](OPENROUTER_B.md) for exact runs, failures, call counts and remaining coverage. This supersedes historical statements that B has not been live tested. The linked C report now records reviewer evaluation; the mixed runtime and explicit demo are implemented; full-corpus and reliability acceptance remain pending. Passing this fixture does not establish broad 3GPP accuracy or sustained availability.

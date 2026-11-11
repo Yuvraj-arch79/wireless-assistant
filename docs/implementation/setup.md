@@ -50,7 +50,7 @@ The parser retains clause, page, document version, original hash, table cells an
 
 ## 4. Configure free API access on your computer
 
-Only the Gemini adapter is implemented today. Gemini, Groq and Mistral are the agreed shortlist for later comparison; Groq/Mistral keys cannot be used by this version. A/B/C provider assignment is pending testing. Use your own Gemini API project with **billing disabled** and model access available. Never paste the key into a chat, issue, screenshot or Git file. The application does not inspect your billing account: `WA_FREE_TIER_CONFIRMED=1` records your confirmation, not a server-side billing guarantee. There is no automatic paid/provider fallback, built-in web search or provider file-search service.
+The default profile uses Gemini. An opt-in mixed profile now routes A/C to Groq and B to OpenRouter; see the [live demo guide](../DEMO.md) for the exact models, private-key setup and explicit single-excerpt mode. Mistral runtime integration remains unimplemented. The following instructions describe the default full hybrid-corpus path. Use your own Gemini API project with **billing disabled** and model access available. Never paste the key into a chat, issue, screenshot or Git file. The application does not inspect your billing account: `WA_FREE_TIER_CONFIRMED=1` records your confirmation, not a server-side billing guarantee. There is no automatic paid/provider fallback, built-in web search or provider file-search service.
 
 Windows Command Prompt (current terminal only):
 

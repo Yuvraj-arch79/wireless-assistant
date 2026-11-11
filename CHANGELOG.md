@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-11-11 — Mixed provider runtime and explicit live demo
+
+- Connect pinned Groq A/C and free OpenRouter B to the existing controller; share tested wire contracts and preserve original backend validation.
+- Add a separate single-excerpt demo database, explicit UI scope notice and Windows setup instructions; full hybrid corpus setup remains separate.
+- Cap C output at 900 tokens, bind backend identities without model echo, and retain low reasoning after a no-reasoning trial missed a regression.
+- Pace mixed-provider calls within cancelable run deadlines; quota failures stop without automatic retry or paid fallback.
+- Prevent skipped workflows from evicting an authorized pending live test.
+- Verify the live controller end to end in four generation calls, with local source retrieval and a persisted C-approved cited answer; correct A’s source-document versus topic-series filtering.
+
+## 2026-11-10 — Bounded Groq C evaluation
+
+- Add source-grounded C cases, strict backend binding/coverage checks and first-review regression validation; preserve failed trials in the evaluation record.
+- Evaluate Qwen through the existing Groq key after inconsistent GPT-OSS reviewer results; keep A unchanged and runtime integration pending.
+- Pace calls with finite deadlines and no automatic retries; retain manual/full-suite and selected-case execution.
+
 ## 2026-11-02 — Explicit single-call Groq smoke
 
 - Add a one-generation-call Groq mode using the previously verified model; no metadata refresh or retries.

@@ -1,8 +1,8 @@
 # OpenRouter B evaluation — 4 November 2026
 
-Status: six representative cases passed across the linked bounded runs. Ready to begin C evaluation; not a full domain benchmark or a production UI integration.
+Status: six representative cases passed across the linked bounded runs. The [C follow-up evaluation](GROQ_C.md) records subsequent reviewer work. This is not a full domain benchmark or production UI integration.
 
-Model: `nvidia/nemotron-3.5-super-vl:free`. A and proposed C remain Groq; C has not been live validated. Production chat remains Gemini-only until explicit runtime integration.
+Model: `nvidia/nemotron-3.5-super-vl:free`. A remains Groq; the C candidate and its measured results are recorded in the linked C report. An opt-in mixed runtime profile and [single-excerpt demo](../docs/DEMO.md) now connect A/B/C; the default remains Gemini. Full-corpus acceptance remains separate.
 
 ## Live evidence
 
