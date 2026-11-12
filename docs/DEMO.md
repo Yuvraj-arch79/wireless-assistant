@@ -37,3 +37,7 @@ The `Live A-B-C demo` Actions workflow exercises one real API chat through the r
 > References: [1] TS 38.201 v18.0.0, clause 4.1.1.
 
 The first integrated attempt paused because A confused a subject-series number with a source-document filter. A's source-selection instruction was corrected; the passing run searched the actual 38.201 document and did not require a user clarification. No answer was hard-coded into the controller or UI. Offline verification: **235 tests and 79 subtests passed**, one optional browser test skipped locally; **98 structural/design assertions passed**. Windows, Linux and Chromium CI passed on the live-tested commit. This establishes the small live demonstration, not full-corpus/domain acceptance.
+
+## Full corpus follow-up
+
+The [12 November full-corpus report](../evaluation/FULL_CORPUS.md) verifies all twelve originals and parsing, but records a Gemini quota stop during full-index preparation. The single-excerpt demo above remains verified; do not interpret it as full-corpus acceptance.

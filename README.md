@@ -86,3 +86,5 @@ python docs/design/validate_design.py
 Runtime tests use deterministic provider fixtures. Real corpus extraction was exercised; live generation, real embeddings, technical accuracy and full release acceptance remain unverified. The [verification record](docs/implementation/verification.md) separates those results and limitations. The setup guide also covers database backups, retained corpus builds and Git checkpoints.
 
 For a small live presentation with real A/B/C providers and one explicitly labeled source excerpt, follow [the demo guide](docs/DEMO.md). Existing full hybrid-corpus setup remains separate.
+
+Full-corpus progress and measured blockers: [12-document validation report](evaluation/FULL_CORPUS.md).
