@@ -67,3 +67,12 @@ jobs:
             git tag prototype-v0.1.0 "$GITHUB_SHA"
             git push origin refs/tags/prototype-v0.1.0
           fi
+      - name: Save verified single-PDF presentation checkpoint
+        if: contains(github.event.head_commit.message, '[one-pdf-checkpoint]')
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git rev-parse -q --verify refs/tags/one-pdf-demo-v0.1.0 >/dev/null; then
+            git tag one-pdf-demo-v0.1.0 "$GITHUB_SHA"
+            git push origin refs/tags/one-pdf-demo-v0.1.0
+          fi

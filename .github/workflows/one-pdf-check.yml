@@ -2,6 +2,10 @@ name: One PDF live validation
 on:
   workflow_dispatch:
     inputs:
+      cases:
+        description: Optional comma-separated case IDs (series,coding,control,missing_detail); blank runs all four
+        type: string
+        required: false
       resume_run_id:
         description: Prior run ID containing this repository's one-pdf-validation artifact (optional)
         type: string
@@ -29,23 +33,23 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r requirements.lock
       - name: Restore previously completed public corpus batches
-        if: always()
+        if: github.event_name == 'workflow_dispatch' && inputs.resume_run_id != ''
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: one-pdf-validation
           path: data/one-pdf/
-          run-id: ${{ inputs.resume_run_id || '43184708258' }}
+          run-id: ${{ inputs.resume_run_id }}
           github-token: ${{ github.token }}
       - name: Prepare the complete pinned TS 38.201 PDF
         run: python -m wireless_assistant.cli prepare-one
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           WA_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
-      - name: Recheck control question after provider availability failure
+      - name: Selected source-anchored live A-B-C checks
         run: python -m evaluation.one_pdf_live
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          WA_EVAL_CASES: control
+          WA_EVAL_CASES: ${{ inputs.cases || '' }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           WA_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}

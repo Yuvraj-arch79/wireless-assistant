@@ -4,7 +4,7 @@ A local development assistant for clear, relevant and verifiable answers from a 
 
 For the complete **single-PDF TS 38.201** setup with Gemini search and Groq/OpenRouter A–B–C, see [the one-PDF guide](docs/ONE_PDF.md). This is separate from the limited excerpt demo.
 
-**Project stage:** Development prototype (v0.1.0). The [single-excerpt live A–B–C demo](docs/DEMO.md) passes; full-corpus and domain-quality acceptance remain pending.
+**Project stage:** Development prototype (v0.1.0). The [whole-TS-38.201 presentation setup](docs/ONE_PDF.md) has three live reviewed/cited answers and an insufficient-evidence check verified across two runs. Twelve-document and broader domain-quality acceptance remain pending.
 
 **SRS:** v0.9.1 — 94 requirements and 30 acceptance scenarios.
 
@@ -85,7 +85,7 @@ python -m pytest -q
 python docs/design/validate_design.py
 ```
 
-Runtime tests use deterministic provider fixtures. Real corpus extraction was exercised; live generation, real embeddings, technical accuracy and full release acceptance remain unverified. The [verification record](docs/implementation/verification.md) separates those results and limitations. The setup guide also covers database backups, retained corpus builds and Git checkpoints.
+Runtime regression tests use deterministic provider fixtures. Real Gemini embeddings and representative live A–B–C answers are verified for the single-PDF setup; broader technical accuracy and full release acceptance remain unverified. The [verification record](docs/implementation/verification.md) separates those results and limitations. The setup guide also covers database backups, retained corpus builds and Git checkpoints.
 
 For a small live presentation with real A/B/C providers and one explicitly labeled source excerpt, follow [the demo guide](docs/DEMO.md). Existing full hybrid-corpus setup remains separate.
 

@@ -4,6 +4,10 @@ This isolated setup loads the **entire pinned TS 38.201 v18.0.0 Release 18 PDF**
 
 The source is a physical-layer **overview**. It describes other specifications but does not include their detailed contents. Unreadable extraction is excluded, and diagram/formula fidelity is not certified. Answers must cite the loaded document or explicitly identify missing evidence.
 
+## Download the prepared index (recommended)
+
+[Download the verified one-PDF artifact](https://github.com/Yuvraj-arch79/wireless-assistant/actions/runs/43186016545/artifacts/13928049122) while signed into GitHub. It is retained for seven days. Extract it into `data/one-pdf` in the repository; `assistant.sqlite3` must sit directly inside that folder. It includes the verified source, complete Gemini index and public test chats. With this download, **skip `prepare-one`** below and run only `serve`. The local three API keys are still needed for new questions. If the artifact has expired, `prepare-one` recreates it from the pinned source.
+
 ## Windows PowerShell
 
 From your existing repository folder:
@@ -48,6 +52,21 @@ To avoid repeating document embedding, download a successful **One PDF live vali
 
 The live workflow tests these four cases through the real HTTP API/controller with at most seven generation attempts per case, zero automatic retries and at most one format repair, persisted review checks and citation-to-source checks. Keyword checks are only coarse regressions; inspect the saved answers as well. Four successful probes do not certify every possible question. Calls to the same model are paced, so an answer can take about a minute.
 
+## Source extraction
+
+All pages of the pinned PDF are processed into 50 passages. Of these, 36 are eligible for embedding; 14 are excluded (front matter, problematic table/diagram extraction or mathematical glyphs). Exclusion is explicit: full-PDF ingestion does not mean perfect extraction of every figure or formula. The main overview clauses 4.1.1–4.2.5 and specification summaries 5.2–5.9 have readable text.
+
 ## Validation record
 
-Local implementation checks: 238 tests and 79 subtests passed; 98 structural/design assertions passed. Live results are recorded in the workflow artifact's `preparation.json` and `live-report.json`; the presence of this guide alone does not mean the live run passed.
+Local implementation checks: 238 baseline tests plus two citation-repair regressions passed (240 total), with 79 subtests; 98 structural/design assertions passed. Live validation on 12 November 2026:
+
+| Probe | Result | Source |
+| --- | --- | --- |
+| Layer 1 versus Layers 2/3 specification series | Accepted C review; cited answer | 4.1.1 |
+| Transport-block coding versus PBCH/control coding | Accepted C review; cited answer; one bounded B format repair | 4.2.3 |
+| TS 38.213 control-procedure scope | Accepted C review; cited answer on targeted recheck | 5.6 |
+| Exact LDPC thresholds absent from this overview | Explicit insufficient-evidence stop; no invented thresholds or unchecked draft | Out of loaded coverage |
+
+[Initial four-case run](https://github.com/Yuvraj-arch79/wireless-assistant/actions/runs/43184708258) passed three cases; the control question failed at Groq A with `PROVIDER_UNAVAILABLE`. [Only that question was rerun](https://github.com/Yuvraj-arch79/wireless-assistant/actions/runs/43186016545) and passed. Thus four representative probes passed across two runs, **not one flawless full-suite run**. The final artifact retains the index and saved public chat history; its `live-report.json` covers the targeted recheck. No additional document embedding was needed on either rerun.
+
+The complete index has 36 Gemini vectors, created in three batches. The three successful answers also passed backend citation/version binding checks and C review; their text was compared with the pinned source clauses. This is a presentation-ready scoped prototype, not an assurance of every answer or provider uptime. Free provider quota, availability and formula/diagram extraction remain limitations.
