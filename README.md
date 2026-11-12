@@ -2,6 +2,8 @@
 
 A local development assistant for clear, relevant and verifiable answers from a prepared **3GPP cellular** collection, with context-aware follow-up questions.
 
+For the complete **single-PDF TS 38.201** setup with Gemini search and Groq/OpenRouter A–B–C, see [the one-PDF guide](docs/ONE_PDF.md). This is separate from the limited excerpt demo.
+
 **Project stage:** Development prototype (v0.1.0). The [single-excerpt live A–B–C demo](docs/DEMO.md) passes; full-corpus and domain-quality acceptance remain pending.
 
 **SRS:** v0.9.1 — 94 requirements and 30 acceptance scenarios.

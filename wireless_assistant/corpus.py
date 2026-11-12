@@ -11,7 +11,7 @@ from .common import AppError, canonical, digest, now, token_bound, uid
 from .provider import request, vector
 from .store import insert, row
 
-PARSER = 'pdfplumber-clause-v2'
+PARSER = 'pdfplumber-clause-v3'
 CHUNK_CHARS = 1800
 MAX_BUILD_PASSAGES = 20000
 
@@ -45,7 +45,7 @@ def parse_pdf(path):
                 nonlocal buffer
                 if buffer:
                     content = '\n'.join(buffer).strip()
-                    bad = '\ufffd' in content or '(cid:' in content or clause == 'front-matter'
+                    bad = '\ufffd' in content or '(cid:' in content or bool(re.search(r'[\ue000-\uf8ff]', content)) or clause == 'front-matter'
                     kind = 'heading' if content == clause + ' ' + title else 'text'
                     passages.append({'clause_id':clause, 'clause_title':title, 'page_location':str(page_number),
                                      'text':content, 'unreadable':bad,
@@ -54,6 +54,10 @@ def parse_pdf(path):
             for line in lines:
                 if re.match(r'^(ETSI|3GPP TS|ETSI TS)\b', line) or re.fullmatch(r'\d+',line.strip()):
                     continue
+                annex = re.match(r'^Annex ([A-Z])\b', line)
+                if annex:
+                    flush()
+                    clause, title = 'Annex ' + annex.group(1), line
                 match = re.match(r'^(\d+(?:\.\d+){0,7})\s+([A-Za-z][^\n]{2,150})$',line)
                 if match and match.group(1) in heading_numbers and not re.search(r'\.{3,}',line):
                     flush()
@@ -120,7 +124,7 @@ class Corpus:
             docs = [dict(d) for d in db.execute('SELECT spec_number,title,version,release,source_uri FROM source_documents WHERE build_id=? ORDER BY spec_number',(build['build_id'],))]
             ready = self.ready(build['build_id'])
             return {'active_build_id':build['build_id'],'ready':ready,'documents':docs,
-                    'coverage_gaps':['Release 18 selected PHY/Layer-2 documents only; external referenced standards are unavailable.',
+                    'coverage_gaps':['Loaded sources only: ' + ', '.join('TS ' + d['spec_number'] for d in docs) + '. Referenced documents are not automatically included.',
                                      'Formula/diagram interpretation needs source inspection; extraction is not a certified transcription.'] + ([] if ready else ['Lexical preview only: prepare embeddings before AI chat.'])}
 
     def get(self, build, ids):

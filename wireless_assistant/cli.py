@@ -16,6 +16,7 @@ def main(argv=None):
     sub=parser.add_subparsers(dest='command',required=True)
     sub.add_parser('serve')
     sub.add_parser('demo', help='Live A/B/C on one pinned excerpt, in a separate data folder')
+    sub.add_parser('prepare-one', help='Verify and index the complete pinned TS 38.201 PDF with Gemini')
     sub.add_parser('status')
     sub.add_parser('builds')
     p=sub.add_parser('ingest')
@@ -31,6 +32,14 @@ def main(argv=None):
     settings=Settings.environment()
     if args.data_dir:
         settings=settings.model_copy(update={'data_dir':args.data_dir.absolute()})
+    if args.command=='prepare-one':
+        from .one_pdf import prepare
+        try:
+            print(json.dumps(prepare(args.data_dir), indent=2))
+            return 0
+        except (AppError, OSError, ValueError) as exc:
+            print('ERROR: ' + str(exc), file=sys.stderr)
+            return 1
     if args.command=='demo':
         values=settings.model_dump(exclude={'model_a','model_b','model_c','active_seconds','max_active'})
         values.update(provider_profile='groq_openrouter',demo_mode=True,data_dir=args.data_dir.absolute() if args.data_dir else ROOT/'data'/'demo')
