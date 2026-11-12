@@ -194,6 +194,8 @@ class Engine:
                     retry=True;continue
                 raise
             try:
+                if response.get('contract_error'):
+                    raise AppError('INVALID_CONTRACT',response['contract_error'])
                 raw=load_json(response['text'])
                 value=ADAPTERS[role].validate_python(raw).model_dump(mode='json')
                 validate(value)

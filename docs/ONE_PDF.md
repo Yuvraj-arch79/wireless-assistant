@@ -46,7 +46,7 @@ To avoid repeating document embedding, download a successful **One PDF live vali
 - What control procedures are in the scope of TS 38.213? (5.6)
 - Give the exact numerical LDPC base-graph selection thresholds. (Not specified in this overview; must acknowledge missing detail.)
 
-The live workflow tests these four cases through the real HTTP API/controller with at most six generation attempts per case, zero automatic retries/format repairs, persisted review checks and citation-to-source checks. Keyword checks are only coarse regressions; inspect the saved answers as well. Four successful probes do not certify every possible question. Calls to the same model are paced, so an answer can take about a minute.
+The live workflow tests these four cases through the real HTTP API/controller with at most seven generation attempts per case, zero automatic retries and at most one format repair, persisted review checks and citation-to-source checks. Keyword checks are only coarse regressions; inspect the saved answers as well. Four successful probes do not certify every possible question. Calls to the same model are paced, so an answer can take about a minute.
 
 ## Validation record
 

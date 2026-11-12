@@ -121,3 +121,30 @@ def test_mixed_budget_counts_entire_wire_request(tmp_path):
     engine=Engine(Store(s));p=case_payload('correct')
     assert engine.request_size('A',p)==len(canonical(rp.build_request('A',rp.MODELS['A'],p,2000)).encode())
     assert engine.request_size('A',p)<=s.role_input_bound
+
+
+def test_bad_citation_returns_bounded_repair_diagnostic():
+    p=case_payload('correct');value=p['candidate']
+    value['answer_markdown']='Supported claim [1].'
+    value['citations'][0]['claim_anchor']='Words absent from the answer'
+    raw=canonical({'result':value})
+    with patch.object(rp,'request',return_value={'choices':[{'finish_reason':'stop','message':{'content':raw}}]}):
+        response=rp.generate('B',rp.MODELS['B'],'',p,2000)
+    assert response['contract_error']=='Invalid inline citation or claim anchor before reference rendering.'
+
+
+def test_contract_diagnostic_spends_only_one_repair(client):
+    from tests.runtime.conftest import create_chat,post,wait_run
+    original=client.app_script
+    count=0
+    def transport(role,payload):
+        nonlocal count
+        if role=='B':
+            count+=1
+            return {'text':'{}','contract_error':'Invalid inline citation or claim anchor before reference rendering.'}
+        return original(role,payload)
+    client.app.state.engine.role_transport=transport
+    sid=create_chat(client)
+    rid=post(client,f'/api/sessions/{sid}/messages',{'text':'Explain resource blocks'}).json()['data']['run_id']
+    result=wait_run(client,rid)
+    assert result['outcome']['kind']=='INVALID_CONTRACT' and count==2

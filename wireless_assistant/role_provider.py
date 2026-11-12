@@ -79,8 +79,12 @@ def generate(role, model, system, payload, output_tokens):
     parsed = inspect_c_response(raw, payload) if role == 'C' else inspect_response(raw, role, wrapped=True)
     if parsed['status'] != 'pass':
         # Let the controller perform its single bounded format repair; no echoed private provider text.
-        return {'text': '{}', 'usage': {}}
+        return {'text': '{}', 'usage': {}, 'contract_error': canonical({k:v for k,v in parsed.items() if k!='value'})}
     value = parsed['value']
     if role == 'B':
-        value = render_references(value, payload['evidence'])
+        try:
+            value = render_references(value, payload['evidence'])
+        except AppError as exc:
+            # Let the controller's existing one-repair budget handle bad citations.
+            return {'text': canonical(value), 'usage': {}, 'contract_error': exc.message}
     return {'text': canonical(value), 'usage': {}}
