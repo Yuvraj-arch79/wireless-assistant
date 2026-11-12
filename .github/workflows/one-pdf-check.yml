@@ -34,17 +34,18 @@ jobs:
         with:
           name: one-pdf-validation
           path: data/one-pdf/
-          run-id: ${{ inputs.resume_run_id || '43147390308' }}
+          run-id: ${{ inputs.resume_run_id || '43184708258' }}
           github-token: ${{ github.token }}
       - name: Prepare the complete pinned TS 38.201 PDF
         run: python -m wireless_assistant.cli prepare-one
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           WA_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
-      - name: Four source-anchored live A-B-C checks
+      - name: Recheck control question after provider availability failure
         run: python -m evaluation.one_pdf_live
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WA_EVAL_CASES: control
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           WA_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}

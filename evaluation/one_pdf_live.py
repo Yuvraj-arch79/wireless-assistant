@@ -1,5 +1,6 @@
 """Four source-anchored integration probes; not exhaustive domain certification."""
 import json
+import os
 import re
 import time
 from fastapi.testclient import TestClient
@@ -29,12 +30,16 @@ class ObservedEngine(Engine):
 def run():
     settings=Settings(data_dir=ROOT/'data/one-pdf',provider_profile='groq_openrouter',max_calls=7,max_repairs=1,max_retries=0)
     report={'status':'not_completed','scope':'Complete TS 38.201 PDF with Gemini hybrid search, Groq A/C and OpenRouter B; four representative probes','cases':[]}
+    selected=os.getenv('WA_EVAL_CASES','').split(',') if os.getenv('WA_EVAL_CASES') else [c['id'] for c in CASES]
+    if not set(selected)<={c['id'] for c in CASES}:raise ValueError('Unknown case selection')
+    cases=[c for c in CASES if c['id'] in selected]
+    report['selected_cases']=selected
     with TestClient(create_app(settings,ObservedEngine),base_url='http://127.0.0.1:8765') as client:
         app=client.app
         client.headers.update({'Origin':'http://127.0.0.1:8765','X-WA-CSRF':app.state.csrf})
         if not client.get('/api/health').json()['data']['ready']:
             report['status']='SETUP_REQUIRED';return report
-        for case in CASES:
+        for case in cases:
             response=client.post('/api/sessions',json={'title':'TS 38.201 check: '+case['id']},headers={'Idempotency-Key':uid()})
             response.raise_for_status();sid=response.json()['data']['session_id']
             response=client.post('/api/sessions/'+sid+'/messages',json={'text':case['question']},headers={'Idempotency-Key':uid()})
@@ -72,7 +77,7 @@ def run():
             (settings.data_dir/'live-report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
             # No repeated attempts on a quota/auth/network failure.
             if result.get('outcome',{}).get('kind') in ('PROVIDER_QUOTA','PROVIDER_AUTH','PROVIDER_NETWORK','PROVIDER_TIMEOUT'):break
-        report['status']='pass' if len(report['cases'])==len(CASES) and all(c['passed'] for c in report['cases']) else 'not_passed'
+        report['status']='pass' if len(report['cases'])==len(cases) and all(c['passed'] for c in report['cases']) else 'not_passed'
     (settings.data_dir/'live-report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     return report
 
