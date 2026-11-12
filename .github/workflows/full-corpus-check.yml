@@ -1,9 +1,9 @@
-name: Full corpus prerequisite
+name: Full corpus validation
 on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['evaluation/embedding_check.py', '.github/workflows/full-corpus-check.yml']
+    paths: ['evaluation/full_corpus.py', 'evaluation/full_live.py', '.github/workflows/full-corpus-check.yml']
 permissions:
   contents: read
 concurrency:
@@ -13,7 +13,7 @@ jobs:
   embedding:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[full-corpus]')
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -22,8 +22,27 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r requirements.lock
-      - name: One real embedding batch, no retries
-        run: python -m evaluation.embedding_check
+      - name: Fetch and verify the twelve pinned PDFs
+        run: python scripts/corpus.py fetch
+      - name: Ingest and prepare full hybrid corpus with finite budget
+        run: python -m evaluation.full_corpus --live
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           WA_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
+      - name: One full-corpus live A-B-C chat
+        run: python -m evaluation.full_live
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          WA_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
+          WA_GROQ_FREE_TIER_CONFIRMED: ${{ vars.WA_GROQ_FREE_TIER_CONFIRMED || '1' }}
+          WA_OPENROUTER_FREE_TIER_CONFIRMED: ${{ vars.WA_OPENROUTER_FREE_TIER_CONFIRMED || '1' }}
+      - name: Preserve public corpus progress and report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: full-corpus-validation
+          path: data/full-validation/
+          retention-days: 7
+          if-no-files-found: warn
