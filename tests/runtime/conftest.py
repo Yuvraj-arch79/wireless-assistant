@@ -37,7 +37,9 @@ def ready(payload):
 
 
 def clarify(payload):
-    return {'action':'clarify','intent_relation':'same_need','need':need(payload),'coverage_gaps':[],
+    n=need(payload)
+    n['unresolved_gaps']=[{'gap_id':'detail','kind':'user_detail','requirement_ids':['r1'],'reason':'Definition or numbering detail is unspecified.','source_or_message_ids':[]}]
+    return {'action':'clarify','intent_relation':'same_need','need':n,'coverage_gaps':[],
             'clarification':{'question':'Which resource block detail do you need?','missing_requirement_ids':['r1'],'alternatives':['definition','numbering'],'gap_key':'detail'}}
 
 

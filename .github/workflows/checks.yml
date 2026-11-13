@@ -29,6 +29,9 @@ jobs:
       - run: python -m pip check
       - run: python scripts/corpus.py list
       - run: python -X warn_default_encoding -W error::EncodingWarning evaluation/validate.py
+      - name: Initialize tokenizer outside request processing
+        run: python -c "import tiktoken; tiktoken.get_encoding('o200k_harmony')"
+        timeout-minutes: 1
       - run: python -m pytest -q
       - run: python -X warn_default_encoding -W error::EncodingWarning docs/design/validate_design.py
   browser:
