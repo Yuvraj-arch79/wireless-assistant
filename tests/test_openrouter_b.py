@@ -151,3 +151,24 @@ def test_case_selection_does_not_repeat_completed_work(monkeypatch):
 def test_missing_structured_limitation_cannot_be_invented():
     d=draft();d['unresolved_requirements']=[{'req_id':'r3','reason':'No source'}];d['limitation_statement']=None
     with pytest.raises(AppError):b.assess(d,b.case_payload('partial'))
+
+
+def test_b_length_cut_is_discarded_and_routed_to_single_repair(monkeypatch):
+    # Live 14 Nov runs 43619590843/43622407653: B looped citation labels until max_tokens.
+    from wireless_assistant import role_provider as rp
+    looping={'choices':[{'finish_reason':'length','message':{'content':'{"result": {"action": "submit_draft", "answer_markdown": "x [1] [2] [3]'}}]}
+    with patch.object(rp,'request',return_value=looping):
+        r=rp.generate('B',rp.MODELS['B'],'',{'evidence':[]},2000)
+    assert r['text']=='{}' and 'token limit' in r['contract_error']
+    prompt=rp.build_request('B',rp.MODELS['B'],{'evidence':[]},2000)['messages'][0]['content']
+    assert 'at most 3 inline markers' in prompt and 'never ask about language or script' in prompt
+
+
+@pytest.mark.parametrize('role',['A','C'])
+def test_other_roles_length_cut_still_incomplete(role):
+    from wireless_assistant import role_provider as rp
+    from wireless_assistant.common import AppError
+    cut={'choices':[{'finish_reason':'length','message':{'content':'{'}}]}
+    with patch.object(rp,'request',return_value=cut),patch.object(rp,'build_request',return_value={}),pytest.raises(AppError) as e:
+        rp.generate(role,rp.MODELS[role],'',{'evidence':[]},2000)
+    assert e.value.code=='PROVIDER_INCOMPLETE'

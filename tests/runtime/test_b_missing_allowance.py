@@ -156,3 +156,35 @@ def test_genuine_cannot_answer_still_stops_without_release(client):
     result = wait_run(client, rid)
     assert result['outcome']['kind'] == 'INABILITY', result
     assert [r for r, _ in client.app_script.calls] == ['A', 'A', 'B']
+
+
+def test_b_length_cut_uses_existing_repair_then_review(client):
+    def cut(payload):
+        return {'text': '{}', 'usage': {}, 'contract_error': 'Your previous output hit the token limit by repeating text.'}
+    calls = []
+    original = client.app_script.__call__
+    def transport(role, payload):
+        calls.append((role, payload))
+        if role == 'B' and len([c for c in calls if c[0] == 'B']) == 1:
+            return cut(payload)
+        return original(role, payload)
+    client.app.state.engine.role_transport = transport
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': QUESTION}).json()['data']['run_id']
+    result = wait_run(client, rid)
+    assert result['outcome']['kind'] == 'ACCEPTED', result
+    assert [r for r, _ in calls] == ['A', 'A', 'B', 'B', 'C']
+    assert 'token limit' in calls[3][1]['contract_error']
+
+
+def test_second_length_cut_still_stops_without_release(client):
+    def transport(role, payload):
+        if role == 'B':
+            return {'text': '{}', 'usage': {}, 'contract_error': 'Your previous output hit the token limit by repeating text.'}
+        return client.app_script(role, payload)
+    client.app.state.engine.role_transport = transport
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': QUESTION}).json()['data']['run_id']
+    result = wait_run(client, rid)
+    assert result['outcome']['kind'] not in ('ACCEPTED', 'PARTIAL_ACCEPTED'), result
+    assert [r for r, _ in client.app_script.calls].count('C') == 0
