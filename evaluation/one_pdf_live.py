@@ -24,7 +24,10 @@ class ObservedEngine(Engine):
             except Exception as error:
                 print(json.dumps({"role":role,"validation_issue":str(error),"public_evaluation_output":value}),flush=True)
                 raise
-        return super().call(rid,w,role,payload,checked)
+        result=super().call(rid,w,role,payload,checked)
+        if role=='B' and result.get('action')!='submit_draft' and os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
+            print(json.dumps({'role':'B','missing_info_allowed':payload.get('missing_info_allowed'),'public_evaluation_output':result},ensure_ascii=True),flush=True)
+        return result
 
     def tool(self,rid,w,state,tool):
         before=len(state.get('tool_results',[]))

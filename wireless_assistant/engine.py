@@ -304,7 +304,17 @@ class Engine:
                 # Freeze the exact B input. C receives this same context and evidence.
                 binding=self.freeze(rid,w,state,context,evidence)
                 payload['input_binding']=binding
-                result=self.call(rid,w,'B',payload,lambda b:validate_draft(b,state['need'],evidence,state['review']) if b['action']=='submit_draft' else None)
+                # B must know when its one missing-info request is already spent;
+                # otherwise a permitted-looking request ends the run unreviewed.
+                allow_missing=not state['closing'] and state['missing_by_round'][state['round']]<1
+                payload['closing_mode']=not allow_missing
+                payload['missing_info_allowed']=allow_missing
+                def valid_b(b):
+                    if b['action']=='submit_draft':
+                        validate_draft(b,state['need'],evidence,state['review'])
+                    elif b['action']=='request_missing_info':
+                        require(allow_missing,'The missing-information allowance is exhausted (closing_mode). Submit a supported partial draft that discloses unresolved parts in limitation_statement, or cannot_answer.')
+                result=self.call(rid,w,'B',payload,valid_b)
                 if result['action']=='cannot_answer':
                     self.store.stop(rid,'COMPLETED','INABILITY','The available evidence is insufficient for a supported answer. Narrow the question or supply the missing detail.',w['epoch'],self.elapsed(w));return
                 if result['action']=='request_missing_info':
