@@ -125,3 +125,34 @@ def test_source_request_for_other_or_sub_clause_still_allowed(client):
     calls = client.app_script.calls
     assert [r for r, _ in calls][:4] == ['A', 'A', 'B', 'A']
     assert calls[3][1]['b_gap']['item'].endswith('4.4.4.12 table')
+
+
+def test_b_cannot_answer_claiming_complete_clause_missing_is_repaired(client):
+    # Live 14 Nov run 43619330855: cannot_answer said only a short excerpt of the
+    # clause was available although the complete clause was supplied.
+    def cannot(payload):
+        return {'action': 'cannot_answer', 'cannot_answer_reason': [
+            {'gap_id': 'g1', 'kind': 'context_limit', 'requirement_ids': ['r1'],
+             'reason': 'The evidence does not contain the full text of TS 38.211 clause 4.4.4.1.',
+             'source_or_message_ids': []}]}
+    client.app_script.actions = [('A', collect), ('A', ready), ('B', cannot), ('B', draft)]
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': QUESTION}).json()['data']['run_id']
+    result = wait_run(client, rid)
+    assert result['outcome']['kind'] == 'ACCEPTED', result
+    assert [r for r, _ in client.app_script.calls] == ['A', 'A', 'B', 'B', 'C']
+    assert 'already completely present' in client.app_script.calls[3][1]['contract_error']
+
+
+def test_genuine_cannot_answer_still_stops_without_release(client):
+    def cannot(payload):
+        return {'action': 'cannot_answer', 'cannot_answer_reason': [
+            {'gap_id': 'g1', 'kind': 'source', 'requirement_ids': ['r1'],
+             'reason': 'Numerical thresholds from TS 38.212 are not in the loaded corpus.',
+             'source_or_message_ids': []}]}
+    client.app_script.actions = [('A', collect), ('A', ready), ('B', cannot)]
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': QUESTION}).json()['data']['run_id']
+    result = wait_run(client, rid)
+    assert result['outcome']['kind'] == 'INABILITY', result
+    assert [r for r, _ in client.app_script.calls] == ['A', 'A', 'B']
