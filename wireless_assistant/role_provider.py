@@ -46,6 +46,9 @@ def request(role, body):
                                                   for k in ('code', 'type', 'param', 'message')}
                                         print('PUBLIC EVAL PROVIDER ERROR: ' + canonical(detail), flush=True)
                                     if error.get('code') == 'json_validate_failed':
+                                        failed = error.get('failed_generation')
+                                        if isinstance(failed, str) and len(failed.encode('utf-8')) <= 65536:
+                                            return {'wireless_failed_generation': failed}
                                         return {'wireless_schema_rejected': True}
                             except (ValueError, TypeError, KeyError):
                                 pass
@@ -104,7 +107,11 @@ def generate(role, model, system, payload, output_tokens):
     result = request(role, build_request(role, model, payload, output_tokens))
     if result.get('wireless_schema_rejected'):
         return {'text': '{}', 'usage': {}, 'contract_error': 'Return a JSON object with the single key result, matching the role schema in the instructions.'}
-    choices = result.get('choices', [])
+    # A provider-rejected JSON draft is never trusted. A missing result wrapper
+    # can be normalized losslessly, then must pass the same DTO and engine checks.
+    failed = result.get('wireless_failed_generation') if role == 'A' else None
+    choices = ([{'finish_reason': 'stop', 'message': {'content': failed}}]
+               if isinstance(failed, str) else result.get('choices', []))
     if len(choices) != 1 or choices[0].get('finish_reason') != 'stop' or choices[0].get('message', {}).get('tool_calls'):
         raise AppError('PROVIDER_INCOMPLETE', 'Provider output was incomplete; no unchecked answer was released.', 502)
     raw = choices[0].get('message', {}).get('content')
@@ -114,6 +121,8 @@ def generate(role, model, system, payload, output_tokens):
         from .a_transport import decode_result
         try:
             envelope = load_json(raw)
+            if isinstance(envelope, dict) and 'result' not in envelope and envelope.get('action') in ('collect', 'ready_for_b', 'clarify', 'out_of_scope'):
+                envelope = {'result': envelope}  # No inner field is dropped or invented.
             if isinstance(envelope, dict) and set(envelope) == {'result'}:
                 raw = canonical({'result': decode_result(envelope['result'], payload)})
         except (ValueError, TypeError, AppError):

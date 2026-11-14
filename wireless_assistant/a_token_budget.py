@@ -58,6 +58,14 @@ def reachable_schema(schema):
 
 def preview_passage(item, chars):
     out = deepcopy(item)
+    # A chooses tools using the retrieved passage_id and relation; storage hashes
+    # and neighbour IDs are backend bindings, not content the planner must echo.
+    # Full evidence is untouched and is frozen independently for B and C.
+    for name in ('document_id', 'build_id', 'content_hash'):
+        out.pop(name, None)
+    for name in ('parent_id', 'previous_id', 'next_id'):
+        if name in out:
+            out['has_' + name[:-3]] = bool(out.pop(name))
     text = out.get('text', '')
     if isinstance(text, str) and len(text) > chars:
         out['text'] = text[:chars]
@@ -74,6 +82,18 @@ def preview_passage(item, chars):
 def compact_payload(payload, chars):
     p = deepcopy(payload)
     p['evidence'] = [preview_passage(e, chars) for e in p.get('evidence', [])]
+    # Preserve each document's exact source metadata once, not once per chunk.
+    sources = {}
+    source_keys = ('source_uri', 'spec_number', 'document_version', 'release')
+    for item in p['evidence']:
+        source = {k: item.pop(k) for k in source_keys if k in item}
+        if source:
+            sid = next((key for key, value in sources.items() if value == source), None)
+            if sid is None:
+                sid = 's' + str(len(sources) + 1)
+                sources[sid] = source
+            item['source_ref'] = sid
+    p['evidence_sources'] = sources
     evidence_ids = {e.get('passage_id') for e in p['evidence']}
     for result in p.get('tool_results', []):
         items = []
@@ -100,7 +120,8 @@ def budget_request(role, payload, body):
     system = system.replace('The JSON schema above is the original role contract.',
                             'Follow the transport schema; the backend validates the selected action.')
     system += ('\nEvidence text here is a retrieval preview, not the full evidence. '
-               'B/C receive original passages. Preserve the requested language and explanation style in need. '
+               'B/C receive original passages. Resolve source_ref through evidence_sources for exact source metadata. '
+               'Do not expand merely because preview_truncated is true: B/C already receive the complete passage. Preserve the requested language and explanation style in need. '
                'Do not clarify whether to disclose a source gap when the user already requested disclosure. '
                'When passages cover the requested topic, hand off to B with remaining gaps. '
                'Expand only actual supplied passage IDs; never request an empty passage_ids list.')

@@ -38,7 +38,8 @@ def test_a_fits_with_original_question_and_references(stage):
     assert sent['excluded_history_map']==p['excluded_history_map']
     assert p==original
     for actual,source in zip(sent['evidence'],p['evidence']):
-        for key in ('passage_id','spec_number','document_version','clause_id','source_uri','content_hash','page_location'):
+        actual = {**actual, **sent['evidence_sources'][actual['source_ref']]}
+        for key in ('passage_id','spec_number','document_version','clause_id','source_uri','page_location'):
             assert actual[key]==source[key]
         assert actual['preview_truncated']
     if stage=='repair':assert sent['contract_error']==p['contract_error']
@@ -90,3 +91,24 @@ def test_no_tokenizer_no_network(monkeypatch):
     with patch.object(rp,'request') as request,pytest.raises(AppError):
         rp.generate('A',rp.MODELS['A'],'',payload(),2000)
     request.assert_not_called()
+
+
+def test_real_storage_metadata_fits_without_changing_evidence():
+    from tests.runtime.conftest import need
+    p=payload();p['need']=need(p);p['need']['language']='Hinglish'
+    for i,e in enumerate(p['evidence']):
+        e.update(passage_id=f'{i:032x}', document_id='a'*32, build_id='b'*32,content_hash='f'*64,
+                 parent_id='c'*32,previous_id='d'*32,next_id='e'*32,
+                 source_uri='https://www.etsi.org/deliver/etsi_ts/138200_138299/138201/18.00.00_60/ts_138201v180000p.pdf')
+    p['tool_results']=[]
+    original=copy.deepcopy(p)
+    body=rp.build_request('A',rp.MODELS['A'],p,2000)
+    assert request_tokens(body)+A_MARGIN<=A_LIMIT
+    sent=json.loads(body['messages'][1]['content'])
+    assert sent['need']['language']=='Hinglish'
+    for actual,full in zip(sent['evidence'],original['evidence']):
+        assert actual['passage_id']==full['passage_id']
+        assert sent['evidence_sources'][actual['source_ref']]['source_uri']==full['source_uri']
+        assert actual['has_previous'] is True and actual['has_next'] is True
+        assert 'content_hash' not in actual and 'build_id' not in actual
+    assert p==original

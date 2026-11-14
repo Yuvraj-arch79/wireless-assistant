@@ -1,4 +1,5 @@
 name: Bounded ABC repair acceptance
+# Verify missing-wrapper normalization and real-corpus metadata compaction.
 on:
   workflow_dispatch:
   push:

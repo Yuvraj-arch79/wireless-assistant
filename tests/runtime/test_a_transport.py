@@ -88,3 +88,19 @@ def test_public_evaluation_error_diagnostics_are_opt_in_and_redact_key(monkeypat
         out=capsys.readouterr().out
         assert ('schema detail' in out)==enabled
         assert 'test-secret' not in out and 'private completion' not in out
+
+
+@pytest.mark.parametrize('invalid', [False, True])
+def test_provider_rejected_missing_wrapper_still_requires_backend_contract(monkeypatch,invalid):
+    monkeypatch.setenv('GROQ_API_KEY','fixture');monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED','1')
+    p=payload();v=collect(p);v['need']=encode_payload({**p,'need':v['need']})['need']
+    if invalid:v['extra_untrusted_field']='must fail, not silently stripped'
+    calls=[]
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(400,json={'error':{'code':'json_validate_failed','failed_generation':canonical(v)}})
+    with patch.object(rp.httpx,'Client',return_value=httpx.Client(transport=httpx.MockTransport(handler))):
+        result=rp.generate('A',rp.MODELS['A'],'',p,2000)
+    assert len(calls)==1
+    if invalid:assert result.get('contract_error')
+    else:assert json.loads(result['text'])==collect(p)
