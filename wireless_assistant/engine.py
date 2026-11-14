@@ -314,6 +314,14 @@ class Engine:
                         validate_draft(b,state['need'],evidence,state['review'])
                     elif b['action']=='request_missing_info':
                         require(allow_missing,'The missing-information allowance is exhausted (closing_mode). Submit a supported partial draft that discloses unresolved parts in limitation_statement, or cannot_answer.')
+                        info=b['missing_info']
+                        if info['type'] in ('user_detail','history'):
+                            # A owns clarification. B may not invent a user question
+                            # (e.g. presentation choices) that A did not record as a gap.
+                            gaps=state['need']['unresolved_gaps']+state['gaps']
+                            recorded={q for g in gaps if g['kind']==info['type'] for q in g['requirement_ids']}
+                            require(bool(info['requirement_ids']) and set(info['requirement_ids'])<=recorded,
+                                    'Do not ask the user about presentation choices (analogy count, format, length) or details A did not record as a '+info['type']+' gap. Decide them yourself and submit_draft.')
                 result=self.call(rid,w,'B',payload,valid_b)
                 if result['action']=='cannot_answer':
                     self.store.stop(rid,'COMPLETED','INABILITY','The available evidence is insufficient for a supported answer. Narrow the question or supply the missing detail.',w['epoch'],self.elapsed(w));return

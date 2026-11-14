@@ -48,3 +48,42 @@ def test_b_prompt_treats_requested_rationale_disclosure_as_answerable():
     assert 'Never use request_missing_info or cannot_answer for such a disclosure requirement.' in ROLES['B']
     import inspect
     assert 'missing_info_allowed is false' in inspect.getsource(role_provider.build_request)
+
+
+def presentation_question(payload):
+    return {'action': 'request_missing_info',
+            'missing_info': {'type': 'user_detail', 'item': 'One combined analogy or separate analogies?',
+                             'why_material': 'Analogy layout unspecified.', 'requirement_ids': ['r1']}}
+
+
+def test_b_cannot_invent_user_question_a_did_not_record(client):
+    # Live 14 Nov run 43617519760: B asked about analogy layout on a clear request.
+    client.app_script.actions = [('A', collect), ('A', ready), ('B', presentation_question), ('B', draft)]
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': QUESTION}).json()['data']['run_id']
+    result = wait_run(client, rid)
+    assert result['outcome']['kind'] == 'ACCEPTED', result
+    assert [r for r, _ in client.app_script.calls] == ['A', 'A', 'B', 'B', 'C']
+    assert 'presentation choices' in client.app_script.calls[3][1]['contract_error']
+
+
+def test_b_history_request_allowed_for_a_recorded_gap(client):
+    # A cannot hand a user_detail gap to B (it must clarify), but history gaps may pass.
+    def ready_with_gap(payload):
+        v = ready(payload)
+        v['coverage_gaps'] = [{'gap_id': 'g', 'kind': 'history', 'requirement_ids': ['r1'],
+                               'reason': 'Recorded by A.', 'source_or_message_ids': []}]
+        return v
+    seen = []
+    def b_first(payload):
+        seen.append(payload)
+        v = presentation_question(payload);v['missing_info']['type'] = 'history'
+        return v
+    client.app_script.actions = [('A', collect), ('A', ready_with_gap), ('B', b_first)]
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': QUESTION}).json()['data']['run_id']
+    wait_run(client, rid)
+    calls = client.app_script.calls
+    # Accepted by validation: no repair, control returned to A with the B gap.
+    assert [r for r, _ in calls][:4] == ['A', 'A', 'B', 'A']
+    assert 'contract_error' not in calls[3][1] and calls[3][1]['b_gap']['type'] == 'history'
