@@ -74,3 +74,17 @@ def test_groq_union_has_one_enum_discriminator_and_backend_keeps_intent_enum(has
     wire={**v,'need':encoded['need']}
     jsonschema.validate({'result':wire},s)
     assert inspect_response(canonical({'result':decode_result(wire,p)}),'A',wrapped=True)['status']=='CONTRACT_INVALID'
+
+
+def test_public_evaluation_error_diagnostics_are_opt_in_and_redact_key(monkeypatch,capsys):
+    monkeypatch.setenv('GROQ_API_KEY','test-secret')
+    monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED','1')
+    error={'error':{'type':'invalid_request_error','message':'schema detail test-secret','failed_generation':'private completion'}}
+    for enabled in (False,True):
+        if enabled:monkeypatch.setenv('WA_PUBLIC_EVAL_DIAGNOSTICS','1')
+        else:monkeypatch.delenv('WA_PUBLIC_EVAL_DIAGNOSTICS',raising=False)
+        with patch.object(rp.httpx,'Client',return_value=httpx.Client(transport=httpx.MockTransport(lambda r:httpx.Response(400,json=error)))),pytest.raises(AppError):
+            rp.request('A',{})
+        out=capsys.readouterr().out
+        assert ('schema detail' in out)==enabled
+        assert 'test-secret' not in out and 'private completion' not in out

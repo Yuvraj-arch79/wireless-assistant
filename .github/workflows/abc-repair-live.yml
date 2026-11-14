@@ -43,6 +43,7 @@ jobs:
         run: python -m evaluation.abc_repair_live
         timeout-minutes: 6
         env:
+          WA_PUBLIC_EVAL_DIAGNOSTICS: '1'
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

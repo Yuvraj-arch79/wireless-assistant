@@ -37,8 +37,16 @@ def request(role, body):
                                 break
                         if len(raw) <= 65536:
                             try:
-                                if load_json(raw)['error']['code'] == 'json_validate_failed':
-                                    return {'wireless_schema_rejected': True}
+                                error = load_json(raw).get('error', {})
+                                if isinstance(error, dict):
+                                    if os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
+                                        # Explicit public-corpus evaluation only. Never log failed_generation,
+                                        # request headers or raw response bodies. Redact the configured key.
+                                        detail = {k: str(error.get(k, '')).replace(key, '[REDACTED]')[:1000]
+                                                  for k in ('code', 'type', 'param', 'message')}
+                                        print('PUBLIC EVAL PROVIDER ERROR: ' + canonical(detail), flush=True)
+                                    if error.get('code') == 'json_validate_failed':
+                                        return {'wireless_schema_rejected': True}
                             except (ValueError, TypeError, KeyError):
                                 pass
                     if response.status_code == 413:
