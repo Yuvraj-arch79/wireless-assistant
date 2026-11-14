@@ -83,3 +83,15 @@ idempotence, refusing an unknown patch anchor, rollback after failed checks,
 one-attempt live diagnostics, private error reporting and rejecting an invalid
 DTO even after HTTP 200. Windows/browser CI and real provider output remain
 separate acceptance checks.
+
+### GitHub-hosted live acceptance
+
+Repository secrets can be used inside Actions without exporting their values to
+the repair workspace. `abc-repair-live.yml` runs on the repair branch only for
+an explicit `[abc-repair-live]` workflow-file commit, or by manual dispatch. It
+restores the successful November 12 public corpus artifact, verifies the pinned
+source/build, and runs one Hinglish question through the actual controller with
+at most seven generation attempts, one format repair and no provider retries.
+Only the public evaluation report is uploaded. The final released answer must
+also be inspected for language and analogy quality; HTTP 200 alone is not a pass.
+The pinned artifact expires November 19; later runs need a verified replacement.
