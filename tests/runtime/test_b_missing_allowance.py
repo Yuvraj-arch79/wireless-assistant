@@ -87,3 +87,41 @@ def test_b_history_request_allowed_for_a_recorded_gap(client):
     # Accepted by validation: no repair, control returned to A with the B gap.
     assert [r for r, _ in calls][:4] == ['A', 'A', 'B', 'A']
     assert 'contract_error' not in calls[3][1] and calls[3][1]['b_gap']['type'] == 'history'
+
+
+def clause_text_request(payload):
+    return {'action': 'request_missing_info',
+            'missing_info': {'type': 'source', 'item': 'TS 38.211 clause 4.4.4.1 full text',
+                             'why_material': 'Claimed absent.', 'requirement_ids': ['r1']}}
+
+
+def test_b_cannot_request_a_clause_already_complete_in_evidence(client):
+    # Live 14 Nov run 43618328836: B requested 'clause 4.2.3 full text' while the
+    # complete single-passage clause was evidence rank 1. No A round trip is spent.
+    client.app_script.actions = [('A', collect), ('A', ready), ('B', clause_text_request), ('B', draft)]
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': QUESTION}).json()['data']['run_id']
+    result = wait_run(client, rid)
+    assert result['outcome']['kind'] == 'ACCEPTED', result
+    calls = client.app_script.calls
+    assert [r for r, _ in calls] == ['A', 'A', 'B', 'B', 'C']
+    first_b, repaired = calls[2][1], calls[3][1]
+    assert first_b['complete_clauses'] == [{'spec_number': '38.211', 'document_version': '18.10.0',
+                                            'clause_id': '4.4.4.1', 'passage_ids': ['fixture-passage']}]
+    assert 'already completely present' in repaired['contract_error']
+    # Evidence handed to B and C is unchanged by the completeness signal.
+    assert first_b['evidence'] == calls[4][1]['evidence']
+    assert 'complete_clauses' not in first_b['evidence'][0]
+
+
+def test_source_request_for_other_or_sub_clause_still_allowed(client):
+    def sub_clause(payload):
+        v = clause_text_request(payload); v['missing_info']['item'] = 'TS 38.211 clause 4.4.4.12 table'
+        return v
+    client.app_script.actions = [('A', collect), ('A', ready), ('B', sub_clause)]
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': QUESTION}).json()['data']['run_id']
+    wait_run(client, rid)
+    calls = client.app_script.calls
+    assert [r for r, _ in calls][:4] == ['A', 'A', 'B', 'A']
+    assert calls[3][1]['b_gap']['item'].endswith('4.4.4.12 table')

@@ -139,6 +139,28 @@ class Corpus:
                 result.append(passage(p))
             return result
 
+    def complete_clauses(self, build, evidence):
+        """Clauses whose every readable stored passage is already in evidence.
+
+        Deterministic: lets B know an exact clause is fully supplied, so it does
+        not request text it already holds. Evidence itself is not modified.
+        """
+        held = {p['passage_id'] for p in evidence}
+        out, seen = [], set()
+        with self.store.read() as db:
+            for p in evidence:
+                key = (p['document_id'], p['clause_id'])
+                if key in seen or p['clause_id'] in ('front-matter',):
+                    continue
+                seen.add(key)
+                ids = [r[0] for r in db.execute(
+                    'SELECT passage_id FROM passages WHERE build_id=? AND document_id=? AND clause_id=? AND unreadable=0',
+                    (build, p['document_id'], p['clause_id']))]
+                if ids and set(ids) <= held:
+                    out.append({'spec_number': p['spec_number'], 'document_version': p['document_version'],
+                                'clause_id': p['clause_id'], 'passage_ids': ids})
+        return out
+
     def ready(self, build):
         with self.store.read() as db:
             b=row(db,'SELECT * FROM corpus_builds WHERE build_id=?',(build,))

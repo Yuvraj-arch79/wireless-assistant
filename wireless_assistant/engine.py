@@ -1,6 +1,7 @@
 """Explicit, bounded A/B/C state machine with independently supervised workers."""
 import json
 import os
+import re
 import sqlite3
 import threading
 import time
@@ -309,12 +310,18 @@ class Engine:
                 allow_missing=not state['closing'] and state['missing_by_round'][state['round']]<1
                 payload['closing_mode']=not allow_missing
                 payload['missing_info_allowed']=allow_missing
+                complete=self.corpus.complete_clauses(self.store.run(rid)['corpus_build_id'],evidence)
+                payload['complete_clauses']=complete
                 def valid_b(b):
                     if b['action']=='submit_draft':
                         validate_draft(b,state['need'],evidence,state['review'])
                     elif b['action']=='request_missing_info':
                         require(allow_missing,'The missing-information allowance is exhausted (closing_mode). Submit a supported partial draft that discloses unresolved parts in limitation_statement, or cannot_answer.')
                         info=b['missing_info']
+                        if info['type']=='source':
+                            held=[c for c in complete if re.search(r'(?<![\d.])'+re.escape(c['clause_id'])+r'(?![\d.]*\d)',info['item'])]
+                            require(not held,'Clause '+', '.join(f"{c['clause_id']} of TS {c['spec_number']} v{c['document_version']} (passages {', '.join(c['passage_ids'])})" for c in held)+
+                                    ' is already completely present in evidence. Answer from it and submit_draft; disclose any detail it does not state.')
                         if info['type'] in ('user_detail','history'):
                             # A owns clarification. B may not invent a user question
                             # (e.g. presentation choices) that A did not record as a gap.
