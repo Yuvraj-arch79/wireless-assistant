@@ -26,6 +26,21 @@ class ObservedEngine(Engine):
                 raise
         return super().call(rid,w,role,payload,checked)
 
+    def tool(self,rid,w,state,tool):
+        before=len(state.get('tool_results',[]))
+        out=super().tool(rid,w,state,tool)
+        if os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
+            # Public corpus metadata only: no keys, prompts or model outputs.
+            returned=[i.get('passage_id') for r in state.get('tool_results',[])[before:] for i in r.get('items',[]) if isinstance(i,dict)]
+            build=self.store.run(rid)['corpus_build_id']
+            held=self.corpus.get(build,state['passage_ids']) if state['passage_ids'] else []
+            print(json.dumps({'tool':{k:tool.get(k) for k in ('kind','query','filters','limit','passage_ids','relation')},
+                              'returned':returned,
+                              'evidence':[{'passage_id':p['passage_id'],'clause_id':p['clause_id'],'page':p.get('page_location'),
+                                           'chars':len(p['text']),'has_polar':'polar' in p['text'].lower(),
+                                           'has_ldpc':'ldpc' in p['text'].lower()} for p in held]},ensure_ascii=True),flush=True)
+        return out
+
 
 def run():
     settings=Settings(data_dir=ROOT/'data/one-pdf',provider_profile='groq_openrouter',max_calls=7,max_repairs=1,max_retries=0)

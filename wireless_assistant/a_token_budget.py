@@ -135,6 +135,9 @@ def budget_request(role, payload, body):
     for chars in (800, 400, 200, 80):
         body['messages'][1]['content'] = canonical(encode_payload(compact_payload(payload, chars)))
         if request_tokens(body) <= A_LIMIT - A_MARGIN:
+            import os
+            if os.environ.get('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
+                print(f"A PREVIEW: chars={chars} passages={len(payload.get('evidence', []))}", flush=True)
             return body
     raise AppError('CONTEXT_LIMIT',
                    'A request cannot fit the 8000-token budget with its required question, history, schema and output. No provider request was sent.', 413)

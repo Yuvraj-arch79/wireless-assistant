@@ -40,6 +40,9 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           WA_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
+      - name: Key-free clause 4.2.3 chunking and retrieval probe
+        run: python -m evaluation.abc_corpus_probe
+        timeout-minutes: 1
       - name: One Hinglish chat with source citations and C review
         run: python -m evaluation.abc_repair_live
         timeout-minutes: 6
