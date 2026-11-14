@@ -78,7 +78,21 @@ def test_local_validation_reason_is_retained():
 def test_citation_contract_is_explicit():
     defs=b.schema()['$defs']
     assert 'NOT from evidence' in defs['Citation']['properties']['claim_anchor']['description']
-    assert 'References' in defs['BDraft']['properties']['answer_markdown']['description']
+    assert 'Do NOT write a References section' in defs['BDraft']['properties']['answer_markdown']['description']
+    # Live 14 Nov run 43619590843: B looped '[299] [300] ...' until max_tokens.
+    assert defs['BDraft']['properties']['answer_markdown']['maxLength']==5000
+    assert defs['BDraft']['properties']['citations']['maxItems']==8
+
+
+def test_inline_only_draft_gets_server_references_and_passes():
+    d=draft();d['answer_markdown']=d['answer_markdown'].split('\n\nReferences')[0]
+    p=b.payload()
+    reply={'choices':[{'finish_reason':'stop','message':{'content':json.dumps({'result':d})}}]}
+    with patch.object(b,'request',return_value=reply):r=b.generate(p)
+    assert r['status']!='INVALID_CONTRACT',r
+    from wireless_assistant.role_provider import build_request,MODELS
+    prompt=build_request('B',MODELS['B'],{'evidence':[]},2000)['messages'][0]['content']
+    assert 'Do NOT write a References section' in prompt and 'without the References section is invalid' not in prompt
 
 
 def test_reference_rendering_preserves_claims_and_uses_source_metadata():
