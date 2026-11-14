@@ -95,3 +95,38 @@ at most seven generation attempts, one format repair and no provider retries.
 Only the public evaluation report is uploaded. The final released answer must
 also be inspected for language and analogy quality; HTTP 200 alone is not a pass.
 The pinned artifact expires November 19; later runs need a verified replacement.
+
+## 14 November 2026 live acceptance (GitHub Actions, existing secrets)
+
+Run on `fix/restore-abc-flow` from checkpoint `4348555`. Each run is one
+question, max seven generation attempts, one shared format repair, no retries.
+No key, model, billing or local PDF/index change.
+
+Findings, in order (each fixed with a regression test in
+`tests/runtime/test_b_missing_allowance.py` that fails on the prior engine):
+
+| Run | Stage reached | Exact failure | Fix |
+|---|---|---|---|
+| 43616626693 | A, retrieval, A, B (all HTTP 200) | B `request_missing_info` while the round allowance was spent but B was told `closing_mode=false` → INABILITY, no C | B payload carries `missing_info_allowed`; `closing_mode` reflects the spent allowance; a disallowed request is a contract error under the existing repair |
+| 43617092806 | diagnostics | Retrieval is correct: rank 1 is the complete clause 4.2.3 (one 713-char passage, page 9, LDPC + Polar); A preview 800 chars | none needed (key-free probe `evaluation/abc_corpus_probe.py` added) |
+| 43617519760 | B | B asked the user "one combined or separate analogies?" on a clear request | B `user_detail`/`history` requests must target gaps A recorded; presentation choices are B's |
+| 43618328836 | B | B requested "clause 4.2.3 full text" although it was complete in evidence | Engine computes `complete_clauses`; re-requesting one is a contract error (no A round trip) |
+| 43619330855 | B | `cannot_answer` claiming "only a short excerpt" of 4.2.3 (evidence and Polar text confirmed in B's request body; 6077 prompt tokens counted) | Same check applied to `cannot_answer` source/context_limit reasons |
+| 43619590843 | B repair | Repaired Hinglish draft was correct (LDPC with 2 base graphs and segmentation; Polar for PBCH/control) but degenerated into a citation-marker loop `[299] [300] …` and stopped at `finish_reason=length` (2000/2000) → PROVIDER_INCOMPLETE, nothing released | **Open.** Raising the token cap would not fix a loop |
+
+Status: **not passed.** No C-reviewed answer has been released yet. The
+remaining blocker is output reliability of the free B model
+(`nvidia/nemotron-3.5-super-vl:free`): across runs it asked unnecessary
+questions (analogy layout, Devanagari vs Roman script), falsely reported the
+supplied clause as missing, and looped. The controller now rejects each of
+these without releasing anything, but the single repair can still fail. Next
+options need an owner decision: a B repetition/frequency penalty (if the
+OpenRouter route supports it with `require_parameters`), a different B model,
+or a further structural guard. CI (Linux + Windows): 280 passed, 79 subtests.
+
+`WA_PUBLIC_EVAL_DIAGNOSTICS=1` (Actions only) now also prints A preview
+length, retrieval passage metadata, B's non-draft outputs, and for B the
+request evidence IDs, provider token counts, finish reason and a bounded
+excerpt of the public-question output. No keys or request headers are logged.
+The Windows installers (`scripts/fix_*.py`) do not yet include these engine
+changes; regenerate them once live acceptance passes.
