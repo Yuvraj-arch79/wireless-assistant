@@ -1,0 +1,60 @@
+name: Bounded ABC repair acceptance
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/restore-abc-flow]
+    paths: ['.github/workflows/abc-repair-live.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: provider-readiness
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[abc-repair-live]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.lock
+      - name: Initialize tokenizer outside request deadline
+        run: python -c "import tiktoken; tiktoken.get_encoding('o200k_harmony')"
+        timeout-minutes: 1
+      - name: Restore verified public corpus from the successful November 12 run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: one-pdf-validation
+          path: data/one-pdf/
+          run-id: '43186016545'
+          github-token: ${{ github.token }}
+      - name: Verify prepared pinned PDF and compatible embeddings
+        run: python -m wireless_assistant.cli prepare-one
+        timeout-minutes: 4
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WA_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
+      - name: One Hinglish chat with source citations and C review
+        run: python -m evaluation.abc_repair_live
+        timeout-minutes: 6
+        env:
+          WA_PUBLIC_EVAL_DIAGNOSTICS: '1'
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WA_GROQ_FREE_TIER_CONFIRMED: ${{ vars.WA_GROQ_FREE_TIER_CONFIRMED || '1' }}
+          WA_OPENROUTER_FREE_TIER_CONFIRMED: ${{ vars.WA_OPENROUTER_FREE_TIER_CONFIRMED || '1' }}
+          WA_FREE_TIER_CONFIRMED: ${{ vars.WA_GEMINI_FREE_TIER_CONFIRMED || '1' }}
+      - name: Preserve public acceptance report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: abc-repair-acceptance
+          path: data/one-pdf/live-report.json
+          retention-days: 7
+          if-no-files-found: warn

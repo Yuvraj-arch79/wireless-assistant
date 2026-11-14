@@ -54,6 +54,7 @@ class Settings(BaseModel):
                     raise ValueError('Mixed profile uses the evaluated pinned role models')
                 values[field] = model
             values.setdefault('active_seconds', 300)
+            values.setdefault('call_seconds', 60)
             values.setdefault('max_active', 1)
             values.setdefault('role_input_bound', 48000)
         return values

@@ -170,6 +170,7 @@ class Engine:
             if self.stopped(w):
                 raise AppError('STOPPED','Processing stopped.',409)
             if not self.role_transport and self.settings.provider_profile == 'groq_openrouter':
+                print(f'PROVIDER CAPACITY: role={role} waiting for bounded dispatch slot', flush=True)
                 self.pace_provider(w, getattr(self.settings,'model_'+role.lower()))
             counters=json.loads(self.store.run(rid)['counters_json'])
             # Reserve one final B+C pair; repairs/retries cannot spend it as A.
@@ -190,9 +191,11 @@ class Engine:
                 self.store.operation_done(rid,w['epoch'],op)
             except AppError as exc:
                 self.store.operation_done(rid,w['epoch'],op,exc.code)
+                if exc.code == 'OPERATION_TIMEOUT':
+                    exc = AppError(exc.code, f'Role {role} exceeded its operation deadline; no unchecked answer was released.', exc.status, exc.retryable)
                 if not retry and exc.retryable and exc.code!='PROVIDER_QUOTA' and self.remaining(w)>self.settings.call_seconds:
                     retry=True;continue
-                raise
+                raise exc from None
             try:
                 if response.get('contract_error'):
                     raise AppError('INVALID_CONTRACT',response['contract_error'])
@@ -253,6 +256,13 @@ class Engine:
                 def valid_a(a):
                     if a.get('need'):
                         validate_need(a['need'],context['originals'])
+                    if a['action']=='clarify':
+                        missing=set(a['clarification']['missing_requirement_ids'])
+                        known={q['req_id'] for q in a['need']['requirements']}
+                        gaps=a['need']['unresolved_gaps']+a['coverage_gaps']
+                        unresolved={q for g in gaps if g['kind'] in ('user_detail','history') for q in g['requirement_ids']}
+                        require(bool(missing) and missing <= known and missing <= unresolved,
+                                'Clarify only a material missing user detail/history gap tied to a known requirement. Do not ask the user to choose a factual answer, confirm their question, or repeat supplied preferences. Retrieve evidence or hand supported context to B.')
                     moves_to_b = a['action']=='ready_for_b' or (a['action']=='collect' and state['closing'])
                     if moves_to_b:
                         gaps=a['need']['unresolved_gaps']+a['coverage_gaps']
