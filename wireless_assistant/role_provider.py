@@ -113,6 +113,13 @@ def generate(role, model, system, payload, output_tokens):
     choices = ([{'finish_reason': 'stop', 'message': {'content': failed}}]
                if isinstance(failed, str) else result.get('choices', []))
     if len(choices) != 1 or choices[0].get('finish_reason') != 'stop' or choices[0].get('message', {}).get('tool_calls'):
+        if os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
+            # Metadata only: no prompt, completion text or credentials.
+            usage = result.get('usage') or {}
+            print('PROVIDER INCOMPLETE: role=%s choices=%d finish_reason=%s native=%s completion_tokens=%s max_tokens=%s' % (
+                role, len(choices), choices[0].get('finish_reason') if choices else None,
+                choices[0].get('native_finish_reason') if choices else None,
+                usage.get('completion_tokens'), min(output_tokens, 900 if role == 'C' else 2000)), flush=True)
         raise AppError('PROVIDER_INCOMPLETE', 'Provider output was incomplete; no unchecked answer was released.', 502)
     raw = choices[0].get('message', {}).get('content')
     if not isinstance(raw, str) or not raw or len(raw.encode('utf-8')) > 65536:
