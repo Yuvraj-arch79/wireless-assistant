@@ -88,7 +88,7 @@ def build_request(role, model, payload, output_tokens):
         schema = b_schema()
         extra = {'reasoning': {'enabled': False}, 'provider': {'require_parameters': True, 'allow_fallbacks': False, 'max_price': {'prompt': 0, 'completion': 0, 'request': 0}}}
     else:
-        prompt = COMMON + ROLES['C'] + '\nReturn the C review fields in the response_format schema directly, without a result wrapper. Do not echo reviewed_binding; the server binds this response to the exact input versions. Do not rewrite the supplied candidate.'
+        prompt = COMMON + ROLES['C'] + '\nReturn the C review fields in the response_format schema directly, without a result wrapper. Do not echo reviewed_binding; the server binds this response to the exact input versions. Do not rewrite the supplied candidate. Each evidence source_ref resolves through evidence_sources.'
         schema = compact_c_schema(payload)
         extra = {'reasoning_effort': 'low', 'reasoning_format': 'hidden'}
     response_format = {'type': 'json_schema', 'json_schema': {'name': 'wireless_' + role, 'strict': True, 'schema': schema}}

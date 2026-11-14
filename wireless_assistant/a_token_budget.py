@@ -109,7 +109,47 @@ def compact_payload(payload, chars):
     return p
 
 
+# C review needs the user's originals, need, the exact candidate, prior review and
+# the complete original evidence text/structure. Planner and storage fields are not
+# review inputs; the server binds the review to the exact frozen inputs itself.
+C_KEYS = ('original_context', 'need', 'evidence', 'candidate', 'prior_candidate', 'prior_review',
+          'coverage_gaps', 'extraction_policy')
+C_DROP_EVIDENCE = ('document_id', 'build_id', 'content_hash', 'parent_id', 'previous_id', 'next_id')
+
+
+def compact_c_payload(payload):
+    p = {k: deepcopy(payload[k]) for k in C_KEYS if k in payload}
+    p['round_number'] = payload.get('envelope', {}).get('round_number')
+    sources = {}
+    for item in p.get('evidence', []):
+        for name in C_DROP_EVIDENCE:
+            item.pop(name, None)
+        source = {k: item.pop(k) for k in ('source_uri',) if k in item}
+        if source:
+            sid = next((key for key, value in sources.items() if value == source), None)
+            if sid is None:
+                sid = 's' + str(len(sources) + 1)
+                sources[sid] = source
+            item['source_ref'] = sid
+    p['evidence_sources'] = sources
+    return p
+
+
+def budget_c(payload, body):
+    body = deepcopy(body)
+    body['messages'][1]['content'] = canonical(compact_c_payload(payload))
+    if request_tokens(body) > A_LIMIT - A_MARGIN:
+        raise AppError('CONTEXT_LIMIT',
+                       'The review request cannot fit the 8000-token budget with the complete evidence and candidate. No provider request was sent.', 413)
+    import os
+    if os.environ.get('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
+        print(f"C BUDGET: tokens={request_tokens(body)} limit={A_LIMIT - A_MARGIN}", flush=True)
+    return body
+
+
 def budget_request(role, payload, body):
+    if role == 'C':
+        return budget_c(payload, body)
     if role != 'A':
         return body
     from .contracts import ADAPTERS
