@@ -104,7 +104,19 @@ def build_request(role, model, payload, output_tokens):
 
 
 def generate(role, model, system, payload, output_tokens):
-    result = request(role, build_request(role, model, payload, output_tokens))
+    body = build_request(role, model, payload, output_tokens)
+    result = request(role, body)
+    if role == 'B' and os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
+        # Public-corpus evaluation only: confirms the evidence reached B's body and
+        # whether the provider counted the whole prompt. No credentials are logged.
+        sent = body['messages'][1]['content']
+        choice = (result.get('choices') or [{}])[0]
+        content = (choice.get('message') or {}).get('content') or ''
+        print('B DIAGNOSTIC: ' + canonical({
+            'body_chars': len(sent), 'body_has_polar': 'Polar' in sent, 'evidence_ids': [e.get('passage_id') for e in payload.get('evidence', [])],
+            'usage': {k: (result.get('usage') or {}).get(k) for k in ('prompt_tokens', 'completion_tokens')},
+            'finish_reason': choice.get('finish_reason'), 'content_chars': len(content),
+            'content_head': content[:700], 'content_tail': content[-500:] if choice.get('finish_reason') != 'stop' else ''}), flush=True)
     if result.get('wireless_schema_rejected'):
         return {'text': '{}', 'usage': {}, 'contract_error': 'Return a JSON object with the single key result, matching the role schema in the instructions.'}
     # A provider-rejected JSON draft is never trusted. A missing result wrapper
