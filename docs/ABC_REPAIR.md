@@ -37,3 +37,49 @@ Use **New chat** and the original TS 38.201 clause 4.2.3 Hinglish question. Logs
 13 November 2026: 258 offline tests passed, 79 subtests passed, 1 optional browser test skipped. Tests cover A being retained, retrieval/B/C handoff, rejection preventing release, clarification repair, aliases/invalid IDs, empty expansions, budget overflow/no dispatch, B/C preservation, HTTP 413/no retry, timeout privacy, cancellation and shared bounds. The installer is separately rehearsed against the old budget wrapper and clause bypass, including a second installation and preservation of an unrelated local edit.
 
 No live provider keys were available in the repair environment. This is not a claim of live Hinglish answer quality or provider availability; the local live acceptance check remains required. CI on Windows and the optional browser suite must still pass before merge.
+
+## Groq compiler rejection: multiple discriminator candidates
+
+The live November 13 error reported `invalid_request_error`, parameter
+`response_format`, path `/properties/result/anyOf`, with
+`discriminator_multiple_candidates` naming `action` and `intent_relation`.
+This is a schema compilation rejection before generation, separate from the
+prior `json_validate_failed` and 413 budget errors.
+
+Only `action` remains an enum discriminator in the A action union. The shared
+`intent_relation` is a wire string with allowed values in its description;
+the original backend DTO still rejects unknown values. Initial and post-search
+request schemas are tested for one unambiguous enum discriminator per object
+union. Strict output mode, the repair bound, original-reference checks and C
+review remain unchanged.
+
+For an already installed ABC flow, download `scripts/fix_groq_schema.py`, stop
+the server and run from the project PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe "$env:USERPROFILE\Downloads\fix_groq_schema.py"
+```
+
+This patches only the known schema location and appends its regression test,
+backs up both files, preserves other edits, and rolls back if offline checks
+fail. It then attempts one bounded A call using existing configured Groq
+environment variables. No key is displayed, no retry is performed and no draft
+is published. `--offline-only` skips this call. The live probe distinguishes
+HTTP acceptance from DTO validity and requires `collect` for the explicit
+source question. A successful probe does not establish B/C or final-answer
+quality; the actual chat must still produce a Reviewed answer with sources.
+
+The full `fix_abc_flow.py` installer also includes this correction. Offline
+JSON Schema validation alone cannot emulate Groq's compiler; live acceptance
+was not tested in the patch author's environment because provider keys were
+not available.
+
+14 November 2026 verification: 267 offline tests and 79 subtests passed; one
+optional browser test skipped. Evaluation manifest checks (40 cases), 98 design
+assertions, dependency consistency and whitespace checks passed. The targeted
+installer was run against the previous schema with an unrelated local edit;
+15 schema/budget tests passed and that edit was preserved. Separate tests cover
+idempotence, refusing an unknown patch anchor, rollback after failed checks,
+one-attempt live diagnostics, private error reporting and rejecting an invalid
+DTO even after HTTP 200. Windows/browser CI and real provider output remain
+separate acceptance checks.

@@ -45,3 +45,32 @@ def test_timeout_identifies_actual_role_without_secrets(monkeypatch):
         rp.request('B',{})
     assert error.value.code=='PROVIDER_TIMEOUT'
     assert 'OPENROUTER role B' in error.value.message and 'secret' not in error.value.message
+
+
+@pytest.mark.parametrize('has_evidence', [False, True])
+def test_groq_union_has_one_enum_discriminator_and_backend_keeps_intent_enum(has_evidence):
+    import jsonschema
+    p=payload()
+    if not has_evidence:p['evidence']=[]
+    s=rp.build_request('A',rp.MODELS['A'],p,2000)['response_format']['json_schema']['schema']
+    def resolve(n):
+        return s['$defs'][n['$ref'].split('/')[-1]] if '$ref' in n else n
+    def check(n):
+        if isinstance(n,dict):
+            if 'anyOf' in n:
+                variants=[resolve(v) for v in n['anyOf']]
+                if all(v.get('type')=='object' for v in variants):
+                    candidates=set.intersection(*[{k for k,v in b['properties'].items() if 'enum' in v} for b in variants])
+                    assert len(candidates)==1, candidates
+                    tag=next(iter(candidates))
+                    enums=[set(b['properties'][tag]['enum']) for b in variants]
+                    assert all(not x&y for i,x in enumerate(enums) for y in enums[i+1:])
+            for v in n.values():check(v)
+        elif isinstance(n,list):
+            for v in n:check(v)
+    check(s)
+    v=collect(p);v['intent_relation']='invented_relation'
+    encoded=encode_payload({**p,'need':v['need']})
+    wire={**v,'need':encoded['need']}
+    jsonschema.validate({'result':wire},s)
+    assert inspect_response(canonical({'result':decode_result(wire,p)}),'A',wrapped=True)['status']=='CONTRACT_INVALID'

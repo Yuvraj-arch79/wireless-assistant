@@ -69,6 +69,16 @@ def schema(payload):
         return out
     original = walk(ADAPTERS['A'].json_schema())
     definitions = original.pop('$defs')
+    # Groq infers an object-union discriminator from enum properties. The
+    # shared intent_relation enum competes with action, despite overlapping
+    # values. Keep only action as a wire discriminator; the original backend
+    # DTO still enforces intent_relation's enum after decoding.
+    for branch in original['anyOf']:
+        definition = definitions[branch['$ref'].split('/')[-1]]
+        props = definition['properties']
+        allowed = props['intent_relation']['enum']
+        props['intent_relation'] = {'type': 'string', 'description': 'Must be one of: ' + ', '.join(allowed)}
+        definition['properties'] = {'action': props['action'], **{k: v for k, v in props.items() if k != 'action'}}
     alias = {'type': 'string', 'enum': list(references(payload))}
     if alias['enum']:
         definitions['Need']['properties']['original_refs']['items'] = alias
