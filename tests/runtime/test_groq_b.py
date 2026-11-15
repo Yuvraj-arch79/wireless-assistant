@@ -85,3 +85,24 @@ def test_groq_rejected_b_draft_is_never_used(monkeypatch):
     with patch.object(rp.httpx, 'Client', return_value=httpx.Client(transport=httpx.MockTransport(handler))):
         result = rp.request('B', {})
     assert result == {'wireless_schema_rejected': True}
+
+
+def test_first_draft_revision_log_must_be_empty():
+    # Live 15 Nov runs 43704269919/43704495935/43704710536: strict required-all made
+    # gpt-oss-20b invent revision entries on a first draft -> INVALID_CONTRACT.
+    log = groq_b_schema(b_payload())['$defs']['BDraft']['properties']['revision_log']
+    assert log['minItems'] == log['maxItems'] == 0 and 'empty list' in log['description']
+    prompt = rp.build_request('B', rp.MODELS['B'], b_payload(), 2000)['messages'][0]['content']
+    assert 'empty list [] when there is no prior_review' in prompt
+
+
+def test_revision_log_bound_to_exact_prior_findings():
+    p = b_payload()
+    p['prior_review'] = {'findings': [{'finding_id': 'f1'}, {'finding_id': 'f2'}]}
+    s = groq_b_schema(p)
+    log = s['$defs']['BDraft']['properties']['revision_log']
+    assert log['minItems'] == log['maxItems'] == 2
+    item = s['$defs'][log['items']['$ref'].split('/')[-1]]
+    assert item['properties']['finding_id'] == {'type': 'string', 'enum': ['f1', 'f2']}
+    # The shared default schema is not mutated between payloads.
+    assert groq_b_schema(b_payload())['$defs']['BDraft']['properties']['revision_log']['maxItems'] == 0

@@ -151,7 +151,7 @@ def b_schema():
     return {'type':'object','properties':{'result':role},'required':['result'],'additionalProperties':False,'$defs':defs}
 
 
-def groq_b_schema():
+def groq_b_schema(payload=None):
     """Groq strict form of the B schema: every object closed and fully required.
 
     Optional DTO fields stay nullable; the original backend DTO and engine checks
@@ -168,7 +168,17 @@ def groq_b_schema():
             out['required']=list(out['properties'])
             out['additionalProperties']=False
         return out
-    return walk(b_schema())
+    schema=walk(b_schema())
+    # Seen live 15 Nov: strict "all fields required" made the model invent revision
+    # entries on a first draft. Bind the log to the exact prior finding IDs.
+    previous=[f['finding_id'] for f in ((payload or {}).get('prior_review') or {}).get('findings',[])]
+    log=schema['$defs']['BDraft']['properties']['revision_log']
+    log['minItems']=log['maxItems']=len(previous)
+    log['description']=('Exactly one entry per prior_review finding ID: '+', '.join(previous)) if previous else 'Must be an empty list: there is no prior review.'
+    if previous:
+        item=schema['$defs'][log['items']['$ref'].split('/')[-1]] if '$ref' in log['items'] else log['items']
+        item['properties']['finding_id']={'type':'string','enum':previous}
+    return schema
 
 
 def render_references(out,evidence):
