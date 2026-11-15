@@ -106,3 +106,40 @@ def test_revision_log_bound_to_exact_prior_findings():
     assert item['properties']['finding_id'] == {'type': 'string', 'enum': ['f1', 'f2']}
     # The shared default schema is not mutated between payloads.
     assert groq_b_schema(b_payload())['$defs']['BDraft']['properties']['revision_log']['maxItems'] == 0
+
+
+def _b_reply(answer, marker='[1]'):
+    p = b_payload()
+    pid = p['evidence'][0]['passage_id']
+    draft = {'action': 'submit_draft', 'answer_markdown': answer,
+             'citations': [{'marker': marker, 'claim_anchor': 'LDPC coding hoti hai', 'passage_ids': [pid]}],
+             'covered_requirements': [r['req_id'] for r in p['need']['requirements']],
+             'unresolved_requirements': [], 'limitation_statement': None, 'revision_log': []}
+    return p, {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps({'result': draft}, ensure_ascii=False)}}]}
+
+
+def test_fullwidth_marker_normalized_then_bound():
+    # Live 15 Nov run 43705849999: gpt-oss wrote 【1】, validator saw no [1].
+    p, reply = _b_reply('Transport blocks ke liye LDPC coding hoti hai【1】.')
+    with patch.object(rp, 'request', return_value=reply):
+        out = rp.generate('B', rp.MODELS['B'], '', p, 2000)
+    assert 'contract_error' not in out
+    answer = json.loads(out['text'])['answer_markdown']
+    assert 'LDPC coding hoti hai[1].' in answer and '【' not in answer
+    assert '[1] TS 38.201 v18.0.0, clause 4.2.3' in answer
+
+
+def test_other_fullwidth_forms_are_not_rewritten():
+    p, reply = _b_reply('Transport blocks ke liye LDPC coding hoti hai【1†L2-L4】.')
+    with patch.object(rp, 'request', return_value=reply):
+        out = rp.generate('B', rp.MODELS['B'], '', p, 2000)
+    assert 'contract_error' in out  # unbound: still rejected, never guessed
+
+
+def test_c_schema_rejection_becomes_repair_not_config_error(monkeypatch):
+    # Live 15 Nov run 43705712419: Groq C HTTP 400 stopped the run as PROVIDER_CONFIG.
+    monkeypatch.setenv('GROQ_API_KEY', 'k'); monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
+    def handler(req):
+        return httpx.Response(400, json={'error': {'code': 'json_validate_failed', 'failed_generation': '{}'}})
+    with patch.object(rp.httpx, 'Client', return_value=httpx.Client(transport=httpx.MockTransport(handler))):
+        assert rp.request('C', {}) == {'wireless_schema_rejected': True}
