@@ -6,6 +6,7 @@ from .common import AppError, canonical
 # Observed account limit. Leave room for Groq's schema/chat framing estimation.
 A_LIMIT = 8000
 A_MARGIN = 1000
+B_MARGIN = 500
 
 
 @lru_cache(maxsize=1)
@@ -159,14 +160,27 @@ def budget_b(payload, body):
     for key in ('closing_mode', 'missing_info_allowed', 'complete_clauses', 'b_gap', 'contract_error'):
         if key in payload:
             wire[key] = deepcopy(payload[key])
+    # B never writes original references; short aliases (as for A) replace the
+    # repeated message hashes/offsets. The server keeps the full originals.
+    from .a_transport import encode_payload
+    wire = encode_payload(wire)
+    # A revision needs the prior draft and the findings, not review bindings.
+    if isinstance(wire.get('prior_review'), dict):
+        wire['prior_review'] = {k: wire['prior_review'][k] for k in ('decision', 'findings') if k in wire['prior_review']}
+    if isinstance(wire.get('prior_candidate'), dict):
+        wire['prior_candidate'] = {k: v for k, v in wire['prior_candidate'].items() if k != 'revision_log'}
     body['messages'][1]['content'] = canonical(wire)
     import os
     # Prefer the full output reservation; shrink it only within a safe floor.
-    for output in (body['max_tokens'], 1700, 1400):
+    # Live gpt-oss-20b B completions were 534-747 tokens (incl. low reasoning).
+    # Live counts: this whole-body count exceeded Groq's prompt_tokens (4172 vs
+    # 4018), so a 500-token margin still stays below Groq's 8000 prompt+max limit.
+    limit = A_LIMIT - B_MARGIN
+    for output in (body['max_tokens'], 1700, 1400, 1100):
         body['max_tokens'] = min(output, body['max_tokens'])
-        if request_tokens(body) <= A_LIMIT - A_MARGIN:
+        if request_tokens(body) <= limit:
             if os.environ.get('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
-                print(f"B BUDGET: tokens={request_tokens(body)} max_tokens={body['max_tokens']} limit={A_LIMIT - A_MARGIN}", flush=True)
+                print(f"B BUDGET: tokens={request_tokens(body)} max_tokens={body['max_tokens']} limit={limit}", flush=True)
             return body
     raise AppError('CONTEXT_LIMIT',
                    'The draft request cannot fit the 8000-token budget with the complete evidence. No provider request was sent.', 413)

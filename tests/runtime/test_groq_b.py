@@ -9,7 +9,7 @@ from unittest.mock import patch
 import httpx
 import pytest
 from wireless_assistant import role_provider as rp
-from wireless_assistant.a_token_budget import budget_b, A_LIMIT, A_MARGIN, request_tokens
+from wireless_assistant.a_token_budget import budget_b, A_LIMIT, A_MARGIN, B_MARGIN, request_tokens
 from wireless_assistant.common import AppError, canonical
 from wireless_assistant.provider_contracts import groq_b_schema
 from tests.runtime.test_c_budget import payload as review_payload
@@ -61,11 +61,12 @@ def test_groq_b_schema_closed_and_fully_required():
 def test_b_request_fits_free_quota_with_complete_evidence():
     p = b_payload()
     body = rp.build_request('B', rp.MODELS['B'], p, 2000)
-    assert request_tokens(body) <= A_LIMIT - A_MARGIN
+    assert request_tokens(body) <= A_LIMIT - B_MARGIN
     sent = json.loads(body['messages'][1]['content'])
     for wire, full in zip(sent['evidence'], p['evidence']):
         assert wire['text'] == full['text'] and wire['clause_id'] == full['clause_id']
-    assert sent['need'] == p['need'] and sent['original_context'] == p['original_context']
+    from wireless_assistant.a_transport import encode_payload
+    assert sent['need'] == encode_payload(p)['need'] and sent['original_context'][0]['text'] == p['original_context'][0]['text']
     assert sent['missing_info_allowed'] is True and sent['complete_clauses'] == []
     assert not {'tool_results', 'corpus_inventory', 'budget'} & set(sent)
 
@@ -169,3 +170,24 @@ def test_a_empty_failed_generation_is_repair_not_format_stop(monkeypatch):
         return httpx.Response(400, json={'error': {'code': 'json_validate_failed', 'failed_generation': ''}})
     with patch.object(rp.httpx, 'Client', return_value=httpx.Client(transport=httpx.MockTransport(handler))):
         assert rp.request('A', {}) == {'wireless_schema_rejected': True}
+
+
+def test_revision_request_fits_with_prior_draft_and_findings():
+    # Live 15 Nov runs 43707027673/43707258204: revision B exceeded 8K -> CONTEXT_LIMIT.
+    p = b_payload()
+    for item, size in zip(p['evidence'], (713, 409, 560, 231, 1008)):  # live 4.2.3 evidence sizes
+        item['text'] = item['text'][:size]
+    prior = review_payload(answer_chars=2100)['candidate']
+    p['prior_candidate'] = dict(prior, revision_log=[])
+    p['prior_review'] = {'decision': 'revise', 'reviewed_binding': {'candidate_hash': 'x' * 64},
+                         'findings': [{'finding_id': f'f{i}', 'finding_type': 'presentation_problem', 'blocking': True,
+                                       'target_claim_or_req': 'R1', 'reason': 'Analogy must be Hinglish. ' * 8, 'evidence_ids': []}
+                                      for i in range(3)]}
+    body = rp.build_request('B', rp.MODELS['B'], p, 2000)
+    assert request_tokens(body) <= A_LIMIT - B_MARGIN and body['max_tokens'] >= 1100
+    sent = json.loads(body['messages'][1]['content'])
+    assert sent['prior_review']['findings'] == p['prior_review']['findings'] and 'reviewed_binding' not in sent['prior_review']
+    assert sent['prior_candidate']['answer_markdown'] == prior['answer_markdown']
+    assert sent['need']['original_refs'] == ['o1'] and 'content_hash' not in canonical(sent['need'])
+    for wire, full in zip(sent['evidence'], p['evidence']):
+        assert wire['text'] == full['text']
