@@ -191,3 +191,20 @@ def test_revision_request_fits_with_prior_draft_and_findings():
     assert sent['need']['original_refs'] == ['o1'] and 'content_hash' not in canonical(sent['need'])
     for wire, full in zip(sent['evidence'], p['evidence']):
         assert wire['text'] == full['text']
+
+
+def test_language_rule_first_for_b_and_checked_by_c():
+    # Live 15 Nov runs 43708426820 (all English) / 43708567587 (English analogy) were C-accepted.
+    p = b_payload()
+    p['need']['language'] = 'Hinglish'
+    b_prompt = rp.build_request('B', rp.MODELS['B'], p, 2000)['messages'][0]['content']
+    assert b_prompt.startswith('LANGUAGE (mandatory): write EVERY sentence of answer_markdown in Hinglish')
+    assert 'including headings, the analogy and the limitation' in b_prompt
+    c = review_payload(); c['need']['language'] = 'Hinglish'
+    c_prompt = rp.build_request('C', rp.MODELS['C'], c, 900)['messages'][0]['content']
+    assert 'the user asked for Hinglish' in c_prompt and 'blocking presentation_problem' in c_prompt
+
+
+def test_english_request_adds_no_language_rule():
+    p = b_payload(); p['need']['language'] = 'English'
+    assert not rp.build_request('B', rp.MODELS['B'], p, 2000)['messages'][0]['content'].startswith('LANGUAGE')
