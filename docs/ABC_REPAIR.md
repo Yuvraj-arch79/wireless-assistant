@@ -130,3 +130,30 @@ request evidence IDs, provider token counts, finish reason and a bounded
 excerpt of the public-question output. No keys or request headers are logged.
 The Windows installers (`scripts/fix_*.py`) do not yet include these engine
 changes; regenerate them once live acceptance passes.
+
+## 15 November 2026: B on free Groq, owner-approved bounds
+
+Owner decisions: B moved from free OpenRouter `nvidia/nemotron-3.5-super-vl:free`
+to free Groq `openai/gpt-oss-20b` (existing `GROQ_API_KEY`; Mistral's API needed
+prepaid credits, so it was not used). Groq profile `max_calls` is 9 in the app
+and the live harness (one repair plus one C revision round); `max_repairs` stays
+1; deadlines unchanged. C output prefers 2400 tokens and steps down to 900 to
+stay inside the 8000-token free quota. **Chat now needs only `GROQ_API_KEY`**
+(plus `GEMINI_API_KEY` for embeddings); `OPENROUTER_API_KEY` is no longer used.
+
+Fixed from live runs (each with a regression test, mostly `tests/runtime/test_groq_b.py`):
+strict schema made B invent revision entries on a first draft; gpt-oss wrote
+`【1】` markers; B omitted the inline marker it declared (placed after a unique
+claim anchor only); revision requests exceeded the 8K quota (alias refs,
+findings-only prior review, B margin 500, output step-down); English answers or
+analogies were C-accepted (language rule first for B, C blocks English sections);
+Groq 400 `json_validate_failed` for B/C and empty A `failed_generation` now use
+the single repair; C review truncation (output 900 → up to 2400).
+
+Accepted, fully reviewed Hinglish answers to the acceptance question:
+43709409120, 43711061439 (also 43705018556, 43707487019, 43708426820,
+43708567587 before the language fix). Remaining observed risks: C occasionally
+truncating (fixed after run 43710832894, not yet re-verified live), an English
+"reason" sentence in 43711061439, and Groq free daily quota: on 15 Nov testing
+used A's 200,000 tokens/day (run 43711499964, HTTP 429 TPD). Re-run the bounded
+acceptance after the quota resets to verify the final commit.
