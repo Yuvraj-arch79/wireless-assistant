@@ -1,4 +1,4 @@
-"""Bound Groq A transport only; backend originals and B/C evidence stay intact."""
+"""Bound Groq A/B/C requests; backend originals and B/C evidence text stay intact."""
 from copy import deepcopy
 from functools import lru_cache
 from .common import AppError, canonical
@@ -147,9 +147,36 @@ def budget_c(payload, body):
     return body
 
 
+# B drafts from the user's originals, need, complete evidence and controller
+# signals. Planner/storage fields are not drafting inputs.
+B_KEYS = ('original_context', 'need', 'evidence', 'coverage_gaps', 'extraction_policy', 'closing_mode',
+          'missing_info_allowed', 'complete_clauses', 'prior_candidate', 'prior_review', 'b_gap', 'contract_error')
+
+
+def budget_b(payload, body):
+    body = deepcopy(body)
+    wire = compact_c_payload({k: payload[k] for k in B_KEYS + ('envelope',) if k in payload})
+    for key in ('closing_mode', 'missing_info_allowed', 'complete_clauses', 'b_gap', 'contract_error'):
+        if key in payload:
+            wire[key] = deepcopy(payload[key])
+    body['messages'][1]['content'] = canonical(wire)
+    import os
+    # Prefer the full output reservation; shrink it only within a safe floor.
+    for output in (body['max_tokens'], 1700, 1400):
+        body['max_tokens'] = min(output, body['max_tokens'])
+        if request_tokens(body) <= A_LIMIT - A_MARGIN:
+            if os.environ.get('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
+                print(f"B BUDGET: tokens={request_tokens(body)} max_tokens={body['max_tokens']} limit={A_LIMIT - A_MARGIN}", flush=True)
+            return body
+    raise AppError('CONTEXT_LIMIT',
+                   'The draft request cannot fit the 8000-token budget with the complete evidence. No provider request was sent.', 413)
+
+
 def budget_request(role, payload, body):
     if role == 'C':
         return budget_c(payload, body)
+    if role == 'B':
+        return budget_b(payload, body)
     if role != 'A':
         return body
     from .contracts import ADAPTERS

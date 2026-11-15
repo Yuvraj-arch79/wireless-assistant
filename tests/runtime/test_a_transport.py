@@ -39,12 +39,12 @@ def test_generate_restores_aliases_before_backend_validation():
 
 
 def test_timeout_identifies_actual_role_without_secrets(monkeypatch):
-    monkeypatch.setenv('OPENROUTER_API_KEY','secret');monkeypatch.setenv('WA_OPENROUTER_FREE_TIER_CONFIRMED','1')
+    monkeypatch.setenv('GROQ_API_KEY','secret');monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED','1')
     def handler(req):raise httpx.ReadTimeout('secret private data')
     with patch.object(rp.httpx,'Client',return_value=httpx.Client(transport=httpx.MockTransport(handler))),pytest.raises(AppError) as error:
         rp.request('B',{})
     assert error.value.code=='PROVIDER_TIMEOUT'
-    assert 'OPENROUTER role B' in error.value.message and 'secret' not in error.value.message
+    assert 'GROQ role B' in error.value.message and 'secret' not in error.value.message
 
 
 @pytest.mark.parametrize('has_evidence', [False, True])

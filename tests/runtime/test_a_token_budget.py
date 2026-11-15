@@ -53,11 +53,10 @@ def test_unfit_essential_context_never_dispatches():
     request.assert_not_called()
 
 
-@pytest.mark.parametrize('role',['B'])
-def test_other_role_bodies_untouched(role):
+def test_unknown_role_bodies_untouched():
     from wireless_assistant.a_token_budget import budget_request
     p=payload();body={'messages':[{'content':canonical(p)}]}
-    assert budget_request(role,p,body) is body
+    assert budget_request('X',p,body) is body
 
 
 def test_http_413_terminal_no_retry(monkeypatch):

@@ -151,6 +151,26 @@ def b_schema():
     return {'type':'object','properties':{'result':role},'required':['result'],'additionalProperties':False,'$defs':defs}
 
 
+def groq_b_schema():
+    """Groq strict form of the B schema: every object closed and fully required.
+
+    Optional DTO fields stay nullable; the original backend DTO and engine checks
+    still validate the decoded draft.
+    """
+    def walk(v):
+        if isinstance(v,list):return [walk(x) for x in v]
+        if not isinstance(v,dict):return v
+        out={}
+        for k,x in v.items():
+            if k=='const':out['enum']=[x]
+            else:out[k]=walk(x)
+        if out.get('type')=='object' and 'properties' in out:
+            out['required']=list(out['properties'])
+            out['additionalProperties']=False
+        return out
+    return walk(b_schema())
+
+
 def render_references(out,evidence):
     """Deterministic presentation from cited, verified metadata; never edits claims."""
     if out.get('action')!='submit_draft':return out
