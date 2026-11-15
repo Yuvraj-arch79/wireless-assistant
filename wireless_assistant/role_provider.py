@@ -49,7 +49,7 @@ def request(role, body):
                                     if error.get('code') == 'json_validate_failed':
                                         failed = error.get('failed_generation')
                                         # Only A's rejected JSON is normalized; a rejected B draft is never used.
-                                        if role == 'A' and isinstance(failed, str) and len(failed.encode('utf-8')) <= 65536:
+                                        if role == 'A' and isinstance(failed, str) and failed.strip() and len(failed.encode('utf-8')) <= 65536:
                                             return {'wireless_failed_generation': failed}
                                         return {'wireless_schema_rejected': True}
                             except (ValueError, TypeError, KeyError):
@@ -177,6 +177,17 @@ def generate(role, model, system, payload, output_tokens):
         import re
         if isinstance(value.get('answer_markdown'), str):
             value['answer_markdown'] = re.sub(r'【([1-9][0-9]?)】', r'[\1]', value['answer_markdown'])
+            if '【' in value['answer_markdown']:
+                return {'text': canonical(value), 'usage': {}, 'contract_error': 'Use plain citation markers like [1]; remove 【...】 source annotations.'}
+            # Seen live: gpt-oss bound a claim in citations but omitted the inline
+            # marker. Place B's own declared marker after its claim_anchor only when
+            # that anchor occurs exactly once; claims and evidence are untouched.
+            for citation in value.get('citations') or []:
+                answer, marker, anchor = value['answer_markdown'], citation.get('marker'), citation.get('claim_anchor')
+                if (isinstance(marker, str) and re.fullmatch(r'\[[1-9][0-9]?\]', marker) and marker not in answer
+                        and isinstance(anchor, str) and anchor.strip() and answer.count(anchor) == 1):
+                    at = answer.index(anchor) + len(anchor)
+                    value['answer_markdown'] = answer[:at] + ' ' + marker + answer[at:]
         try:
             value = render_references(value, payload['evidence'])
         except AppError as exc:

@@ -143,3 +143,29 @@ def test_c_schema_rejection_becomes_repair_not_config_error(monkeypatch):
         return httpx.Response(400, json={'error': {'code': 'json_validate_failed', 'failed_generation': '{}'}})
     with patch.object(rp.httpx, 'Client', return_value=httpx.Client(transport=httpx.MockTransport(handler))):
         assert rp.request('C', {}) == {'wireless_schema_rejected': True}
+
+
+def test_missing_inline_marker_placed_after_unique_anchor():
+    # Live 15 Nov run 43706181380: citations had [1] + anchor; answer had no marker.
+    p, reply = _b_reply('Transport blocks ke liye LDPC coding hoti hai. Analogy: parcel.')
+    with patch.object(rp, 'request', return_value=reply):
+        out = rp.generate('B', rp.MODELS['B'], '', p, 2000)
+    assert 'contract_error' not in out
+    answer = json.loads(out['text'])['answer_markdown']
+    assert answer.startswith('Transport blocks ke liye LDPC coding hoti hai [1]. Analogy: parcel.')
+
+
+def test_ambiguous_anchor_is_not_guessed():
+    p, reply = _b_reply('LDPC coding hoti hai. Phir se: LDPC coding hoti hai.')
+    with patch.object(rp, 'request', return_value=reply):
+        out = rp.generate('B', rp.MODELS['B'], '', p, 2000)
+    assert 'contract_error' in out
+
+
+def test_a_empty_failed_generation_is_repair_not_format_stop(monkeypatch):
+    # Live 15 Nov run 43706142475: empty failed_generation -> PROVIDER_FORMAT stop.
+    monkeypatch.setenv('GROQ_API_KEY', 'k'); monkeypatch.setenv('WA_GROQ_FREE_TIER_CONFIRMED', '1')
+    def handler(req):
+        return httpx.Response(400, json={'error': {'code': 'json_validate_failed', 'failed_generation': ''}})
+    with patch.object(rp.httpx, 'Client', return_value=httpx.Client(transport=httpx.MockTransport(handler))):
+        assert rp.request('A', {}) == {'wireless_schema_rejected': True}
