@@ -139,6 +139,11 @@ def compact_c_payload(payload):
 def budget_c(payload, body):
     body = deepcopy(body)
     body['messages'][1]['content'] = canonical(compact_c_payload(payload))
+    # Prefer 1400 output tokens; never go below the previously verified 900.
+    for output in (body['max_tokens'], 1100, 900):
+        body['max_tokens'] = min(output, body['max_tokens'])
+        if request_tokens(body) <= A_LIMIT - A_MARGIN:
+            break
     if request_tokens(body) > A_LIMIT - A_MARGIN:
         raise AppError('CONTEXT_LIMIT',
                        'The review request cannot fit the 8000-token budget with the complete evidence and candidate. No provider request was sent.', 413)

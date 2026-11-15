@@ -56,6 +56,8 @@ class Settings(BaseModel):
             values.setdefault('active_seconds', 300)
             values.setdefault('call_seconds', 60)
             values.setdefault('max_active', 1)
+            # Owner decision 15 Nov: room for one repair plus one C revision round.
+            values.setdefault('max_calls', 9)
             values.setdefault('role_input_bound', 48000)
         return values
 

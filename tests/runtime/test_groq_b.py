@@ -208,3 +208,14 @@ def test_language_rule_first_for_b_and_checked_by_c():
 def test_english_request_adds_no_language_rule():
     p = b_payload(); p['need']['language'] = 'English'
     assert not rp.build_request('B', rp.MODELS['B'], p, 2000)['messages'][0]['content'].startswith('LANGUAGE')
+
+
+def test_owner_limits_nine_calls_and_c_1400():
+    from wireless_assistant.config import Settings
+    assert Settings(provider_profile='groq_openrouter').max_calls == 9
+    assert Settings(provider_profile='groq_openrouter').max_repairs == 1
+    small = review_payload(passages=2, answer_chars=1200)
+    body = rp.build_request('C', rp.MODELS['C'], small, 2000)
+    assert body['max_tokens'] == 1400 and request_tokens(body) <= A_LIMIT - A_MARGIN
+    big = rp.build_request('C', rp.MODELS['C'], review_payload(), 2000)
+    assert 900 <= big['max_tokens'] <= 1400 and request_tokens(big) <= A_LIMIT - A_MARGIN

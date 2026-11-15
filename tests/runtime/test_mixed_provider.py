@@ -23,7 +23,7 @@ def test_pinned_live_routes_keep_original_contract(role):
     assert json.loads(result['text'])==value
     body=call.call_args.args[1]
     assert body['model']==rp.MODELS[role] and body['response_format']['json_schema']['strict']
-    if role=='C':assert body['max_tokens']==900 and body['reasoning_effort']=='low'
+    if role=='C':assert body['max_tokens']==1400 and body['reasoning_effort']=='low'
     if role=='B':assert body['model']=='openai/gpt-oss-20b' and body['reasoning_effort']=='low' and 'provider' not in body
 
 

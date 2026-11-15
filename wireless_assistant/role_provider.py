@@ -6,6 +6,9 @@ from .contracts import ADAPTERS
 from .prompts import COMMON, ROLES, instructions
 from .provider_contracts import wire_schema, b_schema, groq_b_schema, compact_c_schema, inspect_c_response, inspect_response, render_references
 
+# Owner decision 15 Nov: C review was cut at 900 tokens (Groq json_validate_failed).
+C_OUTPUT_TOKENS = 1400
+
 MODELS = {'A': 'openai/gpt-oss-120b', 'B': 'openai/gpt-oss-20b', 'C': 'qwen/qwen3.8-27b'}
 
 
@@ -124,7 +127,7 @@ def build_request(role, model, payload, output_tokens):
     if role == 'A' and payload.get('contract_error'):
         # The repair still passes the original backend contract and semantic checks.
         response_format = {'type': 'json_object'}
-    body = {'model': model, 'temperature': 0, 'max_tokens': min(output_tokens, 900 if role == 'C' else 2000), **extra,
+    body = {'model': model, 'temperature': 0, 'max_tokens': min(output_tokens, C_OUTPUT_TOKENS if role == 'C' else 2000), **extra,
         'response_format': response_format,
         'messages': [{'role': 'system', 'content': prompt}, {'role': 'user', 'content': canonical(payload)}]}
 
@@ -178,7 +181,7 @@ def generate(role, model, system, payload, output_tokens):
             print('PROVIDER INCOMPLETE: role=%s choices=%d finish_reason=%s native=%s completion_tokens=%s max_tokens=%s' % (
                 role, len(choices), choices[0].get('finish_reason') if choices else None,
                 choices[0].get('native_finish_reason') if choices else None,
-                usage.get('completion_tokens'), min(output_tokens, 900 if role == 'C' else 2000)), flush=True)
+                usage.get('completion_tokens'), min(output_tokens, C_OUTPUT_TOKENS if role == 'C' else 2000)), flush=True)
         raise AppError('PROVIDER_INCOMPLETE', 'Provider output was incomplete; no unchecked answer was released.', 502)
     raw = choices[0].get('message', {}).get('content')
     if not isinstance(raw, str) or not raw or len(raw.encode('utf-8')) > 65536:

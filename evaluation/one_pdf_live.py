@@ -46,7 +46,7 @@ class ObservedEngine(Engine):
 
 
 def run():
-    settings=Settings(data_dir=ROOT/'data/one-pdf',provider_profile='groq_openrouter',max_calls=7,max_repairs=1,max_retries=0)
+    settings=Settings(data_dir=ROOT/'data/one-pdf',provider_profile='groq_openrouter',max_calls=9,max_repairs=1,max_retries=0)
     report={'status':'not_completed','scope':'Complete TS 38.201 PDF with Gemini hybrid search, Groq A/C and OpenRouter B; four representative probes','cases':[]}
     selected=os.getenv('WA_EVAL_CASES','').split(',') if os.getenv('WA_EVAL_CASES') else [c['id'] for c in CASES]
     if not set(selected)<={c['id'] for c in CASES}:raise ValueError('Unknown case selection')
