@@ -119,6 +119,16 @@ def generate(role, model, system, payload, output_tokens):
             'usage': {k: (result.get('usage') or {}).get(k) for k in ('prompt_tokens', 'completion_tokens')},
             'finish_reason': choice.get('finish_reason'), 'content_chars': len(content),
             'content_head': content[:700], 'content_tail': content[-500:] if choice.get('finish_reason') != 'stop' else ''}), flush=True)
+        try:
+            import re
+            draft = (load_json(content) or {}).get('result') or {}
+            answer = draft.get('answer_markdown') or ''
+            print('B MARKERS: ' + canonical({'action': draft.get('action'),
+                'answer_markers': sorted(set(re.findall(r'\[[^\]\n]{1,40}\]', answer))),
+                'citation_markers': [c.get('marker') for c in draft.get('citations') or []],
+                'answer_tail': answer[-400:]}), flush=True)
+        except (ValueError, TypeError, AttributeError):
+            pass
     if result.get('wireless_schema_rejected'):
         return {'text': '{}', 'usage': {}, 'contract_error': 'Return a JSON object with the single key result, matching the role schema in the instructions.'}
     # A provider-rejected JSON draft is never trusted. A missing result wrapper
