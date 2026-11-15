@@ -72,7 +72,7 @@ def test_b_request_fits_free_quota_with_complete_evidence():
 
 
 def test_unfit_b_request_never_dispatches():
-    p = b_payload(passages=14)
+    p = b_payload(passages=40)
     with patch.object(rp, 'request') as call, pytest.raises(AppError) as exc:
         rp.generate('B', rp.MODELS['B'], '', p, 2000)
     assert exc.value.code == 'CONTEXT_LIMIT'
