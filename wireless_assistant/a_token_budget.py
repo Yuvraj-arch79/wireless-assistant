@@ -140,7 +140,7 @@ def budget_c(payload, body):
     body = deepcopy(body)
     body['messages'][1]['content'] = canonical(compact_c_payload(payload))
     # Prefer 1400 output tokens; never go below the previously verified 900.
-    for output in (body['max_tokens'], 1100, 900):
+    for output in (body['max_tokens'], 1800, 1400, 1100, 900):
         body['max_tokens'] = min(output, body['max_tokens'])
         if request_tokens(body) <= A_LIMIT - A_MARGIN:
             break
@@ -149,7 +149,7 @@ def budget_c(payload, body):
                        'The review request cannot fit the 8000-token budget with the complete evidence and candidate. No provider request was sent.', 413)
     import os
     if os.environ.get('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
-        print(f"C BUDGET: tokens={request_tokens(body)} limit={A_LIMIT - A_MARGIN}", flush=True)
+        print(f"C BUDGET: tokens={request_tokens(body)} max_tokens={body['max_tokens']} limit={A_LIMIT - A_MARGIN}", flush=True)
     return body
 
 

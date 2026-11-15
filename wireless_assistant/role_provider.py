@@ -7,7 +7,8 @@ from .prompts import COMMON, ROLES, instructions
 from .provider_contracts import wire_schema, b_schema, groq_b_schema, compact_c_schema, inspect_c_response, inspect_response, render_references
 
 # Owner decision 15 Nov: C review was cut at 900 tokens (Groq json_validate_failed).
-C_OUTPUT_TOKENS = 1400
+# Run 43710832894: still cut at 1400 (qwen hidden reasoning counts); body ~4300 tokens.
+C_OUTPUT_TOKENS = 2400
 
 MODELS = {'A': 'openai/gpt-oss-120b', 'B': 'openai/gpt-oss-20b', 'C': 'qwen/qwen3.8-27b'}
 
@@ -60,6 +61,15 @@ def request(role, body):
                     if response.status_code == 413:
                         raise AppError('PROVIDER_REQUEST_TOO_LARGE', f'{provider} role {role} rejected the request size. Reduce collected context; no automatic retry.', 413)
                     if response.status_code == 429:
+                        if os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
+                            # Quota scope only (TPM/TPD/RPD); the configured key is redacted.
+                            try:
+                                text = response.read()[:4096].decode('utf-8', 'replace').replace(key, '[REDACTED]')
+                                import re as _re
+                                scope = _re.search(r'\((TPM|TPD|RPM|RPD)\)[^.]*\.', text)
+                                print(f'PUBLIC EVAL QUOTA: role={role} ' + (scope.group(0)[:200] if scope else 'scope not stated'), flush=True)
+                            except Exception:
+                                pass
                         raise AppError('PROVIDER_QUOTA', 'The provider quota was reached. Processing stopped; retry later.', 429)
                     code = 'PROVIDER_AUTH' if response.status_code in (401, 403) else 'PROVIDER_CONFIG' if response.status_code in (400, 402, 404) else 'PROVIDER_UNAVAILABLE'
                     raise AppError(code, f'{provider} role {role} rejected the request (HTTP {response.status_code}). No unchecked answer was released.', 503)
