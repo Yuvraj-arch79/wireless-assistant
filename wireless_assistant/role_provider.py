@@ -169,7 +169,21 @@ def generate(role, model, system, payload, output_tokens):
                 'citation_markers': [c.get('marker') for c in draft.get('citations') or []],
                 'answer_tail': answer[-400:]}), flush=True)
         except (ValueError, TypeError, AttributeError):
-            pass
+            # Key names only: which JSON key was repeated (public evaluation).
+            try:
+                import json as _json
+                repeated = []
+                def pairs(items):
+                    seen = set()
+                    for k, _ in items:
+                        if k in seen:
+                            repeated.append(k)
+                        seen.add(k)
+                    return dict(items)
+                _json.loads(content, object_pairs_hook=pairs)
+                print('B DUPLICATE KEYS: ' + canonical(repeated), flush=True)
+            except ValueError:
+                print('B DUPLICATE KEYS: unparseable', flush=True)
     if result.get('wireless_schema_rejected'):
         return {'text': '{}', 'usage': {}, 'contract_error': 'Return a JSON object with the single key result, matching the role schema in the instructions.'}
     # A provider-rejected JSON draft is never trusted. A missing result wrapper
