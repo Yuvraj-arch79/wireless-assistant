@@ -157,3 +157,43 @@ truncating (fixed after run 43710832894, not yet re-verified live), an English
 "reason" sentence in 43711061439, and Groq free daily quota: on 15 Nov testing
 used A's 200,000 tokens/day (run 43711499964, HTTP 429 TPD). Re-run the bounded
 acceptance after the quota resets to verify the final commit.
+
+## 16 November 2026: live verification on four question types
+
+All runs: GitHub Actions `abc-repair-live.yml` (dispatch input `case`), free
+Groq A `openai/gpt-oss-120b`, B `openai/gpt-oss-20b`, C `qwen/qwen3.8-27b`,
+Gemini embeddings, pinned TS 38.201 v18.0.0 corpus, 9 calls, 1 repair.
+
+| Case | Expected | Result | Run |
+|---|---|---|---|
+| `coding_hinglish` (acceptance question) | C-reviewed Hinglish answer, LDPC + Polar, analogy, v18.0.0 clause 4.2.3, rationale-absent stated, no clarification | **Pass**, first attempt, 4 calls, C accepted with no findings | 43836566189 (final code); also 43833678659 |
+| `modulation_english` (clause 4.2.2) | C-reviewed answer, no clarification | **Pass**, 5 calls; downlink QPSK…1024QAM, uplink OFDM / DFT-s-OFDM lists, v18.0.0 clause 4.2.2 | 43836147990 |
+| `ambiguous` ("Iska size kitna hota hai…") | A asks one precise clarification; nothing drafted | **Pass**, 1 call, `WAITING_USER`: "Aap "iska" se kis vastu ya feature ke baare mein pooch rahe hain?" | 43835469102 |
+| `out_of_scope` (Delhi weather) | Scope refusal, no B/C | **Pass**, 1 call, `OUT_OF_SCOPE` | 43834222248 |
+
+Fixed on 16 Nov from live runs (regression tests in `tests/runtime/test_groq_b.py`
+and `tests/runtime/test_a_clarify_gap.py`):
+- The byte-based token allowance ended runs at 6-7 calls; the Groq profile now
+  uses the field maximum so the approved 9-call bound governs.
+- Groq free qwen has an **output-tokens-per-minute limit of 1000**: C output is
+  fixed at 900 again and C is asked for a concise review (the 1400/2400 change
+  was reverted).
+- The second C review and B revisions are compacted to fit the 8000-token quota.
+- A real clarification that omitted its recorded gap gets a precise repair; a
+  source-type worry with collected passages is directed to B, never the user.
+- A's previews keep the start and end of a passage (the 4.2.2 modulation list
+  sits in the last 200 characters) and A is told previews are not source gaps.
+- B's schema names the requested language for the answer and limitation.
+
+C caught real defects before release in these runs: an English Limitation
+section, "8 parity-check matrices" instead of "8 sets", and invented base-graph
+numbering (43831441623, 43832098837, 43832691878). No run released an unreviewed
+answer.
+
+Known limits (not defects): free models still vary run to run, so a question
+can end with a clear "retry" message instead of an answer (earlier runs today:
+quota, a repeated JSON key in a B revision, a spent repair). Groq free A quota
+is 200,000 tokens/day refilling at about 8,300 tokens/hour; one question uses
+roughly 8,000-15,000. The corpus text has "/2-BPSK" where the PDF shows
+"π/2-BPSK" (extraction). The local Windows app and its own PDF index were not
+part of this verification; run one question there before a demo.
