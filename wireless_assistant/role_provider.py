@@ -67,7 +67,8 @@ def request(role, body):
                                 text = response.read()[:4096].decode('utf-8', 'replace').replace(key, '[REDACTED]')
                                 import re as _re
                                 scope = _re.search(r'\((TPM|TPD|RPM|RPD)\)[^.]*\.', text)
-                                print(f'PUBLIC EVAL QUOTA: role={role} ' + (scope.group(0)[:200] if scope else 'scope not stated'), flush=True)
+                                detail = scope.group(0)[:200] if scope else _re.sub(r'org_[A-Za-z0-9]+', 'org_[REDACTED]', text)[:400]
+                                print(f'PUBLIC EVAL QUOTA: role={role} retry-after={response.headers.get("retry-after")} ' + detail, flush=True)
                             except Exception:
                                 pass
                         raise AppError('PROVIDER_QUOTA', 'The provider quota was reached. Processing stopped; retry later.', 429)
