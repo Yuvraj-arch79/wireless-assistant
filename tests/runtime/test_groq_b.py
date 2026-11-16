@@ -260,3 +260,35 @@ def test_b_schema_states_language_on_answer_and_limitation():
     e = b_payload(); e['need']['language'] = 'English'
     plain = groq_b_schema(e)['$defs']['BDraft']['properties']
     assert 'must be in' not in plain['answer_markdown']['description']
+
+
+def _two_citation_reply(second_pid=None):
+    p = b_payload()
+    pid = p['evidence'][0]['passage_id']
+    draft = {'action': 'submit_draft',
+             'answer_markdown': 'Downlink mein QPSK aur 256QAM hote hain [1]. Uplink mein QPSK aur 64QAM hote hain [1].',
+             'citations': [{'marker': '[1]', 'claim_anchor': 'Downlink mein QPSK aur 256QAM hote hain', 'passage_ids': [pid]},
+                           {'marker': '[1]', 'claim_anchor': 'Uplink mein QPSK aur 64QAM hote hain', 'passage_ids': [second_pid or pid]}],
+             'covered_requirements': [r['req_id'] for r in p['need']['requirements']],
+             'unresolved_requirements': [], 'limitation_statement': None, 'revision_log': []}
+    return p, {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps({'result': draft})}}]}
+
+
+def test_repeated_marker_for_same_passage_is_merged():
+    # Live 16 Nov run 43838632071: [1] listed twice for the same clause 4.2.2 passage.
+    p, reply = _two_citation_reply()
+    with patch.object(rp, 'request', return_value=reply):
+        out = rp.generate('B', rp.MODELS['B'], '', p, 2000)
+    assert 'contract_error' not in out, out
+    value = json.loads(out['text'])
+    assert [c['marker'] for c in value['citations']] == ['[1]']
+    assert value['citations'][0]['passage_ids'] == [p['evidence'][0]['passage_id']]
+    assert value['answer_markdown'].count('[1]') >= 2 and '[1] TS 38.201 v18.0.0' in value['answer_markdown']
+
+
+def test_repeated_marker_for_different_passages_is_rejected():
+    p = b_payload()
+    p, reply = _two_citation_reply(second_pid=p['evidence'][1]['passage_id'])
+    with patch.object(rp, 'request', return_value=reply):
+        out = rp.generate('B', rp.MODELS['B'], '', p, 2000)
+    assert 'cites different passages' in out['contract_error']
