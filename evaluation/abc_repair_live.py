@@ -18,6 +18,10 @@ CASES = {
     'modulation_english': {'id': 'modulation_english', 'clause': '4.2.2', 'facts': ['qpsk'],
                            'question': 'According to TS 38.201 clause 4.2.2, which modulation schemes are supported '
                                        'in the downlink and in the uplink? Give the exact citation.'},
+    # A Hinglish question on a different clause, without an analogy request.
+    'modulation_hinglish': {'id': 'modulation_hinglish', 'clause': '4.2.2', 'facts': ['qpsk', '256qam'],
+                            'question': 'TS 38.201 ke clause 4.2.2 mein downlink aur uplink ke liye kaunse modulation '
+                                        'schemes diye gaye hain? Hinglish mein simple tarike se samjhao aur exact citation do.'},
     # No referent at all: A must ask one precise clarification, nothing is drafted or released.
     'ambiguous': {'id': 'ambiguous', 'expect': 'clarify', 'clause': None, 'facts': [],
                   'question': 'Iska size kitna hota hai aur yeh kab use hota hai?'},
