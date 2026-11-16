@@ -168,6 +168,7 @@ Gemini embeddings, pinned TS 38.201 v18.0.0 corpus, 9 calls, 1 repair.
 |---|---|---|---|
 | `coding_hinglish` (acceptance question) | C-reviewed Hinglish answer, LDPC + Polar, analogy, v18.0.0 clause 4.2.3, rationale-absent stated, no clarification | **Pass**, first attempt, 4 calls, C accepted with no findings | 43836566189 (final code); also 43833678659 |
 | `modulation_english` (clause 4.2.2) | C-reviewed answer, no clarification | **Pass**, 5 calls; downlink QPSK…1024QAM, uplink OFDM / DFT-s-OFDM lists, v18.0.0 clause 4.2.2 | 43836147990 |
+| `modulation_hinglish` (clause 4.2.2, Hinglish) | C-reviewed Hinglish answer, no clarification | **Pass** after two fixes, 4 calls, C accepted (43839212097). Earlier: C labelled a blocking finding partial_accepted (43837905991); B listed marker [1] twice for one passage (43838632071) |
 | `ambiguous` ("Iska size kitna hota hai…") | A asks one precise clarification; nothing drafted | **Pass**, 1 call, `WAITING_USER`: "Aap "iska" se kis vastu ya feature ke baare mein pooch rahe hain?" | 43835469102 |
 | `out_of_scope` (Delhi weather) | Scope refusal, no B/C | **Pass**, 1 call, `OUT_OF_SCOPE` | 43834222248 |
 
@@ -197,3 +198,11 @@ is 200,000 tokens/day refilling at about 8,300 tokens/hour; one question uses
 roughly 8,000-15,000. The corpus text has "/2-BPSK" where the PDF shows
 "π/2-BPSK" (extraction). The local Windows app and its own PDF index were not
 part of this verification; run one question there before a demo.
+
+Quality note on 43839212097: the Hinglish explanation adds general background
+("higher modulation order packs more data per symbol but is harder to decode in
+noise") that is correct but not stated in clause 4.2.2, and C accepted it. C does
+block claims that contradict or misattribute the source (it rejected "these
+schemes are used with OFDM" for the downlink in 43837905991), but general
+explanatory sentences can pass.
+
