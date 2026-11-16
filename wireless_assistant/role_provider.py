@@ -121,7 +121,7 @@ def build_request(role, model, payload, output_tokens):
         raise AppError('MODEL_CONFIG', 'Unsupported role/model configuration.', 503)
     if role == 'A':
         from .a_transport import schema as a_schema
-        prompt = COMMON + ROLES['A'] + '\nReturn {"result": ...} with only the fields for the chosen action. Original reference aliases o1, o2 etc identify the exact supplied originals; copy these aliases into need.original_refs and requirements.established_by. Do not invent aliases. HistoryFetch uses full supplied history references. Never expand absent passage IDs.'
+        prompt = COMMON + ROLES['A'] + '\nReturn {"result": ...} with only the fields for the chosen action. Original reference aliases o1, o2 etc identify the exact supplied originals; copy these aliases into need.original_refs and requirements.established_by. Do not invent aliases. When action is clarify, need.unresolved_gaps must contain a user_detail (or history) gap whose requirement_ids include every clarification.missing_requirement_ids entry. HistoryFetch uses full supplied history references. Never expand absent passage IDs.'
         schema = a_schema(payload)
         extra = {'reasoning_effort': 'low', 'include_reasoning': False}
     elif role == 'B':

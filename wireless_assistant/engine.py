@@ -265,6 +265,15 @@ class Engine:
                         known={q['req_id'] for q in a['need']['requirements']}
                         gaps=a['need']['unresolved_gaps']+a['coverage_gaps']
                         unresolved={q for g in gaps if g['kind'] in ('user_detail','history') for q in g['requirement_ids']}
+                        # Seen live 16 Nov (run 43834316712): a correct clarification ("iska" has
+                        # no referent) was rejected twice because A left the gap list empty and
+                        # the generic message did not say so. Same rule, precise instruction.
+                        other={q for g in gaps if g['kind'] not in ('user_detail','history') for q in g['requirement_ids']}
+                        # A source-type gap on the same requirement is not a user question: keep the strict message.
+                        require(not (missing and missing <= known and not (missing & other)) or missing <= unresolved,
+                                'A clarification must record its gap: add an entry to need.unresolved_gaps with kind "user_detail" '
+                                '(or "history") whose requirement_ids include: '+', '.join(sorted(missing-unresolved))+
+                                '. Keep the same clarification question. Do this only for a detail that only the user can supply.')
                         require(bool(missing) and missing <= known and missing <= unresolved,
                                 'Clarify only a material missing user detail/history gap tied to a known requirement. Do not ask the user to choose a factual answer, confirm their question, or repeat supplied preferences. Retrieve evidence or hand supported context to B.')
                     moves_to_b = a['action']=='ready_for_b' or (a['action']=='collect' and state['closing'])
