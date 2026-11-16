@@ -132,7 +132,7 @@ def build_request(role, model, payload, output_tokens):
         # when the language rule sat at the end of a long prompt. State it first.
         prompt = language_rule(payload) + prompt
     else:
-        prompt = COMMON + ROLES['C'] + language_check(payload) + '\nReturn the C review fields in the response_format schema directly, without a result wrapper. Do not echo reviewed_binding; the server binds this response to the exact input versions. Do not rewrite the supplied candidate. Each evidence source_ref resolves through evidence_sources. Be concise: the whole review must fit in 600 tokens. Report at most 3 findings, blocking ones first, each reason under 300 characters.'
+        prompt = COMMON + ROLES['C'] + language_check(payload) + '\nReturn the C review fields in the response_format schema directly, without a result wrapper. Do not echo reviewed_binding; the server binds this response to the exact input versions. Do not rewrite the supplied candidate. Each evidence source_ref resolves through evidence_sources. Any blocking finding requires decision findings, never accepted or partial_accepted. Be concise: the whole review must fit in 600 tokens. Report at most 3 findings, blocking ones first, each reason under 300 characters.'
         schema = compact_c_schema(payload)
         extra = {'reasoning_effort': 'low', 'reasoning_format': 'hidden'}
     response_format = {'type': 'json_schema', 'json_schema': {'name': 'wireless_' + role, 'strict': True, 'schema': schema}}
@@ -227,6 +227,14 @@ def generate(role, model, system, payload, output_tokens):
         # Let the controller perform its single bounded format repair; no echoed private provider text.
         return {'text': '{}', 'usage': {}, 'contract_error': canonical({k:v for k,v in parsed.items() if k!='value'})}
     value = parsed['value']
+    if role == 'C' and value.get('decision') in ('accepted', 'partial_accepted') and any(
+            isinstance(f, dict) and f.get('blocking') is True for f in value.get('findings') or []):
+        # Seen live 16 Nov (run 43837905991): C found a blocking unsupported claim but
+        # labelled the review partial_accepted, twice. Only the conservative reading is
+        # taken: a blocking finding means the draft goes back to B and is not released.
+        if os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
+            print('C DECISION NORMALIZED: ' + value['decision'] + ' with blocking findings -> findings', flush=True)
+        value['decision'] = 'findings'
     if role == 'B':
         # gpt-oss habitually writes citation markers as full-width 【1】. Map only that
         # exact form to [1]; the validator still binds every marker to a citation.
