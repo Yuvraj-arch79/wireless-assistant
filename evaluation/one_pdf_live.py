@@ -83,7 +83,13 @@ def run():
                     for pid in citation.get('passage_ids',[]):
                         p=db.execute('SELECT p.clause_id,d.spec_number FROM passages p JOIN source_documents d ON d.document_id=p.document_id WHERE p.passage_id=?',(pid,)).fetchone()
                         if p:cited_clauses.append(dict(p))
-            if case['clause']:
+            if case.get('expect')=='clarify':
+                # A real clarification: waiting on the user, one question, nothing drafted or released.
+                question=(result.get('pending_clarification') or {})
+                passed=result['status']=='WAITING_USER' and bool(question) and not candidates and not reviews
+            elif case.get('expect')=='out_of_scope':
+                passed=result['status']=='COMPLETED' and result.get('outcome',{}).get('kind')=='OUT_OF_SCOPE' and not candidates and not reviews
+            elif case['clause']:
                 passed=result['status']=='COMPLETED' and accepted and all(f in answer.lower() for f in case['facts']) and any(c['clause_id']==case['clause'] and c['spec_number']=='38.201' for c in cited_clauses)
             else:
                 # Never count an infrastructure error as a correct abstention.

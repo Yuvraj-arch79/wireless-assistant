@@ -12,15 +12,33 @@ QUESTION = ('TS 38.201 clause 4.2.3 ke according transport blocks aur PBCH ki co
             'Coding choose karne ka reason source mein nahi hai toh clearly batao.')
 
 
+CASES = {
+    'coding_hinglish': {'id': 'coding_hinglish', 'question': QUESTION, 'clause': '4.2.3', 'facts': ['ldpc', 'polar']},
+    # A clear English question on another clause: reviewed answer, no clarification.
+    'modulation_english': {'id': 'modulation_english', 'clause': '4.2.2', 'facts': ['qpsk'],
+                           'question': 'According to TS 38.201 clause 4.2.2, which modulation schemes are supported '
+                                       'in the downlink and in the uplink? Give the exact citation.'},
+    # No referent at all: A must ask one precise clarification, nothing is drafted or released.
+    'ambiguous': {'id': 'ambiguous', 'expect': 'clarify', 'clause': None, 'facts': [],
+                  'question': 'Iska size kitna hota hai aur yeh kab use hota hai?'},
+    # Outside the declared 3GPP NR collection: clear scope refusal, no B/C draft.
+    'out_of_scope': {'id': 'out_of_scope', 'expect': 'out_of_scope', 'clause': None, 'facts': [],
+                     'question': 'Aaj Delhi ka mausam kaisa hai aur kal barish hogi kya?'},
+}
+
+
 def run():
-    one_pdf_live.CASES = [{'id':'coding_hinglish', 'question':QUESTION,
-                           'clause':'4.2.3', 'facts':['ldpc','polar']}]
-    os.environ['WA_EVAL_CASES'] = 'coding_hinglish'
+    case = os.getenv('WA_ABC_CASE', 'coding_hinglish')
+    if case not in CASES:
+        raise SystemExit('Unknown WA_ABC_CASE')
+    one_pdf_live.CASES = [CASES[case]]
+    os.environ['WA_EVAL_CASES'] = case
     report = one_pdf_live.run()
-    report['scope'] = 'One Hinglish TS 38.201 clause 4.2.3 question; real A, Gemini hybrid retrieval, B and C.'
+    report['scope'] = 'One TS 38.201 question (' + case + '); real A, Gemini hybrid retrieval, B and C.'
     report['manual_review_required'] = 'Inspect the released answer for natural Hinglish, faithful analogy and explicit unsupported-rationale note.'
     # COMPLETED + accepted C review + correct source clause are checked by the
-    # existing evaluator. Clarification, timeout and provider failures fail it.
+    # existing evaluator. Clarification, timeout and provider failures fail it,
+    # except for the cases that expect a clarification or a scope refusal.
     print(json.dumps(report, indent=2, ensure_ascii=True), flush=True)
     return report
 

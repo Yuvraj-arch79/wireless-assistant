@@ -2,6 +2,10 @@ name: Bounded ABC repair acceptance
 # Verify missing-wrapper normalization and real-corpus metadata compaction.
 on:
   workflow_dispatch:
+    inputs:
+      case:
+        description: coding_hinglish, modulation_english, ambiguous or out_of_scope
+        default: coding_hinglish
   push:
     branches: [fix/restore-abc-flow]
     paths: ['.github/workflows/abc-repair-live.yml']
@@ -48,6 +52,7 @@ jobs:
         timeout-minutes: 6
         env:
           WA_PUBLIC_EVAL_DIAGNOSTICS: '1'
+          WA_ABC_CASE: ${{ inputs.case || 'coding_hinglish' }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
