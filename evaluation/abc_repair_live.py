@@ -22,6 +22,10 @@ CASES = {
     'modulation_hinglish': {'id': 'modulation_hinglish', 'clause': '4.2.2', 'facts': ['qpsk', '256qam'],
                             'question': 'TS 38.201 ke clause 4.2.2 mein downlink aur uplink ke liye kaunse modulation '
                                         'schemes diye gaye hain? Hinglish mein simple tarike se samjhao aur exact citation do.'},
+    # Mixed: NR part is in TS 38.201, Wi-Fi 7 (IEEE 802.11be) is not loaded. Must not invent RU sizes.
+    'wifi7_mixed': {'id': 'wifi7_mixed', 'expect': 'no_fabrication', 'clause': None, 'facts': [],
+                    'question': '5G NR aur Wi\u2011Fi 7 dono OFDM use karte hain. Wi\u2011Fi 7 mein kaunse Resource Unit (RU) '
+                                'sizes allowed hain? Exact standard clause aur table cite karo.'},
     # No referent at all: A must ask one precise clarification, nothing is drafted or released.
     'ambiguous': {'id': 'ambiguous', 'expect': 'clarify', 'clause': None, 'facts': [],
                   'question': 'Iska size kitna hota hai aur yeh kab use hota hai?'},

@@ -87,6 +87,13 @@ def run():
                 # A real clarification: waiting on the user, one question, nothing drafted or released.
                 question=(result.get('pending_clarification') or {})
                 passed=result['status']=='WAITING_USER' and bool(question) and not candidates and not reviews
+            elif case.get('expect')=='no_fabrication':
+                # Any of: scope refusal, explicit missing-source stop, or an answer that discloses
+                # the gap. Never RU tone sizes or an IEEE clause/table presented as sourced.
+                import re as _re
+                text=(answer or '').lower()
+                invented=bool(_re.search(r'\b(26|52|106|242|484|996)\b',text)) or '802.11be' in text and _re.search(r'(clause|table)\s*\d',text) and 'not' not in text
+                passed=result['status'] in ('COMPLETED','FAILED') and not invented
             elif case.get('expect')=='out_of_scope':
                 passed=result['status']=='COMPLETED' and (result.get('outcome') or {}).get('kind')=='OUT_OF_SCOPE' and not candidates and not reviews
             elif case['clause']:

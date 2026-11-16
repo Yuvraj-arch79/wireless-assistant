@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       case:
-        description: coding_hinglish, modulation_english, modulation_hinglish, ambiguous or out_of_scope
+        description: coding_hinglish, modulation_english, modulation_hinglish, wifi7_mixed, ambiguous or out_of_scope
         default: coding_hinglish
   push:
     branches: [fix/restore-abc-flow]
