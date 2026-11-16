@@ -27,6 +27,8 @@ class ObservedEngine(Engine):
         result=super().call(rid,w,role,payload,checked)
         if role=='B' and result.get('action')!='submit_draft' and os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
             print(json.dumps({'role':'B','missing_info_allowed':payload.get('missing_info_allowed'),'public_evaluation_output':result},ensure_ascii=True),flush=True)
+        if role=='C' and os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
+            print('C REVIEW: '+json.dumps({'decision':result.get('decision'),'findings':[{k:str(f.get(k))[:260] for k in ('finding_type','blocking','target_claim_or_req','reason')} for f in result.get('findings',[])]},ensure_ascii=True),flush=True)
         return result
 
     def tool(self,rid,w,state,tool):

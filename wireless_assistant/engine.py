@@ -205,6 +205,9 @@ class Engine:
                 validate(value)
                 return value
             except (ValueError,TypeError,KeyError,AppError) as exc:
+                if os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
+                    # Validation message only (public evaluation); no keys or request bodies.
+                    print(f'CONTRACT ISSUE: role={role} repair_used={repair} '+str(exc)[:400].replace(chr(10),' '),flush=True)
                 r=self.store.run(rid)
                 counters=json.loads(r['counters_json'])
                 if counters['format_repairs']>=self.settings.max_repairs or repair:

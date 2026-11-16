@@ -219,3 +219,16 @@ def test_owner_limits_nine_calls_and_c_1400():
     assert body['max_tokens'] >= 1400 and request_tokens(body) <= A_LIMIT - A_MARGIN
     big = rp.build_request('C', rp.MODELS['C'], review_payload(), 2000)
     assert 900 <= big['max_tokens'] <= 2400 and request_tokens(big) <= A_LIMIT - A_MARGIN
+
+
+def test_groq_profile_byte_allowance_does_not_end_runs_before_nine_calls():
+    # Live 16 Nov run 43829375540: BUDGET_EXHAUSTED after 6 calls of an approved 9.
+    from wireless_assistant.config import Settings
+    s = Settings(provider_profile='groq_openrouter')
+    per_call = 27000 + s.role_output_tokens           # observed byte charge per Groq call
+    reserve = s.role_input_bound + s.role_output_tokens
+    # Before the 9th call: 8 charged, the call itself, plus no further reserve (C keeps 0).
+    assert s.total_token_bound - 8 * per_call >= per_call
+    # A revision B as 8th call still leaves its request plus one reserved C.
+    assert s.total_token_bound - 7 * per_call >= per_call + reserve
+    assert s.max_calls == 9 and s.max_repairs == 1

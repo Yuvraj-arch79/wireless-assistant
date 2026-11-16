@@ -58,6 +58,11 @@ class Settings(BaseModel):
             values.setdefault('max_active', 1)
             # Owner decision 15 Nov: room for one repair plus one C revision round.
             values.setdefault('max_calls', 9)
+            # The byte-based allowance charged ~27K per Groq call plus a 50K reserve per
+            # future call, ending runs at 6-7 calls (runs 43829375540, 43709096483).
+            # Each real request stays bounded at 8000 tokens before dispatch, so let the
+            # approved 9-call limit be the effective bound.
+            values.setdefault('total_token_bound', 500000)
             values.setdefault('role_input_bound', 48000)
         return values
 
