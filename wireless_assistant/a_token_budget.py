@@ -150,8 +150,8 @@ def budget_c(payload, body):
     body['messages'][1]['content'] = canonical(encode_payload(wire))
     # Live: this whole-body count exceeded Groq's C prompt_tokens (4687 vs 4315).
     limit = A_LIMIT - (B_MARGIN if wire.get('prior_candidate') else A_MARGIN)
-    # Prefer the full output reservation; never go below the previously verified 900.
-    for output in (body['max_tokens'], 1800, 1400, 1100, 900):
+    # C output is fixed at 900 (Groq free OTPM limit 1000 for qwen).
+    for output in (body['max_tokens'],):
         body['max_tokens'] = min(output, body['max_tokens'])
         if request_tokens(body) <= limit:
             break

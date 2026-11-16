@@ -210,15 +210,14 @@ def test_english_request_adds_no_language_rule():
     assert not rp.build_request('B', rp.MODELS['B'], p, 2000)['messages'][0]['content'].startswith('LANGUAGE')
 
 
-def test_owner_limits_nine_calls_and_c_1400():
+def test_owner_limits_nine_calls_and_c_output_within_groq_otpm():
+    # Run 43833263918: qwen free OTPM limit is 1000; max_tokens above it -> HTTP 429.
     from wireless_assistant.config import Settings
     assert Settings(provider_profile='groq_openrouter').max_calls == 9
     assert Settings(provider_profile='groq_openrouter').max_repairs == 1
-    small = review_payload(passages=2, answer_chars=1200)
-    body = rp.build_request('C', rp.MODELS['C'], small, 2000)
-    assert body['max_tokens'] >= 1400 and request_tokens(body) <= A_LIMIT - A_MARGIN
-    big = rp.build_request('C', rp.MODELS['C'], review_payload(), 2000)
-    assert 900 <= big['max_tokens'] <= 2400 and request_tokens(big) <= A_LIMIT - A_MARGIN
+    body = rp.build_request('C', rp.MODELS['C'], review_payload(), 2000)
+    assert body['max_tokens'] == 900 < 1000 and request_tokens(body) <= A_LIMIT - A_MARGIN
+    assert 'at most 3 findings' in body['messages'][0]['content']
 
 
 def test_groq_profile_byte_allowance_does_not_end_runs_before_nine_calls():
@@ -244,7 +243,7 @@ def test_second_c_review_fits_with_prior_draft_and_findings():
                          'findings': [{'finding_id': 'f1', 'finding_type': 'presentation_problem', 'blocking': True,
                                        'target_claim_or_req': 'R4 / Limitation section', 'reason': 'Limitation is in English. ' * 8, 'evidence_ids': []}]}
     body = rp.build_request('C', rp.MODELS['C'], p, 2000)
-    assert request_tokens(body) <= A_LIMIT - B_MARGIN and body['max_tokens'] >= 900
+    assert request_tokens(body) <= A_LIMIT - B_MARGIN and body['max_tokens'] == 900
     sent = json.loads(body['messages'][1]['content'])
     assert sent['candidate'] == p['candidate']
     assert sent['prior_candidate']['answer_markdown'] == p['prior_candidate']['answer_markdown']

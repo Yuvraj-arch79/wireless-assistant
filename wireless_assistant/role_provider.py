@@ -7,8 +7,9 @@ from .prompts import COMMON, ROLES, instructions
 from .provider_contracts import wire_schema, b_schema, groq_b_schema, compact_c_schema, inspect_c_response, inspect_response, render_references
 
 # Owner decision 15 Nov: C review was cut at 900 tokens (Groq json_validate_failed).
-# Run 43710832894: still cut at 1400 (qwen hidden reasoning counts); body ~4300 tokens.
-C_OUTPUT_TOKENS = 2400
+# Run 43833263918: Groq free qwen has an output-tokens-per-minute limit of 1000 (OTPM);
+# larger max_tokens is rejected with HTTP 429. Keep the verified 900 and ask for a concise review.
+C_OUTPUT_TOKENS = 900
 
 MODELS = {'A': 'openai/gpt-oss-120b', 'B': 'openai/gpt-oss-20b', 'C': 'qwen/qwen3.8-27b'}
 
@@ -131,7 +132,7 @@ def build_request(role, model, payload, output_tokens):
         # when the language rule sat at the end of a long prompt. State it first.
         prompt = language_rule(payload) + prompt
     else:
-        prompt = COMMON + ROLES['C'] + language_check(payload) + '\nReturn the C review fields in the response_format schema directly, without a result wrapper. Do not echo reviewed_binding; the server binds this response to the exact input versions. Do not rewrite the supplied candidate. Each evidence source_ref resolves through evidence_sources.'
+        prompt = COMMON + ROLES['C'] + language_check(payload) + '\nReturn the C review fields in the response_format schema directly, without a result wrapper. Do not echo reviewed_binding; the server binds this response to the exact input versions. Do not rewrite the supplied candidate. Each evidence source_ref resolves through evidence_sources. Be concise: the whole review must fit in 600 tokens. Report at most 3 findings, blocking ones first, each reason under 300 characters.'
         schema = compact_c_schema(payload)
         extra = {'reasoning_effort': 'low', 'reasoning_format': 'hidden'}
     response_format = {'type': 'json_schema', 'json_schema': {'name': 'wireless_' + role, 'strict': True, 'schema': schema}}
