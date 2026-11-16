@@ -175,6 +175,11 @@ def groq_b_schema(payload=None):
     log=schema['$defs']['BDraft']['properties']['revision_log']
     log['minItems']=log['maxItems']=len(previous)
     log['description']=('Exactly one entry per prior_review finding ID: '+', '.join(previous)) if previous else 'Must be an empty list: there is no prior review.'
+    language=((payload or {}).get('need') or {}).get('language')
+    if isinstance(language,str) and language.strip() and language.strip().lower() not in ('english','en'):
+        draft=schema['$defs']['BDraft']['properties']
+        draft['answer_markdown']['description']+=f' Every sentence, heading and the analogy must be in {language.strip()}.'
+        draft['limitation_statement']['description']=f'Write this in {language.strip()}, not English (technical terms excepted).'
     if previous:
         item=schema['$defs'][log['items']['$ref'].split('/')[-1]] if '$ref' in log['items'] else log['items']
         item['properties']['finding_id']={'type':'string','enum':previous}

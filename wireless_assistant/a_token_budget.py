@@ -138,18 +138,29 @@ def compact_c_payload(payload):
 
 def budget_c(payload, body):
     body = deepcopy(body)
-    body['messages'][1]['content'] = canonical(compact_c_payload(payload))
-    # Prefer 1400 output tokens; never go below the previously verified 900.
+    wire = compact_c_payload(payload)
+    # A second review compares against the prior draft's text/citations and the
+    # prior findings; bindings and logs are server-side (run 43831441623 did not fit).
+    if isinstance(wire.get('prior_review'), dict):
+        wire['prior_review'] = {k: wire['prior_review'][k] for k in ('decision', 'findings') if k in wire['prior_review']}
+    if isinstance(wire.get('prior_candidate'), dict):
+        wire['prior_candidate'] = {k: wire['prior_candidate'][k] for k in ('answer_markdown', 'citations', 'covered_requirements', 'unresolved_requirements')
+                                   if k in wire['prior_candidate']}
+    from .a_transport import encode_payload
+    body['messages'][1]['content'] = canonical(encode_payload(wire))
+    # Live: this whole-body count exceeded Groq's C prompt_tokens (4687 vs 4315).
+    limit = A_LIMIT - (B_MARGIN if wire.get('prior_candidate') else A_MARGIN)
+    # Prefer the full output reservation; never go below the previously verified 900.
     for output in (body['max_tokens'], 1800, 1400, 1100, 900):
         body['max_tokens'] = min(output, body['max_tokens'])
-        if request_tokens(body) <= A_LIMIT - A_MARGIN:
+        if request_tokens(body) <= limit:
             break
-    if request_tokens(body) > A_LIMIT - A_MARGIN:
+    if request_tokens(body) > limit:
         raise AppError('CONTEXT_LIMIT',
                        'The review request cannot fit the 8000-token budget with the complete evidence and candidate. No provider request was sent.', 413)
     import os
     if os.environ.get('WA_PUBLIC_EVAL_DIAGNOSTICS') == '1':
-        print(f"C BUDGET: tokens={request_tokens(body)} max_tokens={body['max_tokens']} limit={A_LIMIT - A_MARGIN}", flush=True)
+        print(f"C BUDGET: tokens={request_tokens(body)} max_tokens={body['max_tokens']} limit={limit}", flush=True)
     return body
 
 

@@ -232,3 +232,32 @@ def test_groq_profile_byte_allowance_does_not_end_runs_before_nine_calls():
     # A revision B as 8th call still leaves its request plus one reserved C.
     assert s.total_token_bound - 7 * per_call >= per_call + reserve
     assert s.max_calls == 9 and s.max_repairs == 1
+
+
+def test_second_c_review_fits_with_prior_draft_and_findings():
+    # Live 16 Nov run 43831441623: second C review exceeded the bound -> CONTEXT_LIMIT.
+    p = review_payload(answer_chars=2100)
+    for item, size in zip(p['evidence'], (713, 409, 560, 231, 1008)):
+        item['text'] = item['text'][:size]
+    p['prior_candidate'] = dict(review_payload(answer_chars=2100)['candidate'], revision_log=[])
+    p['prior_review'] = {'decision': 'findings', 'reviewed_binding': {'candidate_hash': 'x' * 64},
+                         'findings': [{'finding_id': 'f1', 'finding_type': 'presentation_problem', 'blocking': True,
+                                       'target_claim_or_req': 'R4 / Limitation section', 'reason': 'Limitation is in English. ' * 8, 'evidence_ids': []}]}
+    body = rp.build_request('C', rp.MODELS['C'], p, 2000)
+    assert request_tokens(body) <= A_LIMIT - B_MARGIN and body['max_tokens'] >= 900
+    sent = json.loads(body['messages'][1]['content'])
+    assert sent['candidate'] == p['candidate']
+    assert sent['prior_candidate']['answer_markdown'] == p['prior_candidate']['answer_markdown']
+    assert sent['prior_review']['findings'] == p['prior_review']['findings'] and 'reviewed_binding' not in sent['prior_review']
+    for wire, full in zip(sent['evidence'], p['evidence']):
+        assert wire['text'] == full['text']
+
+
+def test_b_schema_states_language_on_answer_and_limitation():
+    p = b_payload(); p['need']['language'] = 'Hinglish'
+    draft = groq_b_schema(p)['$defs']['BDraft']['properties']
+    assert 'must be in Hinglish' in draft['answer_markdown']['description']
+    assert 'Hinglish, not English' in draft['limitation_statement']['description']
+    e = b_payload(); e['need']['language'] = 'English'
+    plain = groq_b_schema(e)['$defs']['BDraft']['properties']
+    assert 'must be in' not in plain['answer_markdown']['description']
