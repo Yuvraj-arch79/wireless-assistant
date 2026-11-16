@@ -63,3 +63,41 @@ def test_engine_sends_mislabelled_review_back_to_b_not_release(client):
     rid = post(client, f'/api/sessions/{sid}/messages', {'text': 'TS 38.211 clause 4.4.4.1 explain karo.'}).json()['data']['run_id']
     result = wait_run(client, rid)
     assert calls == ['A', 'A', 'B', 'C', 'B', 'C'] and result['outcome']['kind'] == 'ACCEPTED', (calls, result)
+
+
+def test_partial_label_with_nothing_unmet_and_no_blocking_becomes_accepted():
+    # Owner's laptop 16 Nov: C partial_accepted with no unmet requirements, twice ->
+    # 'Partial acceptance needs useful coverage and explicit limitations'.
+    value = c_output('partial_accepted', blocking=False)
+    value['unmet_requirements'] = []
+    out = generate_c(value)
+    assert 'contract_error' not in out, out
+    assert json.loads(out['text'])['decision'] == 'accepted'
+
+
+def test_genuine_partial_with_unmet_requirement_is_kept():
+    value = c_output('partial_accepted', blocking=False)
+    value['unmet_requirements'] = ['R2']
+    out = generate_c(value)
+    assert 'contract_error' not in out, out
+    assert json.loads(out['text'])['decision'] == 'partial_accepted'
+
+
+def test_c_prompt_limits_partial_to_unmet_requirements():
+    prompt = rp.build_request('C', rp.MODELS['C'], review_payload(), 900)['messages'][0]['content']
+    assert 'Use partial_accepted only when unmet_requirements is non-empty' in prompt
+
+
+def test_engine_releases_relabelled_review_only_when_coverage_matches(client):
+    from tests.runtime.conftest import create_chat, post, wait_run, collect, ready, draft, review
+    def relabelled(payload):
+        v = review(payload)  # accepted shape, nothing unmet, no findings
+        v['decision'] = 'partial_accepted'
+        if v['decision'] == 'partial_accepted' and not v['unmet_requirements'] and not any(f['blocking'] for f in v['findings']):
+            v['decision'] = 'accepted'  # what role_provider does before the engine sees it
+        return v
+    client.app_script.actions = [('A', collect), ('A', ready), ('B', draft), ('C', relabelled)]
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': 'TS 38.211 clause 4.4.4.1 explain karo.'}).json()['data']['run_id']
+    result = wait_run(client, rid)
+    assert result['outcome']['kind'] == 'ACCEPTED', result
