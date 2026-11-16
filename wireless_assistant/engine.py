@@ -274,6 +274,12 @@ class Engine:
                                 'A clarification must record its gap: add an entry to need.unresolved_gaps with kind "user_detail" '
                                 '(or "history") whose requirement_ids include: '+', '.join(sorted(missing-unresolved))+
                                 '. Keep the same clarification question. Do this only for a detail that only the user can supply.')
+                        if missing & other and evidence:
+                            # A source-type worry with passages already collected is B's to resolve from
+                            # the complete text; it is never a user question (run 43835546442).
+                            clauses=sorted({p['clause_id'] for p in evidence})
+                            require(False,'Do not ask the user about source text. You see previews only; B and C receive the complete text of the collected passages (clauses '+', '.join(clauses)[:200]+
+                                    '). Use ready_for_b now and keep the source gap in coverage_gaps only if no collected passage belongs to the requested clause.')
                         require(bool(missing) and missing <= known and missing <= unresolved,
                                 'Clarify only a material missing user detail/history gap tied to a known requirement. Do not ask the user to choose a factual answer, confirm their question, or repeat supplied preferences. Retrieve evidence or hand supported context to B.')
                     moves_to_b = a['action']=='ready_for_b' or (a['action']=='collect' and state['closing'])

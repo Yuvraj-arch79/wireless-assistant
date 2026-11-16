@@ -69,7 +69,11 @@ def preview_passage(item, chars):
             out['has_' + name[:-3]] = bool(out.pop(name))
     text = out.get('text', '')
     if isinstance(text, str) and len(text) > chars:
-        out['text'] = text[:chars]
+        # Keep the start and the end: live run 43835546442 lost the modulation list in
+        # the last 200 characters of clause 4.2.2 with a head-only preview.
+        head = max(1, (chars * 3) // 5)
+        tail = max(0, chars - head - 5)
+        out['text'] = text[:head] + (' […] ' + text[-tail:] if tail else '')
         out['preview_truncated'] = True
         out['full_chars'] = len(text)  # B and C receive all of it
     # Tables repeat the readable passage in structure.rows. Keep navigational
