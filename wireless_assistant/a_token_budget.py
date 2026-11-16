@@ -71,6 +71,7 @@ def preview_passage(item, chars):
     if isinstance(text, str) and len(text) > chars:
         out['text'] = text[:chars]
         out['preview_truncated'] = True
+        out['full_chars'] = len(text)  # B and C receive all of it
     # Tables repeat the readable passage in structure.rows. Keep navigational
     # and extraction flags; B/C still receive the complete original structure.
     structure = out.get('structure')

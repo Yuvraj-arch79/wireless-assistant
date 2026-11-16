@@ -74,7 +74,7 @@ def run():
                 messages=[dict(r) for r in db.execute('SELECT * FROM messages WHERE session_id=? ORDER BY sequence',(sid,))]
                 operations=[dict(r) for r in db.execute('SELECT * FROM operations WHERE run_id=?',(rid,))]
                 candidates=[dict(r) for r in db.execute('SELECT * FROM candidates WHERE run_id=?',(rid,))]
-            answer=next((m['content_text'] for m in reversed(messages) if m['message_id']==result.get('outcome',{}).get('message_id')),'')
+            answer=next((m['content_text'] for m in reversed(messages) if m['message_id']==(result.get('outcome') or {}).get('message_id')),'')
             accepted=any(r['decision'] in ('accepted','partial_accepted') for r in reviews)
             citations=json.loads(candidates[-1]['citations_json']) if candidates else []
             cited_clauses=[]
@@ -88,21 +88,21 @@ def run():
                 question=(result.get('pending_clarification') or {})
                 passed=result['status']=='WAITING_USER' and bool(question) and not candidates and not reviews
             elif case.get('expect')=='out_of_scope':
-                passed=result['status']=='COMPLETED' and result.get('outcome',{}).get('kind')=='OUT_OF_SCOPE' and not candidates and not reviews
+                passed=result['status']=='COMPLETED' and (result.get('outcome') or {}).get('kind')=='OUT_OF_SCOPE' and not candidates and not reviews
             elif case['clause']:
                 passed=result['status']=='COMPLETED' and accepted and all(f in answer.lower() for f in case['facts']) and any(c['clause_id']==case['clause'] and c['spec_number']=='38.201' for c in cited_clauses)
             else:
                 # Never count an infrastructure error as a correct abstention.
                 limitation=bool(re.search(r'not (?:available|provided|specified|included|contain)|does not|unavailable|missing|cannot|can.not',answer,re.I))
                 invented=bool(re.search(r'\b(?:292|3824|8424)\b|0\.(?:25|67|89)',answer))
-                safe_stop=result.get('outcome',{}).get('kind')=='INABILITY' and answer in ('No supporting passages were collected from the selected corpus. Narrow the question or specify a clause.', 'The available evidence is insufficient for a supported answer. Narrow the question or supply the missing detail.') and not candidates
+                safe_stop=(result.get('outcome') or {}).get('kind')=='INABILITY' and answer in ('No supporting passages were collected from the selected corpus. Narrow the question or specify a clause.', 'The available evidence is insufficient for a supported answer. Narrow the question or supply the missing detail.') and not candidates
                 passed=result['status']=='COMPLETED' and not invented and (safe_stop or (accepted and limitation))
             item={'id':case['id'],'question':case['question'],'passed':passed,'run':result,'answer':answer,'accepted_review':accepted,'cited_clauses':cited_clauses,'citations':citations,'generation_attempts':sum(o['kind'] in ('A','B','C') for o in operations),'operation_kinds':[o['kind'] for o in operations]}
             report['cases'].append(item)
             print(json.dumps(item,ensure_ascii=True),flush=True)
             (settings.data_dir/'live-report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
             # No repeated attempts on a quota/auth/network failure.
-            if result.get('outcome',{}).get('kind') in ('PROVIDER_QUOTA','PROVIDER_AUTH','PROVIDER_NETWORK','PROVIDER_TIMEOUT'):break
+            if (result.get('outcome') or {}).get('kind') in ('PROVIDER_QUOTA','PROVIDER_AUTH','PROVIDER_NETWORK','PROVIDER_TIMEOUT'):break
         report['status']='pass' if len(report['cases'])==len(cases) and all(c['passed'] for c in report['cases']) else 'not_passed'
     (settings.data_dir/'live-report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     return report
