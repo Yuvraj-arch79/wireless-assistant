@@ -47,3 +47,28 @@ def test_a_prompt_requires_user_script_and_no_repeat():
     prompt = rp.build_request('A', rp.MODELS['A'], {'evidence': []}, 2000)['messages'][0]['content']
     assert 'Hinglish: Roman, not Devanagari' in prompt
     assert 'Never re-ask an answered clarification' in prompt and 'choose out_of_scope' in prompt
+
+
+def new_question(payload):
+    v = clarify(payload)
+    v['need']['unresolved_gaps'][0]['gap_id'] = 'which_proof'
+    v['clarification'] = {'question': 'Kaunse specific equation ka proof chahiye?', 'missing_requirement_ids': ['r1'],
+                          'alternatives': [], 'gap_key': 'which_proof'}
+    return v
+
+
+def test_new_question_after_out_of_scope_answer_must_redecide_scope(client):
+    # Owner's laptop 17 Nov: reply 'cnn ka backpropogation ka prove' got a new clarification.
+    client.app_script.actions = [('A', clarify), ('A', new_question), ('A', out_of_scope)]
+    sid = create_chat(client)
+    rid = post(client, f'/api/sessions/{sid}/messages', {'text': 'woh tene reason diya tha usko mathematically prove kr'}).json()['data']['run_id']
+    status = wait_run(client, rid, 'WAITING_USER')
+    cid = status['pending_clarification']['clarification_id']
+    post(client, f'/api/runs/{rid}/clarifications/{cid}/reply',
+         {'text': 'cnn ka backpropogation ka prove', 'expected_run_version': status['state_version']})
+    result = wait_run(client, rid)
+    assert result['outcome']['kind'] == 'OUT_OF_SCOPE', result
+    error = client.app_script.calls[2][1]['contract_error']
+    assert 'Re-decide before asking again' in error and 'cnn ka backpropogation ka prove' in error and 'machine learning/CNN' in error
+    with client.app.state.store.read() as db:
+        assert db.execute('SELECT COUNT(*) FROM clarifications WHERE run_id=?', (rid,)).fetchone()[0] == 1

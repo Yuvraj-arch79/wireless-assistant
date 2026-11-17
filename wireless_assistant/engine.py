@@ -258,6 +258,7 @@ class Engine:
             payload=self.payload(rid,state,context,compact,evidence)
             if state['phase']=='A':
                 answered=self.store.answered_clarifications(rid)
+                scope_recheck={'done':False}
                 def valid_a(a):
                     if a.get('need'):
                         validate_need(a['need'],context['originals'])
@@ -271,6 +272,17 @@ class Engine:
                         require(not asked,'The user already answered this clarification ("'+asked[0]['question'][:200]+'" -> "'+asked[0]['reply'][:200]+'"). Do not ask again. '
                                 'Use that answer: if it names something outside the declared 3GPP NR collection (for example Wi-Fi/IEEE 802.11, LTE-only or non-telecom topics), '
                                 'choose out_of_scope; otherwise update the need with the answer and collect or use ready_for_b.' if asked else '')
+                        # Seen on the owner's laptop 17 Nov: the user answered with "cnn ka backpropagation
+                        # ka prove" and A asked a new question instead of out_of_scope. Before a further
+                        # question, A must re-decide scope once (existing single repair); a genuine in-scope
+                        # follow-up question is accepted on that re-decision.
+                        if answered and not scope_recheck['done']:
+                            scope_recheck['done']=True
+                            last=answered[-1]
+                            require(False,'The user already answered a clarification ("'+last['question'][:200]+'" -> "'+last['reply'][:200]+'"). '
+                                    'Re-decide before asking again: if that topic is not covered by the declared 3GPP NR collection '
+                                    '(for example machine learning/CNN, Wi-Fi/IEEE 802.11, general maths or non-telecom), choose out_of_scope. '
+                                    'Ask one more, different question only if the topic is 3GPP NR and an essential detail is still missing.')
                         missing=set(a['clarification']['missing_requirement_ids'])
                         known={q['req_id'] for q in a['need']['requirements']}
                         gaps=a['need']['unresolved_gaps']+a['coverage_gaps']
