@@ -259,9 +259,34 @@ class Engine:
             if state['phase']=='A':
                 answered=self.store.answered_clarifications(rid)
                 scope_recheck={'done':False}
+                loaded={i['spec_number'] for i in payload.get('corpus_inventory') or [] if i.get('spec_number')}
+                loaded_versions={i['version'] for i in payload.get('corpus_inventory') or [] if i.get('version')}
                 def valid_a(a):
                     if a.get('need'):
                         validate_need(a['need'],context['originals'])
+                    # Seen live 17 Nov (run 44015334958 and the owner's laptop): for "Layer 1 ko kaunsi
+                    # TS series describe karti hai?" A put the answer's subject series (38.200/38.300)
+                    # into need.scope, then searched TS 38.201; the search-time check stopped the run
+                    # with no repair. Scope names loaded documents to search; checked here, repairable.
+                    if a.get('need') and loaded:
+                        scope=a['need']['scope']
+                        extra=sorted(set(scope['spec_numbers'])-loaded)
+                        require(not extra,'need.scope.spec_numbers lists the loaded documents to search, not specifications named in the question or answer. '
+                                'Loaded documents: TS '+', TS '.join(sorted(loaded))+'. Remove '+', '.join(extra)+' from need.scope (keep them in the requirement text) '
+                                'and search the loaded document(s). Use out_of_scope only if the user requires a document that is not loaded.')
+                        wrong=sorted(set(scope['document_versions'])-loaded_versions) if loaded_versions else []
+                        require(not wrong,'need.scope.document_versions must be loaded versions: '+', '.join(sorted(loaded_versions))+'. Remove '+', '.join(wrong)+'.')
+                    if a['action']=='collect' and a.get('need'):
+                        scope=a['need']['scope']
+                        for t in a['requests']:
+                            if t.get('kind')!='corpus_search':
+                                continue
+                            f=t['filters']
+                            require((not scope['release'] or f['release']==scope['release']) and
+                                    (not scope['spec_numbers'] or bool(f['spec_numbers']) and set(f['spec_numbers'])<=set(scope['spec_numbers'])) and
+                                    (not scope['document_versions'] or bool(f['document_versions']) and set(f['document_versions'])<=set(scope['document_versions'])),
+                                    'Each corpus_search filter must stay within need.scope (same release; spec_numbers and document_versions a non-empty subset of the scope when the scope sets them). '
+                                    'Scope: '+canonical({k:scope[k] for k in ('release','spec_numbers','document_versions')})+'.')
                     if a['action']=='clarify':
                         # Seen on the owner's laptop 17 Nov: after the user answered "Wi-Fi 7
                         # (IEEE 802.11be)", A asked the identical question again (twice). A gap the
