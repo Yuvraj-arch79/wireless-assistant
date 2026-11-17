@@ -86,8 +86,17 @@ def test_duplicate_submit_one_run_and_key_conflict(client):
         assert db.execute('SELECT COUNT(*) FROM request_runs').fetchone()[0]==1
 
 
+def follow_up_clarify(payload):
+    # A genuinely different second question on a new gap (a repeated question is rejected).
+    v=clarify(payload)
+    v['need']['unresolved_gaps'][0]['gap_id']='aspect'
+    v['clarification']={'question':'Which aspect of the NR resource block do you need?','missing_requirement_ids':['r1'],
+                        'alternatives':['definition','numbering'],'gap_key':'aspect'}
+    return v
+
+
 def test_clarification_idle_resume_and_counters_preserved(client):
-    client.app_script.actions=[('A',clarify),('A',clarify)]
+    client.app_script.actions=[('A',clarify),('A',follow_up_clarify)]
     sid=create_chat(client);rid=post(client,f'/api/sessions/{sid}/messages',{'text':'Explain it.'}).json()['data']['run_id']
     status=wait_run(client,rid,'WAITING_USER')
     store=client.app.state.store

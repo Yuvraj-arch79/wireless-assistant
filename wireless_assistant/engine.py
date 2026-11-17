@@ -257,10 +257,20 @@ class Engine:
             context,compact,evidence=self.collect_context(rid,state)
             payload=self.payload(rid,state,context,compact,evidence)
             if state['phase']=='A':
+                answered=self.store.answered_clarifications(rid)
                 def valid_a(a):
                     if a.get('need'):
                         validate_need(a['need'],context['originals'])
                     if a['action']=='clarify':
+                        # Seen on the owner's laptop 17 Nov: after the user answered "Wi-Fi 7
+                        # (IEEE 802.11be)", A asked the identical question again (twice). A gap the
+                        # user already answered may not be asked again in the same run.
+                        norm=lambda t:' '.join(str(t).lower().split())
+                        asked=[c for c in answered if c['gap_key']==a['clarification']['gap_key'] or
+                               norm(c['question'])==norm(a['clarification']['question'])]
+                        require(not asked,'The user already answered this clarification ("'+asked[0]['question'][:200]+'" -> "'+asked[0]['reply'][:200]+'"). Do not ask again. '
+                                'Use that answer: if it names something outside the declared 3GPP NR collection (for example Wi-Fi/IEEE 802.11, LTE-only or non-telecom topics), '
+                                'choose out_of_scope; otherwise update the need with the answer and collect or use ready_for_b.' if asked else '')
                         missing=set(a['clarification']['missing_requirement_ids'])
                         known={q['req_id'] for q in a['need']['requirements']}
                         gaps=a['need']['unresolved_gaps']+a['coverage_gaps']
