@@ -26,6 +26,9 @@ CASES = {
     'wifi7_mixed': {'id': 'wifi7_mixed', 'expect': 'no_fabrication', 'clause': None, 'facts': [],
                     'question': '5G NR aur Wi\u2011Fi 7 dono OFDM use karte hain. Wi\u2011Fi 7 mein kaunse Resource Unit (RU) '
                                 'sizes allowed hain? Exact standard clause aur table cite karo.'},
+    # Owner's laptop 17 Nov: simple in-scope Hinglish question failed validation.
+    'layers_hinglish': {'id': 'layers_hinglish', 'clause': '4.1.1', 'facts': ['38.200', '38.300'],
+                        'question': '5G NR mein Layer 1 ko kaunsi TS series describe karti hai? Aur Layers 2 aur 3 ko kaunsi?'},
     # No referent at all: A must ask one precise clarification, nothing is drafted or released.
     'ambiguous': {'id': 'ambiguous', 'expect': 'clarify', 'clause': None, 'facts': [],
                   'question': 'Iska size kitna hota hai aur yeh kab use hota hai?'},
