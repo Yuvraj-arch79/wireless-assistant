@@ -44,6 +44,28 @@ def decode_result(value, payload):
         for req in need.get('requirements', []):
             if isinstance(req, dict) and isinstance(req.get('established_by'), list):
                 req['established_by'] = [expand(r) for r in req['established_by']]
+    # Seen live 17 Nov (run 44015633606): A's search filters left need.scope, and on repair
+    # it dropped a filter field. Filters only steer retrieval; they are clamped to the
+    # user's scope here (never widened), so the search cannot leave the requested scope.
+    scope = need.get('scope') if isinstance(need, dict) else None
+    if value.get('action') == 'collect' and isinstance(scope, dict) and isinstance(value.get('requests'), list):
+        for request in value['requests']:
+            if not isinstance(request, dict) or request.get('kind') != 'corpus_search':
+                continue
+            f = request.get('filters') if isinstance(request.get('filters'), dict) else {}
+            def within(key):
+                wanted = [x for x in (f.get(key) or []) if isinstance(x, str)]
+                allowed = scope.get(key) or []
+                if not allowed:
+                    return wanted
+                kept = [x for x in wanted if x in allowed]
+                return kept or list(allowed)
+            request['filters'] = {
+                'release': scope.get('release') or f.get('release'),
+                'spec_numbers': within('spec_numbers'),
+                'document_versions': within('document_versions'),
+                'default_used': f.get('default_used') if isinstance(f.get('default_used'), bool) else bool(scope.get('default_used')),
+            }
     # HistoryFetch refs may refer to excluded history, so retain full DTOs there.
     return value
 

@@ -52,3 +52,27 @@ def test_a_prompt_names_scope_as_loaded_documents():
     from wireless_assistant import role_provider as rp
     prompt = rp.build_request('A', rp.MODELS['A'], {'evidence': []}, 2000)['messages'][0]['content']
     assert 'need.scope.spec_numbers = loaded documents to search' in prompt
+
+
+def test_groq_a_filters_are_clamped_to_scope_and_completed():
+    # Run 44015633606: filter outside scope, then a repair that omitted default_used.
+    from wireless_assistant.a_transport import decode_result
+    scope = {'release': '18', 'spec_numbers': ['38.201'], 'document_versions': ['18.0.0'], 'default_used': False}
+    value = {'action': 'collect', 'intent_relation': 'same_need', 'need': {'scope': scope}, 'coverage_gaps': [],
+             'requests': [{'kind': 'corpus_search', 'query': 'layer 1 series', 'limit': 5,
+                           'filters': {'release': '17', 'spec_numbers': ['38.200', '38.300'], 'document_versions': []}},
+                          {'kind': 'corpus_search', 'query': 'layers 2 3', 'limit': 5,
+                           'filters': {'release': '18', 'spec_numbers': ['38.201'], 'document_versions': ['18.0.0'], 'default_used': False}}]}
+    out = decode_result(value, {'original_context': [], 'need': None})
+    assert out['requests'][0]['filters'] == scope  # narrowed to the scope, missing field filled
+    assert out['requests'][1]['filters'] == scope  # already valid: unchanged
+    assert value['requests'][0]['filters']['release'] == '17'  # input not mutated
+
+
+def test_unscoped_need_keeps_a_filters():
+    from wireless_assistant.a_transport import decode_result
+    scope = {'release': None, 'spec_numbers': [], 'document_versions': [], 'default_used': True}
+    value = {'action': 'collect', 'need': {'scope': scope},
+             'requests': [{'kind': 'corpus_search', 'filters': {'release': '18', 'spec_numbers': ['38.201'], 'document_versions': [], 'default_used': True}}]}
+    out = decode_result(value, {'original_context': [], 'need': None})
+    assert out['requests'][0]['filters'] == {'release': '18', 'spec_numbers': ['38.201'], 'document_versions': [], 'default_used': True}
