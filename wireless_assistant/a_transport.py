@@ -48,6 +48,18 @@ def decode_result(value, payload):
     # it dropped a filter field. Filters only steer retrieval; they are clamped to the
     # user's scope here (never widened), so the search cannot leave the requested scope.
     scope = need.get('scope') if isinstance(need, dict) else None
+    # Seen live 17 Nov (runs 44015334958, 44016039735): for a question naming no
+    # specification, A put subject specs (38.200/38.300, then 38.322/38.331) into the
+    # search scope. A scope entry that is neither a loaded document nor written by the
+    # user is A's invention and is dropped; one the user wrote stays for A to resolve.
+    inventory = payload.get('corpus_inventory') or []
+    loaded = {i.get('spec_number') for i in inventory if isinstance(i, dict)}
+    loaded_versions = {i.get('version') for i in inventory if isinstance(i, dict)}
+    if isinstance(scope, dict) and loaded - {None}:
+        written = ' '.join(m.get('text', '') for m in payload.get('original_context') or [] if isinstance(m, dict))
+        for key, known in (('spec_numbers', loaded), ('document_versions', loaded_versions)):
+            if isinstance(scope.get(key), list):
+                scope[key] = [x for x in scope[key] if x in known or (isinstance(x, str) and x in written)]
     if value.get('action') == 'collect' and isinstance(scope, dict) and isinstance(value.get('requests'), list):
         for request in value['requests']:
             if not isinstance(request, dict) or request.get('kind') != 'corpus_search':

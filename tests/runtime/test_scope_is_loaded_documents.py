@@ -76,3 +76,35 @@ def test_unscoped_need_keeps_a_filters():
              'requests': [{'kind': 'corpus_search', 'filters': {'release': '18', 'spec_numbers': ['38.201'], 'document_versions': [], 'default_used': True}}]}
     out = decode_result(value, {'original_context': [], 'need': None})
     assert out['requests'][0]['filters'] == {'release': '18', 'spec_numbers': ['38.201'], 'document_versions': [], 'default_used': True}
+
+
+def _a_payload(text):
+    return {'original_context': [{'text': text}], 'need': None,
+            'corpus_inventory': [{'spec_number': '38.201', 'version': '18.0.0', 'release': '18'}]}
+
+
+def test_invented_subject_specs_are_dropped_from_scope():
+    # Runs 44015334958 / 44016039735: no spec named by the user; A scoped 38.322/38.331.
+    from wireless_assistant.a_transport import decode_result
+    scope = {'release': '18', 'spec_numbers': ['38.322', '38.331', '38.201'], 'document_versions': ['16.2.0', '18.0.0'], 'default_used': False}
+    value = {'action': 'collect', 'need': {'scope': scope},
+             'requests': [{'kind': 'corpus_search', 'filters': dict(scope)}]}
+    out = decode_result(value, _a_payload('5G NR mein Layer 1 ko kaunsi TS series describe karti hai?'))
+    assert out['need']['scope']['spec_numbers'] == ['38.201']
+    assert out['need']['scope']['document_versions'] == ['18.0.0']
+    assert out['requests'][0]['filters']['spec_numbers'] == ['38.201']
+
+
+def test_spec_written_by_user_is_kept_for_a_to_resolve():
+    from wireless_assistant.a_transport import decode_result
+    scope = {'release': '18', 'spec_numbers': ['38.211'], 'document_versions': [], 'default_used': False}
+    value = {'action': 'ready_for_b', 'need': {'scope': scope}}
+    out = decode_result(value, _a_payload('TS 38.211 ke according PDSCH DMRS kya hai?'))
+    assert out['need']['scope']['spec_numbers'] == ['38.211']  # engine check then repairs/out_of_scope
+
+
+def test_all_invented_specs_dropped_leaves_scope_open():
+    from wireless_assistant.a_transport import decode_result
+    scope = {'release': '18', 'spec_numbers': ['38.200', '38.300'], 'document_versions': [], 'default_used': False}
+    out = decode_result({'action': 'ready_for_b', 'need': {'scope': scope}}, _a_payload('Layer 1 aur Layer 2 kaunsi series?'))
+    assert out['need']['scope']['spec_numbers'] == []
