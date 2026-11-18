@@ -15,6 +15,8 @@ from .role_provider import generate as generate_mixed, configured, build_request
 from .store import Store, insert, row, TERMINAL
 from .validation import validate_need, validate_draft, validate_review, require
 from .local_tools import local_tool_worker
+from . import runlog, versions
+from .failures import explain
 
 
 class Engine:
@@ -117,7 +119,8 @@ class Engine:
                 if self.remaining(w)<=0:
                     w['stop'].set()
                     try:
-                        self.store.stop(rid,'TIMED_OUT','ACTIVE_DEADLINE','Processing reached its time limit. No unchecked answer was released.',w['epoch'],self.elapsed(w))
+                        message,details=self.failure(rid,'ACTIVE_DEADLINE','Processing reached its time limit.')
+                        self.store.stop(rid,'TIMED_OUT','ACTIVE_DEADLINE',message,w['epoch'],self.elapsed(w),details)
                     except (AppError,sqlite3.Error):
                         self.degraded=True
             # A committed request with no scheduled worker cannot remain ACTIVE forever.
@@ -143,7 +146,8 @@ class Engine:
             if exc.code not in ('STALE_WORK','NOT_FOUND'):
                 status='TIMED_OUT' if self.remaining(w)<=0 or exc.code in ('OPERATION_TIMEOUT','BUDGET_EXHAUSTED') else 'FAILED'
                 try:
-                    self.store.stop(rid,status,exc.code,exc.message,w['epoch'],self.elapsed(w))
+                    message,details=self.failure(rid,exc.code,exc.message,exc.retry_after)
+                    self.store.stop(rid,status,exc.code,message,w['epoch'],self.elapsed(w),details)
                 except (AppError,sqlite3.Error):
                     self.degraded=True
         except Exception:
@@ -155,6 +159,43 @@ class Engine:
             with self.lock:
                 if self.workers.get(rid) is w:
                     self.workers.pop(rid,None)
+
+    def select_version(self,rid):
+        with self.store.read() as db:
+            r=self.store.run(rid,db)
+            text=db.execute('SELECT content_text FROM messages WHERE message_id=?',(r['original_message_id'],)).fetchone()[0]
+            prior=None
+            for (raw,) in db.execute("SELECT terminal_result_json FROM request_runs WHERE session_id=? AND run_id!=? AND status='COMPLETED' AND terminal_result_json IS NOT NULL ORDER BY created_at DESC",(r['session_id'],rid)):
+                found=(json.loads(raw).get('version_selection') or {}).get('versions')
+                if found and json.loads(raw).get('kind')!='VERSION_NOT_INDEXED':
+                    prior=found;break
+        indexed=[{'version':d['version'],'release':d['release'],'spec_number':d['spec_number']} for d in self.inventory(r['corpus_build_id'])]
+        selection=versions.select(text,prior,indexed)
+        specs=sorted({d['spec_number'] for d in indexed})
+        selection['spec']=specs[0] if len(specs)==1 else '/'.join(specs) or '38.201'
+        runlog.write(self.settings,run_id=rid,event='version_selected',status=selection['status'],versions=selection['versions'],version_source=selection['source'],corpus_build_id=r['corpus_build_id'])
+        return selection
+
+    def pin_versions(self,state):
+        """The resolved version wins over whatever A wrote; A may narrow, never switch versions."""
+        selection=state.get('version_selection') or {}
+        scope=state['need']['scope']
+        if selection.get('source') in ('explicit','chat'):
+            scope['document_versions']=list(selection['versions'])
+        else:
+            scope['document_versions']=[v for v in scope['document_versions'] if v in selection.get('versions',[])]
+
+    def failure(self,rid,code,message,retry_after=None):
+        """Stage-aware user message for a technical stop (wording owned by failures.py)."""
+        if code=='STOPPED':
+            return message,{}
+        try:
+            _,state=self.store.state(rid)
+        except (AppError,sqlite3.Error):
+            state={}
+        stage=state.get('phase')
+        text,action=explain(code,stage,bool(state.get('passage_ids')),rid,retry_after,message)
+        return text,{'stage':stage,'action':action,'retry_after_seconds':retry_after}
 
     def request_size(self,role,payload):
         if self.settings.provider_profile=='groq_openrouter':
@@ -180,6 +221,10 @@ class Engine:
                 self.settings.total_token_bound-counters['charged_tokens'] < request_size+self.settings.role_output_tokens+keep*(self.settings.role_input_bound+self.settings.role_output_tokens)):
                 raise AppError('BUDGET_EXHAUSTED','Insufficient budget for a checked answer. Retry explicitly with a narrower question.',504)
             op=self.store.reserve(rid,w['epoch'],role,digest(payload),request_size+self.settings.role_output_tokens,retry,repair, min(self.settings.call_seconds,self.remaining(w)))
+            started=time.monotonic()
+            log=lambda code,retry_after=None:runlog.write(self.settings,run_id=rid,event='provider_call',stage=role,provider=runlog.provider_for(self.settings,role),
+                model=getattr(self.settings,'model_'+role.lower()),elapsed_ms=int((time.monotonic()-started)*1000),token_estimate=request_size,
+                retry=retry,repair=repair,code=code,retry_after_seconds=retry_after)
             try:
                 if self.role_transport:
                     response=self.role_transport(role,payload)
@@ -190,11 +235,13 @@ class Engine:
                         args=(role,)+args
                     response=bounded(function,args,min(self.settings.call_seconds,self.remaining(w)),lambda:self.stopped(w))
                 self.store.operation_done(rid,w['epoch'],op)
+                log('OK')
             except AppError as exc:
                 self.store.operation_done(rid,w['epoch'],op,exc.code)
                 if exc.code == 'OPERATION_TIMEOUT':
-                    exc = AppError(exc.code, f'Role {role} exceeded its operation deadline; no unchecked answer was released.', exc.status, exc.retryable)
-                if not retry and exc.retryable and exc.code!='PROVIDER_QUOTA' and self.remaining(w)>self.settings.call_seconds:
+                    exc = AppError(exc.code, f'Role {role} exceeded its operation deadline; no unchecked answer was released.', exc.status, exc.retryable, exc.retry_after)
+                log(exc.code,exc.retry_after)
+                if not retry and exc.retryable and exc.code not in ('PROVIDER_QUOTA','PROVIDER_REQUEST_TOO_LARGE') and self.remaining(w)>self.settings.call_seconds:
                     retry=True;continue
                 raise exc from None
             try:
@@ -205,6 +252,7 @@ class Engine:
                 validate(value)
                 return value
             except (ValueError,TypeError,KeyError,AppError) as exc:
+                runlog.write(self.settings,run_id=rid,event='output_rejected',stage=role,code='INVALID_OUTPUT',repair=repair)
                 if os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
                     # Validation message only (public evaluation); no keys or request bodies.
                     print(f'CONTRACT ISSUE: role={role} repair_used={repair} '+str(exc)[:400].replace(chr(10),' '),flush=True)
@@ -234,6 +282,7 @@ class Engine:
                 'coverage_gaps':state['gaps'],'closing_mode':state['closing'],'budget':json.loads(r['counters_json']),
                 'b_gap':state.get('b_gap'),'prior_candidate':state['prior_candidate'], 'prior_review':state['review'],
                 'corpus_inventory':self.inventory(r['corpus_build_id']),
+                'version_selection':state.get('version_selection'),
                 'extraction_policy':'Excluded passages, diagrams and formula transcription are not verified evidence. State missing coverage; never reconstruct missing mathematical symbols.'}
 
     def inventory(self,build):
@@ -250,6 +299,13 @@ class Engine:
             r,state=self.store.state(rid)
             if r['status']!='ACTIVE' or r['worker_epoch']!=w['epoch']:
                 return
+            if state['phase']=='A' and not state.get('version_selection'):
+                selection=self.select_version(rid)
+                if selection['status']!='ok':
+                    self.store.stop(rid,'COMPLETED','VERSION_NOT_INDEXED',versions.not_indexed_message(selection,selection.get('spec','38.201')),w['epoch'],self.elapsed(w),
+                                    {'version_selection':{**versions.label(selection),'status':selection['status'],'requested':selection['requested']}})
+                    return
+                state['version_selection']=versions.label(selection)
             step_op=self.store.reserve(rid,w['epoch'],'controller',digest({'phase':state['phase'],'round':state['round']}))
             self.store.operation_done(rid,w['epoch'],step_op)
             state['closing']=self.closing(rid,w,state)
@@ -356,8 +412,9 @@ class Engine:
                                 'of the loaded document for the requested topic/clause first; ready_for_b needs collected evidence.')
                 result=self.call(rid,w,'A',payload,valid_a)
                 if result['action']=='out_of_scope':
-                    self.store.stop(rid,'COMPLETED','OUT_OF_SCOPE','This assistant covers the declared 3GPP NR collection. Please ask a question within that scope.',w['epoch'],self.elapsed(w));return
+                    self.store.stop(rid,'COMPLETED','OUT_OF_SCOPE','This question is outside what the loaded 3GPP source covers, so I will not give a general textbook answer. I answer only from the indexed documents (see the source badge); please ask about their content.',w['epoch'],self.elapsed(w));return
                 state['need']=result['need'];state['gaps']=result['coverage_gaps']
+                self.pin_versions(state)
                 scope=state['need']['scope']
                 # A material scope correction cannot retain now-incompatible passages.
                 state['passage_ids']=[p['passage_id'] for p in evidence if
@@ -482,7 +539,10 @@ class Engine:
         op=self.store.reserve(rid,w['epoch'],kind,fingerprint)
         items=[];next_cursor=None
         if kind=='corpus_search':
-            filters=tool['filters'];scope=state['need']['scope']
+            filters=dict(tool['filters']);scope=state['need']['scope']
+            # Pinned versions narrow A's search; they can never widen it.
+            if scope['document_versions'] and not filters['document_versions']:
+                filters['document_versions']=list(scope['document_versions'])
             require(not scope['release'] or filters['release']==scope['release'],'Search cannot change the requested release.')
             require(not scope['spec_numbers'] or bool(filters['spec_numbers']) and set(filters['spec_numbers'])<=set(scope['spec_numbers']),'Search cannot widen requested specifications.')
             require(not scope['document_versions'] or bool(filters['document_versions']) and set(filters['document_versions'])<=set(scope['document_versions']),'Search cannot widen requested versions.')
@@ -568,5 +628,9 @@ class Engine:
             validate_draft(state['candidate'],state['need'],state['frozen_evidence'],state['review'])
             validate_review(review,b,state['candidate'],state['need'],state['frozen_evidence'],state['prior_candidate'],state['round'])
             review_id=self.review_in(db,rid,state,review)
+            cited={p['passage_id']:p['document_version'] for p in state['frozen_evidence']}
+            used=sorted({cited[pid] for c in state['candidate']['citations'] for pid in c['passage_ids'] if pid in cited})
+            selection={**(state.get('version_selection') or {'source':'default','reason':'default'}),'versions':used}
             self.store.finish_in(db,r,'COMPLETED',review['decision'].upper(),stored['answer_markdown'],self.elapsed(w),
-                                 {'candidate_id':b['candidate_id'],'review_id':review_id,'evidence_set_id':b['evidence_set_id']})
+                                 {'candidate_id':b['candidate_id'],'review_id':review_id,'evidence_set_id':b['evidence_set_id'],
+                                  'version_selection':selection,'corpus_build_id':r['corpus_build_id']})

@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "spec": "38.201",
+  "title": "NR; Physical layer; General description",
+  "archive_listing": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/",
+  "listed_on": "2026-11-18",
+  "listing_method": "Directory listing read in a browser; each ZIP fetched and SHA-256 computed on 2026-11-18. ZIP contents were not parsed.",
+  "coverage_statement": "15 versions are listed in the archive. Exactly one (v18.0.0, Release 18) is indexed. Answers cover only the indexed version; no claim is made about the other 14 versions, including the newer v19.0.0.",
+  "default_version": "18.0.0",
+  "default_reason": "The only indexed version. The newest archive version is 19.0.0 (Release 19) and is NOT indexed; add it with the maintainer guide before making it the default.",
+  "activation_checks": {
+    "18.0.0": [
+      {
+        "clause": "4.1.1",
+        "must_contain": [
+          "38.200",
+          "38.300"
+        ]
+      },
+      {
+        "clause": "4.2.3",
+        "must_contain": [
+          "LDPC",
+          "Polar"
+        ]
+      },
+      {
+        "clause": "5.6",
+        "must_contain": [
+          "38.213"
+        ]
+      }
+    ]
+  },
+  "entries": [
+    {
+      "version": "0.0.0",
+      "archive_code": "000",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-000.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-000.zip",
+      "archive_date": "2017-05-23",
+      "bytes": 39944,
+      "sha256": "0943e81ed6db46b3d8f5a466ea78f72731fb764b6690051cd6910125d2f5e244",
+      "status": "not_indexed"
+    },
+    {
+      "version": "0.0.1",
+      "archive_code": "001",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-001.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-001.zip",
+      "archive_date": "2017-08-12",
+      "bytes": 69473,
+      "sha256": "bbef05c52059e9d889c4e4cf84811c86c628877b6d0cff5bea9498f79a6aed39",
+      "status": "not_indexed"
+    },
+    {
+      "version": "0.0.2",
+      "archive_code": "002",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-002.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-002.zip",
+      "archive_date": "2017-09-29",
+      "bytes": 156400,
+      "sha256": "55ee7b838aaca2b2b8dd9b5bf2be008d2403e9d1e8e2cf856af58922acf37f51",
+      "status": "not_indexed"
+    },
+    {
+      "version": "0.1.0",
+      "archive_code": "010",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-010.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-010.zip",
+      "archive_date": "2017-08-28",
+      "bytes": 69961,
+      "sha256": "07789450d960b30e17cc70723f7a0a63ef8d7319aa81652bdc8480cad4dbc2aa",
+      "status": "not_indexed"
+    },
+    {
+      "version": "0.1.1",
+      "archive_code": "011",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-011.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-011.zip",
+      "archive_date": "2017-09-29",
+      "bytes": 71402,
+      "sha256": "d5942840fce55448a3e98af701972089ab7b540f4502f011530bd5e2b17b558e",
+      "status": "not_indexed"
+    },
+    {
+      "version": "1.0.0",
+      "archive_code": "100",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-100.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-100.zip",
+      "archive_date": "2017-09-07",
+      "bytes": 70473,
+      "sha256": "24c1f03db4d06b9c38c24428d3bf1fe33c37cebfb315398190971bea19209160",
+      "status": "not_indexed"
+    },
+    {
+      "version": "1.0.1",
+      "archive_code": "101",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-101.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-101.zip",
+      "archive_date": "2017-11-26",
+      "bytes": 71666,
+      "sha256": "fbd58fb9117022fa31028e886bc054e6fa124c262f790c651cf2d911f8da02be",
+      "status": "not_indexed"
+    },
+    {
+      "version": "1.1.0",
+      "archive_code": "110",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-110.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-110.zip",
+      "archive_date": "2017-11-26",
+      "bytes": 70696,
+      "sha256": "b6df640a604bd11ca4ab049c99d3cde94429bde4d9f7515ffdc4fbc0b1fc985e",
+      "status": "not_indexed"
+    },
+    {
+      "version": "1.2.0",
+      "archive_code": "120",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-120.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-120.zip",
+      "archive_date": "2017-12-15",
+      "bytes": 143162,
+      "sha256": "e832824a4ce5e913210003a30ff4e69b444c694b90ac9ecc3eeea849eb2ad86f",
+      "status": "not_indexed"
+    },
+    {
+      "version": "2.0.0",
+      "archive_code": "200",
+      "release": null,
+      "stage": "draft (pre-approval, v0.x.x-2.x.x)",
+      "filename": "38201-200.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-200.zip",
+      "archive_date": "2017-12-15",
+      "bytes": 86138,
+      "sha256": "4948c68cedc1bd016f25ef28429599793b9baadd090b97dea285d2218a7a7b42",
+      "status": "not_indexed"
+    },
+    {
+      "version": "15.0.0",
+      "archive_code": "f00",
+      "release": "15",
+      "stage": "approved",
+      "filename": "38201-f00.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-f00.zip",
+      "archive_date": "2018-01-03",
+      "bytes": 71936,
+      "sha256": "158b9e537ec932b5efdb8eae3078e906add8cbd9dc0245ea55ced89c4638a404",
+      "status": "not_indexed"
+    },
+    {
+      "version": "16.0.0",
+      "archive_code": "g00",
+      "release": "16",
+      "stage": "approved",
+      "filename": "38201-g00.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-g00.zip",
+      "archive_date": "2020-01-11",
+      "bytes": 74906,
+      "sha256": "2990efb0c537064be768ee52e85ac1126d07106115132eafc01bba8575bcd682",
+      "status": "not_indexed"
+    },
+    {
+      "version": "17.0.0",
+      "archive_code": "h00",
+      "release": "17",
+      "stage": "approved",
+      "filename": "38201-h00.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-h00.zip",
+      "archive_date": "2022-01-05",
+      "bytes": 75338,
+      "sha256": "ac6e3467c16d532a49895202a040f9e91c723d397f960469c125e683ac368169",
+      "status": "not_indexed"
+    },
+    {
+      "version": "18.0.0",
+      "archive_code": "i00",
+      "release": "18",
+      "stage": "approved",
+      "filename": "38201-i00.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-i00.zip",
+      "archive_date": "2023-09-28",
+      "bytes": 113671,
+      "sha256": "655a40de25ca579018de4e78e0631c73474123d9d1fe7d5d773e86bc95f63776",
+      "status": "indexed",
+      "indexed_via": {
+        "note": "Indexed from the ETSI PDF publication of the same 3GPP version (pinned in corpus/manifest.json), not from this ZIP. The ZIP (Word source) and PDF bytes differ; text equivalence was not machine-verified.",
+        "manifest_filename": "ts_38201_v18.0.0.pdf"
+      }
+    },
+    {
+      "version": "19.0.0",
+      "archive_code": "j00",
+      "release": "19",
+      "stage": "approved",
+      "filename": "38201-j00.zip",
+      "url": "https://www.3gpp.org/ftp/specs/archive/38_series/38.201/38201-j00.zip",
+      "archive_date": "2025-07-04",
+      "bytes": 114736,
+      "sha256": "06704d6df219cca13c6c955906a52f47cbc3c502c4e7353337e0e34470bdc4b8",
+      "status": "not_indexed"
+    }
+  ]
+}

@@ -18,6 +18,11 @@ def selected_manifest():
             'selection_source_manifest_sha256': source_hash}
 
 
+def activation_checks(version):
+    from .versions import archive_inventory
+    return archive_inventory().get('activation_checks',{}).get(version,[])
+
+
 def prepare(data_dir=None, raw_dir=None, live=True):
     from scripts.corpus import fetch_one, CorpusError
     from .app import ProcessLock
@@ -50,6 +55,9 @@ def prepare(data_dir=None, raw_dir=None, live=True):
                 report['hybrid_build'] = result['build_id']
                 report['embedding_batches'] += result['batches']
                 if result['complete']:
+                    # Source checksum was verified by fetch_one/ingest; verify known citations
+                    # before switching. On failure the previous active build stays in use.
+                    report['activation_checks']=corpus.verify_samples(result['build_id'],activation_checks(doc['version']))
                     corpus.activate(result['build_id'])
                     break
                 if report['embedding_batches'] >= 4:

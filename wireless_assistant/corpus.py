@@ -315,6 +315,23 @@ class Corpus:
             batches+=1
         return {'build_id':build,'complete':False,'batches':batches,'next':'Run embed again with the same lexical source build to resume.'}
 
+    def verify_samples(self, build, checks):
+        """Pre-activation check that known citations resolve to readable text in THIS build.
+
+        checks: [{'clause': '4.2.3', 'must_contain': ['LDPC', 'Polar']}]. Returns per-check results;
+        raises ACTIVATION_CHECK_FAILED (activation unchanged) if any fail or none are configured."""
+        if not checks:
+            raise AppError('ACTIVATION_CHECK_FAILED','No sample-citation checks are configured for this version; activation was not changed.')
+        results=[]
+        with self.store.read() as db:
+            for check in checks:
+                text=' '.join(r[0] for r in db.execute('SELECT content_text FROM passages WHERE build_id=? AND clause_id=? AND unreadable=0',(build,check['clause']))).lower()
+                missing=[t for t in check['must_contain'] if t.lower() not in text]
+                results.append({'clause':check['clause'],'readable_passage_found':bool(text),'missing_terms':missing,'ok':bool(text) and not missing})
+        if not all(r['ok'] for r in results):
+            raise AppError('ACTIVATION_CHECK_FAILED','Sample citations did not verify in the new build; the previous active index is unchanged: '+json.dumps(results))
+        return results
+
     def activate(self, build):
         with self.store.transaction() as db:
             b=row(db,"SELECT * FROM corpus_builds WHERE build_id=? AND status='VALIDATED'",(build,))

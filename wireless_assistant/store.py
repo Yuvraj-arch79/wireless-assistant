@@ -280,7 +280,7 @@ class Store:
         self.event(db, rid, 'progress', {'stage':'NEED', 'message':'Continuing with your clarification'})
         return {'message_id':mid, 'run_id':rid, 'status':'ACTIVE', 'state_version':version+1}, r['session_id'], rid
 
-    def finish_in(self, db, r, status, code, message, elapsed=None, candidate=None):
+    def finish_in(self, db, r, status, code, message, elapsed=None, candidate=None, details=None):
         if r['status'] in TERMINAL:
             return
         original = row(db, 'SELECT turn_id FROM messages WHERE message_id=?', (r['original_message_id'],))
@@ -289,18 +289,25 @@ class Store:
         outcome = {'kind':code, 'message_id':mid, 'retryable':retryable}
         if candidate:
             outcome.update(candidate)
+        if details:
+            outcome.update({k: v for k, v in details.items() if k not in outcome})
         db.execute("UPDATE clarifications SET status='CANCELED', resolved_at=? WHERE run_id=? AND status='PENDING'", (now(), r['run_id']))
         db.execute("UPDATE operations SET status='UNKNOWN', completed_at=? WHERE run_id=? AND status IN ('RESERVED','DISPATCHED')", (now(), r['run_id']))
         db.execute('UPDATE request_runs SET status=?, stage=?, state_version=state_version+1, worker_epoch=worker_epoch+1, worker_owner=NULL, segment_started_at=NULL, lease_expires_at=NULL, active_elapsed_ms=?, final_message_id=?, terminal_result_json=?, stop_code=?, completed_at=? WHERE run_id=? AND state_version=?',
                    (status, status, elapsed if elapsed is not None else r['active_elapsed_ms'], mid, canonical(outcome), code, now(), r['run_id'], r['state_version']))
         self.event(db, r['run_id'], status.lower(), outcome)
+        from . import runlog
+        runlog.write(self.settings, run_id=r['run_id'], event='run_end', status=status, code=code, stage=outcome.get('stage') or r['stage'],
+                     elapsed_ms=elapsed if elapsed is not None else r['active_elapsed_ms'], corpus_build_id=r['corpus_build_id'],
+                     versions=(outcome.get('version_selection') or {}).get('versions'), version_source=(outcome.get('version_selection') or {}).get('source'),
+                     retry_after_seconds=outcome.get('retry_after_seconds'))
 
-    def stop(self, rid, status, code, message, epoch=None, elapsed=None):
+    def stop(self, rid, status, code, message, epoch=None, elapsed=None, details=None):
         with self.transaction() as db:
             r = self.run(rid, db)
             if r['status'] in TERMINAL or (epoch is not None and epoch != r['worker_epoch']):
                 return False
-            self.finish_in(db, r, status, code, message, elapsed)
+            self.finish_in(db, r, status, code, message, elapsed, details=details)
             return True
 
     def recover(self):

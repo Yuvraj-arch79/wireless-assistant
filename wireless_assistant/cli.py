@@ -10,6 +10,23 @@ from .store import Store
 from .corpus import Corpus
 
 
+def trace(store,prefix):
+    from . import runlog
+    if len(prefix)<6 or not all(c in '0123456789abcdef' for c in prefix):
+        raise AppError('TRACE_INPUT','Give the run ID or at least its first 6 hex characters.')
+    with store.read() as db:
+        runs=[dict(r) for r in db.execute("SELECT run_id,session_id,status,stage,stop_code,corpus_build_id,counters_json,terminal_result_json,created_at,completed_at FROM request_runs WHERE run_id LIKE ? ORDER BY created_at",(prefix+'%',))]
+        if not runs:
+            raise AppError('NOT_FOUND','No run starts with '+prefix+' in '+str(store.path))
+        for r in runs:
+            r['counters']=json.loads(r.pop('counters_json'))
+            outcome=json.loads(r.pop('terminal_result_json') or 'null') or {}
+            r['outcome']={k:v for k,v in outcome.items() if k!='message_id'}
+            r['operations']=[dict(o) for o in db.execute('SELECT kind,status,error_code,reserved_tokens,created_at,completed_at FROM operations WHERE run_id=? ORDER BY created_at',(r['run_id'],))]
+            r['log']=runlog.read(store.settings,r['run_id'])
+    return runs
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description='Wireless Assistant development prototype')
     parser.add_argument('--data-dir',type=Path)
@@ -28,6 +45,7 @@ def main(argv=None):
     p=sub.add_parser('activate');p.add_argument('build_id')
     p=sub.add_parser('search');p.add_argument('query');p.add_argument('--build')
     p=sub.add_parser('backup');p.add_argument('destination',type=Path)
+    p=sub.add_parser('trace',help='Show where a run stopped: status, stage, code, counters and its log lines');p.add_argument('run_id',help='Full run ID or the 8-character Ref shown to the user')
     args=parser.parse_args(argv)
     settings=Settings.environment()
     if args.data_dir:
@@ -82,6 +100,8 @@ def main(argv=None):
             if not build:
                 raise AppError('NO_BUILD','Supply --build or activate a collection.')
             result={'mode':'lexical_preview','passages':corpus.search(build,args.query,{'release':'18'},6)}
+        elif args.command=='trace':
+            result=trace(store,args.run_id)
         elif args.command=='backup':
             store.backup(args.destination);result={'backup':str(args.destination),'verified':True}
         print(json.dumps(result,ensure_ascii=True,indent=2))
