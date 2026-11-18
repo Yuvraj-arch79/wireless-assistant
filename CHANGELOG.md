@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-18 — Traceable failures, enforced version selection, archive inventory
+
+- Technical stops say where they happened (A understand/search, B write, C review), whether sources were found, what to do next (wait/narrow/fix) and the provider's wait time; never "out of scope" or "Reviewed". Wording is owned by `failures.py`.
+- JSONL run log (stage, provider, model, elapsed, token estimate, retry/repair, decision, error code; no keys or chat text) and `cli trace <ref>`.
+- `versions.py`: explicit version > this chat's version > indexed default; unindexed or changed versions are reported, never substituted; the answer label shows the version and why.
+- `corpus/ts38201_archive.json`: all 15 TS 38.201 archive versions with SHA-256 (18 Nov 2026); only v18.0.0 is indexed. `prepare-one` verifies sample citations before activation.
+- Prompt version abc-mixed-v2: scope by the user's actual question, follow-up resolution within the chat, labelled analogies, unsupported rationale as a limitation.
+- Live multi-turn Hinglish check (`evaluation/conversation_live.py`) with tuning/held-out split. Live end-to-end answers on 18 Nov were blocked by the Groq free daily quota (see PR).
+
 ## 2026-11-11 — Mixed provider runtime and explicit live demo
 
 - Connect pinned Groq A/C and free OpenRouter B to the existing controller; share tested wire contracts and preserve original backend validation.
