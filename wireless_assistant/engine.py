@@ -402,6 +402,7 @@ class Engine:
                 def complete_message(held):
                     return ('Clause '+', '.join(f"{c['clause_id']} of TS {c['spec_number']} v{c['document_version']} (passages {', '.join(c['passage_ids'])})" for c in held)+
                             ' is already completely present in evidence. Answer from it and submit_draft; disclose any detail it does not state.')
+                partial_recheck={'done':False}
                 def valid_b(b):
                     if b['action']=='submit_draft':
                         validate_draft(b,state['need'],evidence,state['review'])
@@ -409,6 +410,16 @@ class Engine:
                         # Claiming a fully supplied clause is missing is a contract error.
                         held=[c for g in b['cannot_answer_reason'] if g['kind'] in ('source','context_limit') for c in held_complete(g['reason'])]
                         require(not held,complete_message(held))
+                        # Seen on the owner's laptop 18 Nov: "i did not understand pbch ... explain clearly"
+                        # after an answer citing clause 4.2.3. TS 38.201 states only part of it, and B refused
+                        # outright. With evidence in hand B re-decides once (existing single repair): a
+                        # supported partial answer with explicit limitations, unless nothing is relevant.
+                        if evidence and not partial_recheck['done']:
+                            partial_recheck['done']=True
+                            clauses=', '.join(sorted({p['clause_id'] for p in evidence}))[:200]
+                            require(False,'Evidence was collected (TS 38.201 clauses '+clauses+'). If any passage states something relevant to the question, '
+                                    'submit_draft a partial answer: explain only what the evidence states, in the requested language, and put what it does not state '
+                                    'in limitation_statement and unresolved_requirements. Use cannot_answer only if no collected passage is relevant to the question.')
                     elif b['action']=='request_missing_info':
                         require(allow_missing,'The missing-information allowance is exhausted (closing_mode). Submit a supported partial draft that discloses unresolved parts in limitation_statement, or cannot_answer.')
                         info=b['missing_info']

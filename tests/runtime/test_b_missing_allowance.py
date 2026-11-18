@@ -150,12 +150,13 @@ def test_genuine_cannot_answer_still_stops_without_release(client):
             {'gap_id': 'g1', 'kind': 'source', 'requirement_ids': ['r1'],
              'reason': 'Numerical thresholds from TS 38.212 are not in the loaded corpus.',
              'source_or_message_ids': []}]}
-    client.app_script.actions = [('A', collect), ('A', ready), ('B', cannot)]
+    # With evidence, B re-decides once (partial answer preferred); a repeated refusal stops.
+    client.app_script.actions = [('A', collect), ('A', ready), ('B', cannot), ('B', cannot)]
     sid = create_chat(client)
     rid = post(client, f'/api/sessions/{sid}/messages', {'text': QUESTION}).json()['data']['run_id']
     result = wait_run(client, rid)
     assert result['outcome']['kind'] == 'INABILITY', result
-    assert [r for r, _ in client.app_script.calls] == ['A', 'A', 'B']
+    assert [r for r, _ in client.app_script.calls] == ['A', 'A', 'B', 'B']
 
 
 def test_b_length_cut_uses_existing_repair_then_review(client):
