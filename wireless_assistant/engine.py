@@ -334,6 +334,14 @@ class Engine:
                         gaps=a['need']['unresolved_gaps']+a['coverage_gaps']
                         require(a['intent_relation']!='uncertain' and not any(g['kind']=='user_detail' for g in gaps),
                                 'Essential ambiguity requires clarification, including in closing mode.')
+                        # Seen on the owner's laptop 18 Nov: after the user answered a clarification
+                        # ("5G NR ... TS 38.201 clause 4.2.3"), A handed off without any search and the
+                        # run ended "No supporting passages were collected". A handoff needs at least
+                        # one search in the run (or collected passages); a search that found nothing
+                        # still ends with the honest no-passages message.
+                        require(bool(state['passage_ids']) or bool(state['searches']) or state['closing'],
+                                'No passages have been collected and no corpus_search was made in this run. Use action collect with a corpus_search '
+                                'of the loaded document for the requested topic/clause first; ready_for_b needs collected evidence.')
                 result=self.call(rid,w,'A',payload,valid_a)
                 if result['action']=='out_of_scope':
                     self.store.stop(rid,'COMPLETED','OUT_OF_SCOPE','This assistant covers the declared 3GPP NR collection. Please ask a question within that scope.',w['epoch'],self.elapsed(w));return
