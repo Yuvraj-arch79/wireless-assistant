@@ -250,6 +250,9 @@ class Engine:
                 raw=load_json(response['text'])
                 value=ADAPTERS[role].validate_python(raw).model_dump(mode='json')
                 validate(value)
+                # Decision only (no text): lets `cli trace` show e.g. A collect -> collect -> ready_for_b.
+                runlog.write(self.settings,run_id=rid,event='role_output',stage=role,action=value.get('action') or value.get('decision'),
+                             requests=[t.get('kind') for t in value.get('requests') or []] or None)
                 return value
             except (ValueError,TypeError,KeyError,AppError) as exc:
                 runlog.write(self.settings,run_id=rid,event='output_rejected',stage=role,code='INVALID_OUTPUT',repair=repair)

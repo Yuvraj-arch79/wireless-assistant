@@ -45,7 +45,10 @@ jobs:
       - name: Live conversations
         if: steps.prepare.outcome == 'success'
         continue-on-error: true
-        run: python -m evaluation.conversation_live
+        run: |
+          # Optional "cases=a,b" line in .github/live-trigger selects cases (free quota is small).
+          if [ -z "$WA_EVAL_CASES" ]; then export WA_EVAL_CASES="$(sed -n 's/^cases=//p' .github/live-trigger)"; fi
+          python -m evaluation.conversation_live
       - name: Publish results to a throw-away branch
         if: always()
         run: |

@@ -105,3 +105,9 @@ def test_trace_command_finds_run_by_user_reference(client, capsys):
     assert run['run_id'] == rid and run['stop_code'] == 'PROVIDER_TIMEOUT' and run['outcome']['stage'] == 'C'
     assert [o['kind'] for o in run['operations'] if o['kind'] in 'ABC'] == ['A', 'A', 'B', 'C']
     assert any(l['event'] == 'provider_call' and l['stage'] == 'C' for l in run['log'])
+
+
+def test_long_provider_wait_is_readable():
+    from wireless_assistant.failures import explain
+    assert 'about 25 minutes' in explain('PROVIDER_QUOTA', 'A', False, 'abcdef123456', 1478)[0]
+    assert 'about 17 seconds' in explain('PROVIDER_QUOTA', 'A', False, 'abcdef123456', 17)[0]

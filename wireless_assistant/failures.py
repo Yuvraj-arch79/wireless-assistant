@@ -41,6 +41,13 @@ ADVICE = {
 }
 
 
+def wait_text(seconds):
+    if seconds < 90:
+        return f'{seconds} seconds'
+    minutes = -(-seconds // 60)
+    return f'{minutes} minutes' if minutes < 120 else f'{-(-minutes // 60)} hours'
+
+
 def explain(code, stage, evidence_found, run_id, retry_after=None, fallback=None):
     """Return (message, action) for a technical stop. Pure function: easy to test and to change."""
     what, action = KINDS.get(code, (None, RETRY))
@@ -55,7 +62,7 @@ def explain(code, stage, evidence_found, run_id, retry_after=None, fallback=None
     message = message[0].upper() + message[1:]
     message += ' No unreviewed answer was shown.'
     if code == 'PROVIDER_QUOTA':
-        message += f' The provider asked to wait about {retry_after} seconds before retrying.' if retry_after else ' The provider did not say how long to wait; try again in a few minutes.'
+        message += f' The provider asked to wait about {wait_text(retry_after)} before retrying.' if retry_after else ' The provider did not say how long to wait; try again in a few minutes.'
     else:
         message += ' ' + ADVICE[action]
     message += f' (Ref: run {run_id[:8]}, {code})'

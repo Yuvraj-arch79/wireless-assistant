@@ -8,7 +8,7 @@ import threading
 from .common import now
 
 FIELDS = ('run_id', 'event', 'stage', 'provider', 'model', 'elapsed_ms', 'token_estimate', 'retry', 'repair',
-          'code', 'status', 'evidence_passages', 'corpus_build_id', 'versions', 'version_source', 'retry_after_seconds', 'tool')
+          'code', 'status', 'evidence_passages', 'corpus_build_id', 'versions', 'version_source', 'retry_after_seconds', 'tool', 'action', 'requests')
 MAX_BYTES = 5 * 1024 * 1024
 _lock = threading.Lock()
 
