@@ -35,6 +35,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r requirements.lock
+      - name: Initialize tokenizer outside request deadline
+        run: python -c "import tiktoken; tiktoken.get_encoding('o200k_harmony')"
+        timeout-minutes: 1
       - name: Prepare and verify the pinned TS 38.201 index (sample citations checked before activation)
         id: prepare
         continue-on-error: true

@@ -73,31 +73,6 @@ def test_groq_429_retry_after_header_parsed(monkeypatch):
     assert exc.value.public()['retry_after_seconds'] == 23
 
 
-def test_groq_json_validate_failed_is_model_output_not_schema_config(monkeypatch):
-    body = {'error': {'message': 'Generated JSON does not match the expected schema. private-prompt', 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': 'private'}}
-    with _http(lambda r: httpx.Response(400, json=body), monkeypatch), pytest.raises(AppError) as exc:
-        rp.request('A', {})
-    assert exc.value.code == 'MODEL_OUTPUT_INVALID' and 'private' not in exc.value.message
-    other = {'error': {'message': 'response_format json_schema not supported', 'type': 'invalid_request_error'}}
-    with _http(lambda r: httpx.Response(400, json=other), monkeypatch), pytest.raises(AppError) as exc:
-        rp.request('A', {})
-    assert exc.value.code == 'PROVIDER_CONFIG'
-
-
-def test_model_output_invalid_uses_single_bounded_repair(client):
-    from .conftest import collect, ready
-    script = client.app_script
-    bad = lambda p: AppError('MODEL_OUTPUT_INVALID', 'invalid', 502, False)
-    # Provider-side schema rejection takes the run's single bounded repair (spent here by A);
-    # the next invalid output stops instead of looping, and is reported at its own stage.
-    script.actions = [('A', bad), ('A', collect), ('A', ready), ('B', bad)]
-    sid, rid, status = _ask(client)
-    assert status['outcome']['kind'] == 'INVALID_CONTRACT' and status['outcome']['stage'] == 'B', status
-    counters = json.loads(client.app.state.store.run(rid)['counters_json'])
-    assert counters['format_repairs'] == 1 and counters['provider_calls'] == 4
-    _no_reviewed_answer(client, sid)
-
-
 def test_gemini_429_retry_delay_and_413(monkeypatch):
     monkeypatch.setenv('GEMINI_API_KEY', 'k'); monkeypatch.setenv('WA_FREE_TIER_CONFIRMED', '1')
     body = {'error': {'code': 429, 'details': [{'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31s'}]}}

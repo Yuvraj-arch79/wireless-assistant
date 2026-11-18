@@ -23,7 +23,6 @@ KINDS = {
     'CONTEXT_LIMIT': ('the required context is too large for the configured token budget', NARROW),
     'BUDGET_EXHAUSTED': ('the request used up its call/token budget before a checked answer was ready', NARROW),
     'INVALID_CONTRACT': ('the AI response failed format/citation validation after the one allowed repair', RETRY),
-    'MODEL_OUTPUT_INVALID': ('the AI response did not match the required format', RETRY),
     'PROVIDER_INCOMPLETE': ('the AI provider returned a truncated or blocked response', RETRY),
     'PROVIDER_FORMAT': ('the AI provider returned an invalid response', RETRY),
     'PROVIDER_CONFIG': ('the provider rejected the request format or model setting', FIX),
