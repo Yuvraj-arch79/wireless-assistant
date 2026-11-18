@@ -51,11 +51,22 @@ async function deleteChat(chat){
  if(current?.session_id===chat.session_id){++watchId;current=null;active=null;pending=null;$('messages').replaceChildren();$('welcome').hidden=false;$('chat-title').textContent='Wireless Assistant';controls();}
  await listChats();
 }
+// Minimal, safe formatting for reviewed answers: **bold** spans and '#' headings only.
+// Built with text nodes and <strong>, never innerHTML, so content cannot inject markup.
+function renderBody(el,text){
+ const lines=String(text||'').split('\n');
+ lines.forEach((line,i)=>{
+  const heading=line.match(/^#{1,6}\s+(.*)$/);
+  if(heading){const s=document.createElement('strong');s.textContent=heading[1].replace(/\*\*/g,'');el.append(s);}
+  else{const parts=line.split(/(\*\*[^*\n]+\*\*)/);for(const part of parts){if(/^\*\*[^*\n]+\*\*$/.test(part)){const s=document.createElement('strong');s.textContent=part.slice(2,-2);el.append(s);}else if(part){el.append(document.createTextNode(part));}}}
+  if(i<lines.length-1)el.append(document.createTextNode('\n'));
+ });
+}
 function renderMessage(m,before=null){
  if(document.getElementById('message-'+m.message_id))return;
  const article=document.createElement('article');article.id='message-'+m.message_id;article.className='message '+m.role;
  const label=document.createElement('div');label.className='role';label.textContent=m.role==='user'?'You':m.role==='assistant'?'Wireless Assistant · Reviewed':m.role==='clarification'?'Clarification':'Status';
- const body=document.createElement('div');body.className='message-body';body.textContent=m.content_text;
+ const body=document.createElement('div');body.className='message-body';if(m.role==='assistant')renderBody(body,m.content_text);else body.textContent=m.content_text;
  article.append(label,body);
  if(m.citations){
   const sources=document.createElement('div');sources.className='sources';

@@ -261,7 +261,19 @@ class Engine:
                 scope_recheck={'done':False}
                 loaded={i['spec_number'] for i in payload.get('corpus_inventory') or [] if i.get('spec_number')}
                 loaded_versions={i['version'] for i in payload.get('corpus_inventory') or [] if i.get('version')}
+                prior_answer=next((m['text'] for m in reversed(context['originals']) if m.get('role')=='assistant'),None)
+                follow_up_recheck={'done':False}
                 def valid_a(a):
+                    # Seen on the owner's laptop 18 Nov: after a reviewed answer, "glt hai tera ans"
+                    # (the user disputing it) got out_of_scope. Feedback on the previous answer is
+                    # in scope; A re-decides once (existing single repair). A genuinely unrelated
+                    # message (e.g. weather) is accepted as out_of_scope on that re-decision.
+                    if a['action']=='out_of_scope' and prior_answer and not follow_up_recheck['done']:
+                        follow_up_recheck['done']=True
+                        require(False,'The previous turn was a reviewed 3GPP NR answer ("'+' '.join(prior_answer.split())[:240]+'"). '
+                                'If this message disputes, questions or asks about that answer (for example "galat hai", "why?", "source?"), it is in scope: '
+                                'use intent_relation correction or same_need, collect the clause the previous answer cited, and hand off so B re-checks the claims against the source '
+                                'and corrects or confirms them. Choose out_of_scope only if the message is about an unrelated topic.')
                     if a.get('need'):
                         validate_need(a['need'],context['originals'])
                     # Seen live 17 Nov (run 44015334958 and the owner's laptop): for "Layer 1 ko kaunsi
