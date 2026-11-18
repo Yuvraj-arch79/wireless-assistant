@@ -80,7 +80,7 @@ class Settings(BaseModel):
         data = self.model_dump(mode="json", exclude={"data_dir"})
         data["contract_version"] = "1"
         data["tokenizer_version"] = "utf8-byte-upper-bound-v1"
-        data["prompt_version"] = "abc-mixed-v1" if self.provider_profile == "groq_openrouter" else "abc-v1"
+        data["prompt_version"] = "abc-mixed-v2" if self.provider_profile == "groq_openrouter" else "abc-v2"
         return data
 
     @property

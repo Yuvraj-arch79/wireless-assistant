@@ -62,10 +62,17 @@ function renderBody(el,text){
   if(i<lines.length-1)el.append(document.createTextNode('\n'));
  });
 }
+function answerLabel(outcome){
+ // Only released answers (C accepted the exact text) reach role "assistant".
+ const kind=outcome?.kind==='PARTIAL_ACCEPTED'?'Reviewed (partial answer)':'Reviewed';
+ const v=outcome?.version_selection;
+ const version=v?.versions?.length?' · v'+v.versions.join(', v')+' ('+v.reason+')':'';
+ return 'Wireless Assistant · '+kind+version;
+}
 function renderMessage(m,before=null){
  if(document.getElementById('message-'+m.message_id))return;
  const article=document.createElement('article');article.id='message-'+m.message_id;article.className='message '+m.role;
- const label=document.createElement('div');label.className='role';label.textContent=m.role==='user'?'You':m.role==='assistant'?'Wireless Assistant · Reviewed':m.role==='clarification'?'Clarification':'Status';
+ const label=document.createElement('div');label.className='role';label.textContent=m.role==='user'?'You':m.role==='assistant'?answerLabel(m.outcome):m.role==='clarification'?'Clarification':'Status';
  const body=document.createElement('div');body.className='message-body';if(m.role==='assistant')renderBody(body,m.content_text);else body.textContent=m.content_text;
  article.append(label,body);
  if(m.citations){
