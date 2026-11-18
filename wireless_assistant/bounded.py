@@ -50,7 +50,7 @@ def bounded(function, args=(), seconds=25, canceled=lambda:False):
             result = json.loads(path.read_text(encoding='utf-8'))
             if not result['ok']:
                 e = result['error']
-                raise AppError(e['code'], e['message'], result['status'], e['retryable'])
+                raise AppError(e['code'], e['message'], result['status'], e['retryable'], e.get('retry_after_seconds'))
             return result['value']
         finally:
             if process.is_alive():

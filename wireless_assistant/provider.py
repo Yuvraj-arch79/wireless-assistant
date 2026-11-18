@@ -2,10 +2,35 @@
 import math
 import os
 import httpx
-from .common import AppError, canonical, load_json
+from .common import AppError, canonical, load_json, retry_after_seconds
 
 ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/'
 MAX_RESPONSE = 2 * 1024 * 1024
+
+
+def http_error(response):
+    """Map a Gemini HTTP failure to an app code; the body is read (bounded) only for RetryInfo."""
+    status = response.status_code
+    if status == 429:
+        body = {}
+        try:
+            raw = bytearray()
+            for chunk in response.iter_bytes():
+                raw.extend(chunk)
+                if len(raw) > 65536:
+                    break
+            body = load_json(raw.decode('utf-8')) if len(raw) <= 65536 else {}
+        except (ValueError, UnicodeError, httpx.HTTPError):
+            body = {}
+        return AppError('PROVIDER_QUOTA', 'The provider rate limit or quota was reached. Try again later.', 429, True,
+                        retry_after_seconds(response.headers, body if isinstance(body, dict) else {}))
+    if status == 413:
+        return AppError('PROVIDER_REQUEST_TOO_LARGE', 'The request is larger than the provider allows; it was not resent unchanged.', 413)
+    if status in (401, 403):
+        return AppError('PROVIDER_AUTH', 'The configured API key or model access was rejected.', 503)
+    if status in (400, 404):
+        return AppError('PROVIDER_CONFIG', 'The provider rejected the configured model or request contract.', 503)
+    return AppError('PROVIDER_UNAVAILABLE', 'The provider is temporarily unavailable.', 503, status >= 500)
 
 
 def request(model, method, body):
@@ -21,14 +46,7 @@ def request(model, method, body):
         with httpx.Client(timeout=httpx.Timeout(20, connect=8), follow_redirects=False, trust_env=False) as client:
             with client.stream('POST', ENDPOINT+model+':'+method, headers={'x-goog-api-key':key}, json=body) as response:
                 if response.status_code != 200:
-                    status = response.status_code
-                    if status == 429:
-                        raise AppError('PROVIDER_QUOTA', 'The provider rate limit or quota was reached. Try again later.', 429, True)
-                    if status in (401,403):
-                        raise AppError('PROVIDER_AUTH', 'The configured API key or model access was rejected.', 503)
-                    if status in (400,404):
-                        raise AppError('PROVIDER_CONFIG', 'The provider rejected the configured model or request contract.', 503)
-                    raise AppError('PROVIDER_UNAVAILABLE', 'The provider is temporarily unavailable.', 503, status >= 500)
+                    raise http_error(response)
                 raw = bytearray()
                 for chunk in response.iter_bytes():
                     raw.extend(chunk)

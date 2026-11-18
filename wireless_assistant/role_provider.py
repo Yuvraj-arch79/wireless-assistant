@@ -1,7 +1,7 @@
 """Pinned free Groq A/B/C; one bounded HTTP attempt per call."""
 import os
 import httpx
-from .common import AppError, canonical, load_json
+from .common import AppError, canonical, load_json, retry_after_seconds
 from .contracts import ADAPTERS
 from .prompts import COMMON, ROLES, instructions
 from .provider_contracts import wire_schema, b_schema, groq_b_schema, compact_c_schema, inspect_c_response, inspect_response, render_references
@@ -72,7 +72,9 @@ def request(role, body):
                                 print(f'PUBLIC EVAL QUOTA: role={role} retry-after={response.headers.get("retry-after")} ' + detail, flush=True)
                             except Exception:
                                 pass
-                        raise AppError('PROVIDER_QUOTA', 'The provider quota was reached. Processing stopped; retry later.', 429)
+                        # Read the provider's wait time from the header only; the body is never shown.
+                        raise AppError('PROVIDER_QUOTA', 'The provider quota was reached. Processing stopped; retry later.', 429,
+                                       False, retry_after_seconds(response.headers))
                     code = 'PROVIDER_AUTH' if response.status_code in (401, 403) else 'PROVIDER_CONFIG' if response.status_code in (400, 402, 404) else 'PROVIDER_UNAVAILABLE'
                     raise AppError(code, f'{provider} role {role} rejected the request (HTTP {response.status_code}). No unchecked answer was released.', 503)
                 raw = bytearray()
