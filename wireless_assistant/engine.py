@@ -1,6 +1,7 @@
 """Explicit, bounded A/B/C state machine with independently supervised workers."""
 import json
 import os
+import re
 import sqlite3
 import threading
 import time
@@ -170,6 +171,7 @@ class Engine:
             if self.stopped(w):
                 raise AppError('STOPPED','Processing stopped.',409)
             if not self.role_transport and self.settings.provider_profile == 'groq_openrouter':
+                print(f'PROVIDER CAPACITY: role={role} waiting for bounded dispatch slot', flush=True)
                 self.pace_provider(w, getattr(self.settings,'model_'+role.lower()))
             counters=json.loads(self.store.run(rid)['counters_json'])
             # Reserve one final B+C pair; repairs/retries cannot spend it as A.
@@ -190,9 +192,11 @@ class Engine:
                 self.store.operation_done(rid,w['epoch'],op)
             except AppError as exc:
                 self.store.operation_done(rid,w['epoch'],op,exc.code)
+                if exc.code == 'OPERATION_TIMEOUT':
+                    exc = AppError(exc.code, f'Role {role} exceeded its operation deadline; no unchecked answer was released.', exc.status, exc.retryable)
                 if not retry and exc.retryable and exc.code!='PROVIDER_QUOTA' and self.remaining(w)>self.settings.call_seconds:
                     retry=True;continue
-                raise
+                raise exc from None
             try:
                 if response.get('contract_error'):
                     raise AppError('INVALID_CONTRACT',response['contract_error'])
@@ -201,6 +205,9 @@ class Engine:
                 validate(value)
                 return value
             except (ValueError,TypeError,KeyError,AppError) as exc:
+                if os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
+                    # Validation message only (public evaluation); no keys or request bodies.
+                    print(f'CONTRACT ISSUE: role={role} repair_used={repair} '+str(exc)[:400].replace(chr(10),' '),flush=True)
                 r=self.store.run(rid)
                 counters=json.loads(r['counters_json'])
                 if counters['format_repairs']>=self.settings.max_repairs or repair:
@@ -250,14 +257,103 @@ class Engine:
             context,compact,evidence=self.collect_context(rid,state)
             payload=self.payload(rid,state,context,compact,evidence)
             if state['phase']=='A':
+                answered=self.store.answered_clarifications(rid)
+                scope_recheck={'done':False}
+                loaded={i['spec_number'] for i in payload.get('corpus_inventory') or [] if i.get('spec_number')}
+                loaded_versions={i['version'] for i in payload.get('corpus_inventory') or [] if i.get('version')}
+                prior_answer=next((m['text'] for m in reversed(context['originals']) if m.get('role')=='assistant'),None)
+                follow_up_recheck={'done':False}
                 def valid_a(a):
+                    # Seen on the owner's laptop 18 Nov: after a reviewed answer, "glt hai tera ans"
+                    # (the user disputing it) got out_of_scope. Feedback on the previous answer is
+                    # in scope; A re-decides once (existing single repair). A genuinely unrelated
+                    # message (e.g. weather) is accepted as out_of_scope on that re-decision.
+                    if a['action']=='out_of_scope' and prior_answer and not follow_up_recheck['done']:
+                        follow_up_recheck['done']=True
+                        require(False,'The previous turn was a reviewed 3GPP NR answer ("'+' '.join(prior_answer.split())[:240]+'"). '
+                                'If this message disputes, questions or asks about that answer (for example "galat hai", "why?", "source?"), it is in scope: '
+                                'use intent_relation correction or same_need, collect the clause the previous answer cited, and hand off so B re-checks the claims against the source '
+                                'and corrects or confirms them. Choose out_of_scope only if the message is about an unrelated topic.')
                     if a.get('need'):
                         validate_need(a['need'],context['originals'])
+                    # Seen live 17 Nov (run 44015334958 and the owner's laptop): for "Layer 1 ko kaunsi
+                    # TS series describe karti hai?" A put the answer's subject series (38.200/38.300)
+                    # into need.scope, then searched TS 38.201; the search-time check stopped the run
+                    # with no repair. Scope names loaded documents to search; checked here, repairable.
+                    if a.get('need') and loaded:
+                        scope=a['need']['scope']
+                        extra=sorted(set(scope['spec_numbers'])-loaded)
+                        require(not extra,'need.scope.spec_numbers lists the loaded documents to search, not specifications named in the question or answer. '
+                                'Loaded documents: TS '+', TS '.join(sorted(loaded))+'. Remove '+', '.join(extra)+' from need.scope (keep them in the requirement text) '
+                                'and search the loaded document(s). Use out_of_scope only if the user requires a document that is not loaded.')
+                        wrong=sorted(set(scope['document_versions'])-loaded_versions) if loaded_versions else []
+                        require(not wrong,'need.scope.document_versions must be loaded versions: '+', '.join(sorted(loaded_versions))+'. Remove '+', '.join(wrong)+'.')
+                    if a['action']=='collect' and a.get('need'):
+                        scope=a['need']['scope']
+                        for t in a['requests']:
+                            if t.get('kind')!='corpus_search':
+                                continue
+                            f=t['filters']
+                            require((not scope['release'] or f['release']==scope['release']) and
+                                    (not scope['spec_numbers'] or bool(f['spec_numbers']) and set(f['spec_numbers'])<=set(scope['spec_numbers'])) and
+                                    (not scope['document_versions'] or bool(f['document_versions']) and set(f['document_versions'])<=set(scope['document_versions'])),
+                                    'Each corpus_search filter must stay within need.scope (same release; spec_numbers and document_versions a non-empty subset of the scope when the scope sets them). '
+                                    'Scope: '+canonical({k:scope[k] for k in ('release','spec_numbers','document_versions')})+'.')
+                    if a['action']=='clarify':
+                        # Seen on the owner's laptop 17 Nov: after the user answered "Wi-Fi 7
+                        # (IEEE 802.11be)", A asked the identical question again (twice). A gap the
+                        # user already answered may not be asked again in the same run.
+                        norm=lambda t:' '.join(str(t).lower().split())
+                        asked=[c for c in answered if c['gap_key']==a['clarification']['gap_key'] or
+                               norm(c['question'])==norm(a['clarification']['question'])]
+                        require(not asked,'The user already answered this clarification ("'+asked[0]['question'][:200]+'" -> "'+asked[0]['reply'][:200]+'"). Do not ask again. '
+                                'Use that answer: if it names something outside the declared 3GPP NR collection (for example Wi-Fi/IEEE 802.11, LTE-only or non-telecom topics), '
+                                'choose out_of_scope; otherwise update the need with the answer and collect or use ready_for_b.' if asked else '')
+                        # Seen on the owner's laptop 17 Nov: the user answered with "cnn ka backpropagation
+                        # ka prove" and A asked a new question instead of out_of_scope. Before a further
+                        # question, A must re-decide scope once (existing single repair); a genuine in-scope
+                        # follow-up question is accepted on that re-decision.
+                        if answered and not scope_recheck['done']:
+                            scope_recheck['done']=True
+                            last=answered[-1]
+                            require(False,'The user already answered a clarification ("'+last['question'][:200]+'" -> "'+last['reply'][:200]+'"). '
+                                    'Re-decide before asking again: if that topic is not covered by the declared 3GPP NR collection '
+                                    '(for example machine learning/CNN, Wi-Fi/IEEE 802.11, general maths or non-telecom), choose out_of_scope. '
+                                    'Ask one more, different question only if the topic is 3GPP NR and an essential detail is still missing.')
+                        missing=set(a['clarification']['missing_requirement_ids'])
+                        known={q['req_id'] for q in a['need']['requirements']}
+                        gaps=a['need']['unresolved_gaps']+a['coverage_gaps']
+                        unresolved={q for g in gaps if g['kind'] in ('user_detail','history') for q in g['requirement_ids']}
+                        # Seen live 16 Nov (run 43834316712): a correct clarification ("iska" has
+                        # no referent) was rejected twice because A left the gap list empty and
+                        # the generic message did not say so. Same rule, precise instruction.
+                        other={q for g in gaps if g['kind'] not in ('user_detail','history') for q in g['requirement_ids']}
+                        # A source-type gap on the same requirement is not a user question: keep the strict message.
+                        require(not (missing and missing <= known and not (missing & other)) or missing <= unresolved,
+                                'A clarification must record its gap: add an entry to need.unresolved_gaps with kind "user_detail" '
+                                '(or "history") whose requirement_ids include: '+', '.join(sorted(missing-unresolved))+
+                                '. Keep the same clarification question. Do this only for a detail that only the user can supply.')
+                        if missing & other and evidence:
+                            # A source-type worry with passages already collected is B's to resolve from
+                            # the complete text; it is never a user question (run 43835546442).
+                            clauses=sorted({p['clause_id'] for p in evidence})
+                            require(False,'Do not ask the user about source text. You see previews only; B and C receive the complete text of the collected passages (clauses '+', '.join(clauses)[:200]+
+                                    '). Use ready_for_b now and keep the source gap in coverage_gaps only if no collected passage belongs to the requested clause.')
+                        require(bool(missing) and missing <= known and missing <= unresolved,
+                                'Clarify only a material missing user detail/history gap tied to a known requirement. Do not ask the user to choose a factual answer, confirm their question, or repeat supplied preferences. Retrieve evidence or hand supported context to B.')
                     moves_to_b = a['action']=='ready_for_b' or (a['action']=='collect' and state['closing'])
                     if moves_to_b:
                         gaps=a['need']['unresolved_gaps']+a['coverage_gaps']
                         require(a['intent_relation']!='uncertain' and not any(g['kind']=='user_detail' for g in gaps),
                                 'Essential ambiguity requires clarification, including in closing mode.')
+                        # Seen on the owner's laptop 18 Nov: after the user answered a clarification
+                        # ("5G NR ... TS 38.201 clause 4.2.3"), A handed off without any search and the
+                        # run ended "No supporting passages were collected". A handoff needs at least
+                        # one search in the run (or collected passages); a search that found nothing
+                        # still ends with the honest no-passages message.
+                        require(bool(state['passage_ids']) or bool(state['searches']) or state['closing'],
+                                'No passages have been collected and no corpus_search was made in this run. Use action collect with a corpus_search '
+                                'of the loaded document for the requested topic/clause first; ready_for_b needs collected evidence.')
                 result=self.call(rid,w,'A',payload,valid_a)
                 if result['action']=='out_of_scope':
                     self.store.stop(rid,'COMPLETED','OUT_OF_SCOPE','This assistant covers the declared 3GPP NR collection. Please ask a question within that scope.',w['epoch'],self.elapsed(w));return
@@ -294,7 +390,50 @@ class Engine:
                 # Freeze the exact B input. C receives this same context and evidence.
                 binding=self.freeze(rid,w,state,context,evidence)
                 payload['input_binding']=binding
-                result=self.call(rid,w,'B',payload,lambda b:validate_draft(b,state['need'],evidence,state['review']) if b['action']=='submit_draft' else None)
+                # B must know when its one missing-info request is already spent;
+                # otherwise a permitted-looking request ends the run unreviewed.
+                allow_missing=not state['closing'] and state['missing_by_round'][state['round']]<1
+                payload['closing_mode']=not allow_missing
+                payload['missing_info_allowed']=allow_missing
+                complete=self.corpus.complete_clauses(self.store.run(rid)['corpus_build_id'],evidence)
+                payload['complete_clauses']=complete
+                def held_complete(text):
+                    return [c for c in complete if re.search(r'(?<![\d.])'+re.escape(c['clause_id'])+r'(?![\d.]*\d)',text)]
+                def complete_message(held):
+                    return ('Clause '+', '.join(f"{c['clause_id']} of TS {c['spec_number']} v{c['document_version']} (passages {', '.join(c['passage_ids'])})" for c in held)+
+                            ' is already completely present in evidence. Answer from it and submit_draft; disclose any detail it does not state.')
+                partial_recheck={'done':False}
+                def valid_b(b):
+                    if b['action']=='submit_draft':
+                        validate_draft(b,state['need'],evidence,state['review'])
+                    elif b['action']=='cannot_answer':
+                        # Claiming a fully supplied clause is missing is a contract error.
+                        held=[c for g in b['cannot_answer_reason'] if g['kind'] in ('source','context_limit') for c in held_complete(g['reason'])]
+                        require(not held,complete_message(held))
+                        # Seen on the owner's laptop 18 Nov: "i did not understand pbch ... explain clearly"
+                        # after an answer citing clause 4.2.3. TS 38.201 states only part of it, and B refused
+                        # outright. With evidence in hand B re-decides once (existing single repair): a
+                        # supported partial answer with explicit limitations, unless nothing is relevant.
+                        if evidence and not partial_recheck['done']:
+                            partial_recheck['done']=True
+                            clauses=', '.join(sorted({p['clause_id'] for p in evidence}))[:200]
+                            require(False,'Evidence was collected (TS 38.201 clauses '+clauses+'). If any passage states something relevant to the question, '
+                                    'submit_draft a partial answer: explain only what the evidence states, in the requested language, and put what it does not state '
+                                    'in limitation_statement and unresolved_requirements. Use cannot_answer only if no collected passage is relevant to the question.')
+                    elif b['action']=='request_missing_info':
+                        require(allow_missing,'The missing-information allowance is exhausted (closing_mode). Submit a supported partial draft that discloses unresolved parts in limitation_statement, or cannot_answer.')
+                        info=b['missing_info']
+                        if info['type']=='source':
+                            held=held_complete(info['item']+' '+info['why_material'])
+                            require(not held,complete_message(held))
+                        if info['type'] in ('user_detail','history'):
+                            # A owns clarification. B may not invent a user question
+                            # (e.g. presentation choices) that A did not record as a gap.
+                            gaps=state['need']['unresolved_gaps']+state['gaps']
+                            recorded={q for g in gaps if g['kind']==info['type'] for q in g['requirement_ids']}
+                            require(bool(info['requirement_ids']) and set(info['requirement_ids'])<=recorded,
+                                    'Do not ask the user about presentation choices (analogy count, format, length) or details A did not record as a '+info['type']+' gap. Decide them yourself and submit_draft.')
+                result=self.call(rid,w,'B',payload,valid_b)
                 if result['action']=='cannot_answer':
                     self.store.stop(rid,'COMPLETED','INABILITY','The available evidence is insufficient for a supported answer. Narrow the question or supply the missing detail.',w['epoch'],self.elapsed(w));return
                 if result['action']=='request_missing_info':

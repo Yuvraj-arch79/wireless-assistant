@@ -86,8 +86,18 @@ def test_duplicate_submit_one_run_and_key_conflict(client):
         assert db.execute('SELECT COUNT(*) FROM request_runs').fetchone()[0]==1
 
 
+def follow_up_clarify(payload):
+    # A genuinely different second question on a new gap (a repeated question is rejected).
+    v=clarify(payload)
+    v['need']['unresolved_gaps'][0]['gap_id']='aspect'
+    v['clarification']={'question':'Which aspect of the NR resource block do you need?','missing_requirement_ids':['r1'],
+                        'alternatives':['definition','numbering'],'gap_key':'aspect'}
+    return v
+
+
 def test_clarification_idle_resume_and_counters_preserved(client):
-    client.app_script.actions=[('A',clarify),('A',clarify)]
+    # The second question is accepted after one scope re-decision (one extra A call).
+    client.app_script.actions=[('A',clarify),('A',follow_up_clarify),('A',follow_up_clarify)]
     sid=create_chat(client);rid=post(client,f'/api/sessions/{sid}/messages',{'text':'Explain it.'}).json()['data']['run_id']
     status=wait_run(client,rid,'WAITING_USER')
     store=client.app.state.store
@@ -100,7 +110,7 @@ def test_clarification_idle_resume_and_counters_preserved(client):
     first=post(client,path,body,key);assert first.status_code==202,first.text
     status=wait_run(client,rid,'WAITING_USER')
     duplicate=post(client,path,body,key);assert duplicate.json()['data']==first.json()['data']
-    assert json.loads(store.run(rid)['counters_json'])['provider_calls']==counters['provider_calls']+1
+    assert json.loads(store.run(rid)['counters_json'])['provider_calls']==counters['provider_calls']+2
     assert post(client,path,body).status_code==409
     next_cid=status['pending_clarification']['clarification_id']
     reply=post(client,f'/api/runs/{rid}/clarifications/{next_cid}/reply',{'text':'Give its definition.','expected_run_version':status['state_version']})

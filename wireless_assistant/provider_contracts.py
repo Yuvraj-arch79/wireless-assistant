@@ -142,8 +142,48 @@ def b_schema():
         return {('anyOf' if k=='oneOf' else k):walk(x) for k,x in v.items() if k not in ('discriminator','title')}
     role=walk(ADAPTERS['B'].json_schema());defs=role.pop('$defs')
     defs['Citation']['properties']['claim_anchor']['description']='Exact substring copied from your answer_markdown, NOT from evidence text. Choose words that actually appear in your answer.'
-    defs['BDraft']['properties']['answer_markdown']['description']='Include the answer with inline [1] citation AND a separate References section: [1] TS <spec_number> v<document_version>, clause <clause_id>. The same marker must occur in both places.'
+    defs['BDraft']['properties']['answer_markdown']['description']=('The explanation with a few inline markers such as [1]. Do NOT write a References section or list markers: '
+        'the server renders References from your citations and verified source metadata.')
+    # Wire-only length bounds stop runaway generation (seen live: a [299] [300] ... marker loop).
+    # The original DTO bounds remain authoritative after decoding.
+    defs['BDraft']['properties']['answer_markdown']['maxLength']=5000
+    defs['BDraft']['properties']['citations']['maxItems']=8
     return {'type':'object','properties':{'result':role},'required':['result'],'additionalProperties':False,'$defs':defs}
+
+
+def groq_b_schema(payload=None):
+    """Groq strict form of the B schema: every object closed and fully required.
+
+    Optional DTO fields stay nullable; the original backend DTO and engine checks
+    still validate the decoded draft.
+    """
+    def walk(v):
+        if isinstance(v,list):return [walk(x) for x in v]
+        if not isinstance(v,dict):return v
+        out={}
+        for k,x in v.items():
+            if k=='const':out['enum']=[x]
+            else:out[k]=walk(x)
+        if out.get('type')=='object' and 'properties' in out:
+            out['required']=list(out['properties'])
+            out['additionalProperties']=False
+        return out
+    schema=walk(b_schema())
+    # Seen live 15 Nov: strict "all fields required" made the model invent revision
+    # entries on a first draft. Bind the log to the exact prior finding IDs.
+    previous=[f['finding_id'] for f in ((payload or {}).get('prior_review') or {}).get('findings',[])]
+    log=schema['$defs']['BDraft']['properties']['revision_log']
+    log['minItems']=log['maxItems']=len(previous)
+    log['description']=('Exactly one entry per prior_review finding ID: '+', '.join(previous)) if previous else 'Must be an empty list: there is no prior review.'
+    language=((payload or {}).get('need') or {}).get('language')
+    if isinstance(language,str) and language.strip() and language.strip().lower() not in ('english','en'):
+        draft=schema['$defs']['BDraft']['properties']
+        draft['answer_markdown']['description']+=f' Every sentence, heading and the analogy must be in {language.strip()}.'
+        draft['limitation_statement']['description']=f'Write this in {language.strip()}, not English (technical terms excepted).'
+    if previous:
+        item=schema['$defs'][log['items']['$ref'].split('/')[-1]] if '$ref' in log['items'] else log['items']
+        item['properties']['finding_id']={'type':'string','enum':previous}
+    return schema
 
 
 def render_references(out,evidence):

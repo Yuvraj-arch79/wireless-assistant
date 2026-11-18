@@ -234,6 +234,14 @@ class Store:
             db.execute('UPDATE request_runs SET current_need_id=? WHERE run_id=?', (nid, rid))
             return nid
 
+    def answered_clarifications(self, rid):
+        """Questions already put to the user in this run, with the user's replies."""
+        with self.read() as db:
+            return [dict(r) for r in db.execute(
+                "SELECT c.gap_key, c.missing_requirements_json AS missing, q.content_text AS question, a.content_text AS reply "
+                "FROM clarifications c JOIN messages q ON q.message_id=c.question_message_id "
+                "JOIN messages a ON a.message_id=c.reply_message_id WHERE c.run_id=? AND c.status='ANSWERED' ORDER BY c.created_at", (rid,))]
+
     def wait_user(self, rid, epoch, clarification, elapsed):
         with self.transaction() as db:
             r = self.owned(db, rid, epoch)

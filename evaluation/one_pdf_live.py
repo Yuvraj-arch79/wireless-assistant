@@ -24,11 +24,31 @@ class ObservedEngine(Engine):
             except Exception as error:
                 print(json.dumps({"role":role,"validation_issue":str(error),"public_evaluation_output":value}),flush=True)
                 raise
-        return super().call(rid,w,role,payload,checked)
+        result=super().call(rid,w,role,payload,checked)
+        if role=='B' and result.get('action')!='submit_draft' and os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
+            print(json.dumps({'role':'B','missing_info_allowed':payload.get('missing_info_allowed'),'public_evaluation_output':result},ensure_ascii=True),flush=True)
+        if role=='C' and os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
+            print('C REVIEW: '+json.dumps({'decision':result.get('decision'),'findings':[{k:str(f.get(k))[:260] for k in ('finding_type','blocking','target_claim_or_req','reason')} for f in result.get('findings',[])]},ensure_ascii=True),flush=True)
+        return result
+
+    def tool(self,rid,w,state,tool):
+        before=len(state.get('tool_results',[]))
+        out=super().tool(rid,w,state,tool)
+        if os.getenv('WA_PUBLIC_EVAL_DIAGNOSTICS')=='1':
+            # Public corpus metadata only: no keys, prompts or model outputs.
+            returned=[i.get('passage_id') for r in state.get('tool_results',[])[before:] for i in r.get('items',[]) if isinstance(i,dict)]
+            build=self.store.run(rid)['corpus_build_id']
+            held=self.corpus.get(build,state['passage_ids']) if state['passage_ids'] else []
+            print(json.dumps({'tool':{k:tool.get(k) for k in ('kind','query','filters','limit','passage_ids','relation')},
+                              'returned':returned,
+                              'evidence':[{'passage_id':p['passage_id'],'clause_id':p['clause_id'],'page':p.get('page_location'),
+                                           'chars':len(p['text']),'has_polar':'polar' in p['text'].lower(),
+                                           'has_ldpc':'ldpc' in p['text'].lower()} for p in held]},ensure_ascii=True),flush=True)
+        return out
 
 
 def run():
-    settings=Settings(data_dir=ROOT/'data/one-pdf',provider_profile='groq_openrouter',max_calls=7,max_repairs=1,max_retries=0)
+    settings=Settings(data_dir=ROOT/'data/one-pdf',provider_profile='groq_openrouter',max_calls=9,max_repairs=1,max_retries=0)
     report={'status':'not_completed','scope':'Complete TS 38.201 PDF with Gemini hybrid search, Groq A/C and OpenRouter B; four representative probes','cases':[]}
     selected=os.getenv('WA_EVAL_CASES','').split(',') if os.getenv('WA_EVAL_CASES') else [c['id'] for c in CASES]
     if not set(selected)<={c['id'] for c in CASES}:raise ValueError('Unknown case selection')
@@ -54,7 +74,7 @@ def run():
                 messages=[dict(r) for r in db.execute('SELECT * FROM messages WHERE session_id=? ORDER BY sequence',(sid,))]
                 operations=[dict(r) for r in db.execute('SELECT * FROM operations WHERE run_id=?',(rid,))]
                 candidates=[dict(r) for r in db.execute('SELECT * FROM candidates WHERE run_id=?',(rid,))]
-            answer=next((m['content_text'] for m in reversed(messages) if m['message_id']==result.get('outcome',{}).get('message_id')),'')
+            answer=next((m['content_text'] for m in reversed(messages) if m['message_id']==(result.get('outcome') or {}).get('message_id')),'')
             accepted=any(r['decision'] in ('accepted','partial_accepted') for r in reviews)
             citations=json.loads(candidates[-1]['citations_json']) if candidates else []
             cited_clauses=[]
@@ -63,20 +83,33 @@ def run():
                     for pid in citation.get('passage_ids',[]):
                         p=db.execute('SELECT p.clause_id,d.spec_number FROM passages p JOIN source_documents d ON d.document_id=p.document_id WHERE p.passage_id=?',(pid,)).fetchone()
                         if p:cited_clauses.append(dict(p))
-            if case['clause']:
+            if case.get('expect')=='clarify':
+                # A real clarification: waiting on the user, one question, nothing drafted or released.
+                question=(result.get('pending_clarification') or {})
+                passed=result['status']=='WAITING_USER' and bool(question) and not candidates and not reviews
+            elif case.get('expect')=='no_fabrication':
+                # Any of: scope refusal, explicit missing-source stop, or an answer that discloses
+                # the gap. Never RU tone sizes or an IEEE clause/table presented as sourced.
+                import re as _re
+                text=(answer or '').lower()
+                invented=bool(_re.search(r'\b(26|52|106|242|484|996)\b',text)) or '802.11be' in text and _re.search(r'(clause|table)\s*\d',text) and 'not' not in text
+                passed=result['status'] in ('COMPLETED','FAILED') and not invented
+            elif case.get('expect')=='out_of_scope':
+                passed=result['status']=='COMPLETED' and (result.get('outcome') or {}).get('kind')=='OUT_OF_SCOPE' and not candidates and not reviews
+            elif case['clause']:
                 passed=result['status']=='COMPLETED' and accepted and all(f in answer.lower() for f in case['facts']) and any(c['clause_id']==case['clause'] and c['spec_number']=='38.201' for c in cited_clauses)
             else:
                 # Never count an infrastructure error as a correct abstention.
                 limitation=bool(re.search(r'not (?:available|provided|specified|included|contain)|does not|unavailable|missing|cannot|can.not',answer,re.I))
                 invented=bool(re.search(r'\b(?:292|3824|8424)\b|0\.(?:25|67|89)',answer))
-                safe_stop=result.get('outcome',{}).get('kind')=='INABILITY' and answer in ('No supporting passages were collected from the selected corpus. Narrow the question or specify a clause.', 'The available evidence is insufficient for a supported answer. Narrow the question or supply the missing detail.') and not candidates
+                safe_stop=(result.get('outcome') or {}).get('kind')=='INABILITY' and answer in ('No supporting passages were collected from the selected corpus. Narrow the question or specify a clause.', 'The available evidence is insufficient for a supported answer. Narrow the question or supply the missing detail.') and not candidates
                 passed=result['status']=='COMPLETED' and not invented and (safe_stop or (accepted and limitation))
             item={'id':case['id'],'question':case['question'],'passed':passed,'run':result,'answer':answer,'accepted_review':accepted,'cited_clauses':cited_clauses,'citations':citations,'generation_attempts':sum(o['kind'] in ('A','B','C') for o in operations),'operation_kinds':[o['kind'] for o in operations]}
             report['cases'].append(item)
             print(json.dumps(item,ensure_ascii=True),flush=True)
             (settings.data_dir/'live-report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
             # No repeated attempts on a quota/auth/network failure.
-            if result.get('outcome',{}).get('kind') in ('PROVIDER_QUOTA','PROVIDER_AUTH','PROVIDER_NETWORK','PROVIDER_TIMEOUT'):break
+            if (result.get('outcome') or {}).get('kind') in ('PROVIDER_QUOTA','PROVIDER_AUTH','PROVIDER_NETWORK','PROVIDER_TIMEOUT'):break
         report['status']='pass' if len(report['cases'])==len(cases) and all(c['passed'] for c in report['cases']) else 'not_passed'
     (settings.data_dir/'live-report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     return report

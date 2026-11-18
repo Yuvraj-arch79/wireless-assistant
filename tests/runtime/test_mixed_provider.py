@@ -24,7 +24,7 @@ def test_pinned_live_routes_keep_original_contract(role):
     body=call.call_args.args[1]
     assert body['model']==rp.MODELS[role] and body['response_format']['json_schema']['strict']
     if role=='C':assert body['max_tokens']==900 and body['reasoning_effort']=='low'
-    if role=='B':assert body['provider']['max_price']=={'prompt':0,'completion':0,'request':0} and not body['provider']['allow_fallbacks']
+    if role=='B':assert body['model']=='openai/gpt-oss-20b' and body['reasoning_effort']=='low' and 'provider' not in body
 
 
 @pytest.mark.parametrize('status', [429,401,400,402,500])

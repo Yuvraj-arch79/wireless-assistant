@@ -78,7 +78,21 @@ def test_local_validation_reason_is_retained():
 def test_citation_contract_is_explicit():
     defs=b.schema()['$defs']
     assert 'NOT from evidence' in defs['Citation']['properties']['claim_anchor']['description']
-    assert 'References' in defs['BDraft']['properties']['answer_markdown']['description']
+    assert 'Do NOT write a References section' in defs['BDraft']['properties']['answer_markdown']['description']
+    # Live 14 Nov run 43619590843: B looped '[299] [300] ...' until max_tokens.
+    assert defs['BDraft']['properties']['answer_markdown']['maxLength']==5000
+    assert defs['BDraft']['properties']['citations']['maxItems']==8
+
+
+def test_inline_only_draft_gets_server_references_and_passes():
+    d=draft();d['answer_markdown']=d['answer_markdown'].split('\n\nReferences')[0]
+    p=b.payload()
+    reply={'choices':[{'finish_reason':'stop','message':{'content':json.dumps({'result':d})}}]}
+    with patch.object(b,'request',return_value=reply):r=b.generate(p)
+    assert r['status']!='INVALID_CONTRACT',r
+    from wireless_assistant.role_provider import build_request,MODELS
+    prompt=build_request('B',MODELS['B'],{'evidence':[]},2000)['messages'][0]['content']
+    assert 'Do NOT write a References section' in prompt and 'without the References section is invalid' not in prompt
 
 
 def test_reference_rendering_preserves_claims_and_uses_source_metadata():
@@ -137,3 +151,24 @@ def test_case_selection_does_not_repeat_completed_work(monkeypatch):
 def test_missing_structured_limitation_cannot_be_invented():
     d=draft();d['unresolved_requirements']=[{'req_id':'r3','reason':'No source'}];d['limitation_statement']=None
     with pytest.raises(AppError):b.assess(d,b.case_payload('partial'))
+
+
+def test_b_length_cut_is_discarded_and_routed_to_single_repair(monkeypatch):
+    # Live 14 Nov runs 43619590843/43622407653: B looped citation labels until max_tokens.
+    from wireless_assistant import role_provider as rp
+    looping={'choices':[{'finish_reason':'length','message':{'content':'{"result": {"action": "submit_draft", "answer_markdown": "x [1] [2] [3]'}}]}
+    with patch.object(rp,'request',return_value=looping):
+        r=rp.generate('B',rp.MODELS['B'],'',{'evidence':[]},2000)
+    assert r['text']=='{}' and 'token limit' in r['contract_error']
+    prompt=rp.build_request('B',rp.MODELS['B'],{'evidence':[]},2000)['messages'][0]['content']
+    assert 'at most 3 inline markers' in prompt and 'never ask about language or script' in prompt
+
+
+@pytest.mark.parametrize('role',['A','C'])
+def test_other_roles_length_cut_still_incomplete(role):
+    from wireless_assistant import role_provider as rp
+    from wireless_assistant.common import AppError
+    cut={'choices':[{'finish_reason':'length','message':{'content':'{'}}]}
+    with patch.object(rp,'request',return_value=cut),patch.object(rp,'build_request',return_value={}),pytest.raises(AppError) as e:
+        rp.generate(role,rp.MODELS[role],'',{'evidence':[]},2000)
+    assert e.value.code=='PROVIDER_INCOMPLETE'
