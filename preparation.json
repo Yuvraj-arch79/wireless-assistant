@@ -1,0 +1,178 @@
+{
+  "status": "pass",
+  "scope": "Complete TS 38.201 v18.0.0 PDF; extracted readable text only",
+  "embedding_batches": 3,
+  "retries": 0,
+  "lexical_build": "f5ebf939aa0747049d90e6d3990d5b87",
+  "inventory": [
+    {
+      "clause_id": "1",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "2",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "3",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "3.1",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "3.2",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "3.3",
+      "passages": 2,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4.1",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4.1.1",
+      "passages": 2,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4.1.2",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4.2",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4.2.1",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4.2.2",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4.2.3",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4.2.4",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "4.2.5",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "5",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "5.1",
+      "passages": 3,
+      "excluded": 1
+    },
+    {
+      "clause_id": "5.2",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "5.3",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "5.4",
+      "passages": 2,
+      "excluded": 0
+    },
+    {
+      "clause_id": "5.5",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "5.6",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "5.7",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "5.8",
+      "passages": 1,
+      "excluded": 0
+    },
+    {
+      "clause_id": "5.9",
+      "passages": 3,
+      "excluded": 1
+    },
+    {
+      "clause_id": "Annex A",
+      "passages": 4,
+      "excluded": 3
+    },
+    {
+      "clause_id": "Annex B",
+      "passages": 5,
+      "excluded": 1
+    },
+    {
+      "clause_id": "front-matter",
+      "passages": 8,
+      "excluded": 8
+    }
+  ],
+  "passages": 50,
+  "eligible": 36,
+  "hybrid_build": "b2b23539d1b54adcb434b327c5186d27",
+  "activation_checks": [
+    {
+      "clause": "4.1.1",
+      "readable_passage_found": true,
+      "missing_terms": [],
+      "ok": true
+    },
+    {
+      "clause": "4.2.3",
+      "readable_passage_found": true,
+      "missing_terms": [],
+      "ok": true
+    },
+    {
+      "clause": "5.6",
+      "readable_passage_found": true,
+      "missing_terms": [],
+      "ok": true
+    }
+  ],
+  "ready": true
+}

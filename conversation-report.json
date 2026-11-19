@@ -1,0 +1,103 @@
+{
+  "status": "not_passed",
+  "started": "2026-11-19T11:44:48Z",
+  "scope": "Live Groq A/C + OpenRouter B + Gemini search over the indexed TS 38.201 v18.0.0; coarse checks + full answers for human review",
+  "cases": [
+    {
+      "id": "A_coding_compare",
+      "split": "tuning",
+      "chat": "main",
+      "question": "TS 38.201 clause 4.2.3 ke hisaab se transport blocks aur PBCH ki coding mein kya farq hai? Easy Hinglish mein ek analogy aur exact citation do.",
+      "passed": true,
+      "notes": [],
+      "status": "COMPLETED",
+      "outcome_kind": "ACCEPTED",
+      "stage": null,
+      "version_selection": {
+        "reason": "default: the indexed version, no version named",
+        "source": "default",
+        "versions": [
+          "18.0.0"
+        ]
+      },
+      "seconds": 204,
+      "run_ref": "e13553cb",
+      "released_text": "## Coding scheme for transport blocks\nTransport blocks ke liye TS 38.201 clause 4.2.3 kehta hai ki *quasi‑cyclic LDPC codes* use kiye jaate hain, jisme 2 base graphs aur har base graph ke liye 8 parity‑check matrix sets hote hain. \n\n## Coding scheme for PBCH\nPBCH (Physical Broadcast Channel) aur control information ke liye same clause mein *Polar coding* ka zikr hai, jo nested sequences par based hota hai. \n\n## Analogy (sirf samjhane ke liye, standard ka text nahi)\nTransport block coding ko aap ek *broadband cable* samajh sakte hain jo ek saath bahut saare data packets ko ek saath bhejta hai, isme LDPC ek *strong shield* ki tarah kaam karta hai jo errors ko detect aur correct karta hai. PBCH coding ko ek *dedicated radio station* ki tarah samjho jo sirf ek hi message (broadcast info) bhejta hai, aur Polar coding ek *special frequency tuning* ki tarah kaam karta hai jo ek hi message ko clear aur reliable banata hai.\n\n## Exact citations\n- Transport block coding: clause 4.2.3, sub‑clause *Channel coding* (TS 38.201 v18.0.0). \n- PBCH coding: clause 4.2.3, sub‑clause *Channel coding* (TS 38.201 v18.0.0). \n\n[1] TS 38.201 v18.0.0, clause 4.2.3, paragraph 1‑2.\n[2] TS 38.201 v18.0.0, clause 4.2.3, paragraph 3.\n\nReferences\n[1] TS 38.201 v18.0.0, clause 4.2.3.\n[2] TS 38.201 v18.0.0, clause 4.2.3.",
+      "cited_passages": [
+        {
+          "marker": "[1]",
+          "claim_anchor": "Transport block coding: clause 4.2.3, sub‑clause *Channel coding* (TS 38.201 v18.0.0).",
+          "clause_id": "4.2.3",
+          "passage_text": "4.2.3 Channel coding\nThe channel coding scheme for transport blocks is quasi-cyclic LDPC codes with 2 base graphs and 8 sets of parity\ncheck matrices for each base graph, respectively. One base graph is used for code blocks larger than certain sizes or\nwith initial transmission code rate higher than thresholds; otherwise, the other base graph is used. Before the LDPC\ncoding, for large transport blocks, the transport block is segmented into multiple code blocks with equal size. The\nchannel coding scheme for PBCH and control information is Polar coding based on nested sequences. Puncturing,\nshortening and repetition are used for rate matching. Further details of channel coding schemes are specified in [4].",
+          "spec_number": "38.201",
+          "version": "18.0.0"
+        },
+        {
+          "marker": "[2]",
+          "claim_anchor": "PBCH coding: clause 4.2.3, sub‑clause *Channel coding* (TS 38.201 v18.0.0).",
+          "clause_id": "4.2.3",
+          "passage_text": "4.2.3 Channel coding\nThe channel coding scheme for transport blocks is quasi-cyclic LDPC codes with 2 base graphs and 8 sets of parity\ncheck matrices for each base graph, respectively. One base graph is used for code blocks larger than certain sizes or\nwith initial transmission code rate higher than thresholds; otherwise, the other base graph is used. Before the LDPC\ncoding, for large transport blocks, the transport block is segmented into multiple code blocks with equal size. The\nchannel coding scheme for PBCH and control information is Polar coding based on nested sequences. Puncturing,\nshortening and repetition are used for rate matching. Further details of channel coding schemes are specified in [4].",
+          "spec_number": "38.201",
+          "version": "18.0.0"
+        }
+      ]
+    },
+    {
+      "id": "B_followup_same_chat",
+      "split": "tuning",
+      "chat": "main",
+      "question": "Doosra wala samajh nahi aaya, aur easy bata.",
+      "passed": false,
+      "notes": [
+        "no reviewed answer: INVALID_CONTRACT",
+        "missing fact: polar",
+        "no citation to clause 4.2.3",
+        "answer does not read as Roman Hinglish"
+      ],
+      "status": "FAILED",
+      "outcome_kind": "INVALID_CONTRACT",
+      "stage": "A",
+      "version_selection": null,
+      "seconds": 68,
+      "run_ref": "a724e942",
+      "released_text": "The AI response failed format/citation validation after the one allowed repair while understanding the question and searching the sources. No unreviewed answer was shown. You can use \"Retry this question\"; if it repeats, share the reference at the end of this message. (Ref: run a724e942, INVALID_CONTRACT)",
+      "cited_passages": []
+    },
+    {
+      "id": "B_fresh_chat_isolation",
+      "split": "tuning",
+      "chat": "fresh1",
+      "question": "Doosra wala samajh nahi aaya, aur easy bata.",
+      "passed": true,
+      "notes": [],
+      "status": "WAITING_USER",
+      "outcome_kind": null,
+      "stage": null,
+      "version_selection": null,
+      "seconds": 64,
+      "run_ref": "b7085528",
+      "released_text": "Aap kaunse pehle wale explanation ki baat kar rahe hain? Kripya uska short reference ya topic batayein, taki main use asaan shabdon mein samjha sakun.",
+      "cited_passages": []
+    },
+    {
+      "id": "D_wifi7_out_of_scope",
+      "split": "tuning",
+      "chat": "oos1",
+      "question": "Wi-Fi 7 mein bhi OFDM hai. IEEE 802.11be ke exact RU sizes batao.",
+      "passed": true,
+      "notes": [],
+      "status": "COMPLETED",
+      "outcome_kind": "OUT_OF_SCOPE",
+      "stage": null,
+      "version_selection": null,
+      "seconds": 64,
+      "run_ref": "7b3973f1",
+      "released_text": "This question is outside what the loaded 3GPP source covers, so I will not give a general textbook answer. I answer only from the indexed documents (see the source badge); please ask about their content.",
+      "cited_passages": []
+    }
+  ],
+  "summary": {
+    "tuning": "3/4",
+    "held_out": "0/0"
+  }
+}
