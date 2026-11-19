@@ -22,6 +22,27 @@ def validate_need(need, originals):
     require(all(set(g['requirement_ids'])<=ids for g in need['unresolved_gaps']),'Gap references unknown requirements.')
 
 
+import re as _re
+# A location the user could look up (paragraph 2, page 12, table 4.1-1, clause 5.3) is a factual claim.
+_LOCATION=_re.compile(r'(?i)\b(paragraphs?|paras?|pages?|lines?|tables?|figures?|equations?|eq\.|sub-?clauses?|clauses?|sections?|annex)\s*([A-Z]?\d+(?:[.\-\u2010-\u2013]\d+)*)')
+
+
+def unsourced_locations(answer,evidence):
+    """Reject locations that the supplied evidence does not contain (owner rule: say nothing unsourced)."""
+    clauses={p['clause_id'] for p in evidence}
+    pages={str(p.get('page_location','')) for p in evidence}
+    text=' '.join((p.get('clause_id','')+' '+p.get('content_text','')) for p in evidence).lower()
+    for match in _LOCATION.finditer(answer):
+        kind,number=match.group(1).lower(),match.group(2)
+        if kind.startswith(('clause','sub','section','annex')):
+            ok=number in clauses or number.lower() in text
+        elif kind.startswith('page'):
+            ok=number in pages
+        else:
+            ok=match.group(0).lower() in text
+        require(ok,f'"{match.group(0)}" is not in the supplied evidence. Remove it, or state the gap in limitation_statement.')
+
+
 def validate_draft(candidate, need, evidence, previous_review):
     expected={r['req_id'] for r in need['requirements']}
     unresolved=[r['req_id'] for r in candidate['unresolved_requirements']]
@@ -39,6 +60,7 @@ def validate_draft(candidate, need, evidence, previous_review):
             p=allowed[pid]
             require(p['spec_number'] in candidate['answer_markdown'] and p['document_version'] in candidate['answer_markdown'] and p['clause_id'] in candidate['answer_markdown'],'End references must identify specification, version and clause.')
     require(len(markers)==len(set(markers)),'Duplicate citation markers.')
+    unsourced_locations(candidate['answer_markdown'],evidence)
     import re
     require(set(re.findall(r'\[[1-9][0-9]?\]',candidate['answer_markdown']))==set(markers),'Answer contains unbound citation markers.')
     for p in evidence:

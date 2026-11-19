@@ -23,7 +23,7 @@ def _no_reviewed_answer(client, sid):
 @pytest.mark.parametrize('stage,code,expect', [
     ('C', 'PROVIDER_TIMEOUT', 'reviewing'),
     ('B', 'PROVIDER_TIMEOUT', 'writing'),
-    ('C', 'PROVIDER_REQUEST_TOO_LARGE', 'too large'),
+    ('C', 'PROVIDER_REQUEST_TOO_LARGE', 'token limit'),
     ('B', 'PROVIDER_QUOTA', 'rate limit'),
 ])
 def test_failure_names_stage_and_is_not_scope_or_review(client, stage, code, expect):
@@ -111,3 +111,10 @@ def test_long_provider_wait_is_readable():
     from wireless_assistant.failures import explain
     assert 'about 25 minutes' in explain('PROVIDER_QUOTA', 'A', False, 'abcdef123456', 1478)[0]
     assert 'about 17 seconds' in explain('PROVIDER_QUOTA', 'A', False, 'abcdef123456', 17)[0]
+
+
+def test_token_limit_stop_says_so_plainly_and_gives_no_answer():
+    from wireless_assistant.failures import explain
+    text, action = explain('CONTEXT_LIMIT', 'A', True, 'abcdef123456')
+    assert 'beyond the 8000-token limit' in text and 'not sent' in text and action == 'narrow'
+    assert 'No unreviewed answer was shown' in text
