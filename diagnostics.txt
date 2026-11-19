@@ -1,0 +1,1 @@
+CONTRACT ISSUE: role=A repair_used=False A clarification must record its gap: add an entry to need.unresolved_gaps with kind "user_detail" (or "history") whose requirement_ids include: R1, R2, R3. Keep the same clarification question. Do this only for a detail that only the user can supply.
