@@ -1,0 +1,2 @@
+CONTRACT ISSUE: role=B repair_used=False Coverage must exactly partition current requirements.
+CONTRACT ISSUE: role=B repair_used=True Invalid inline citation or claim anchor before reference rendering.

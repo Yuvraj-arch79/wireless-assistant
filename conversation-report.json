@@ -1,0 +1,53 @@
+{
+  "status": "not_passed",
+  "started": "2026-11-19T12:03:07Z",
+  "scope": "Live Groq A/C + OpenRouter B + Gemini search over the indexed TS 38.201 v18.0.0; coarse checks + full answers for human review",
+  "cases": [
+    {
+      "id": "A_coding_compare",
+      "split": "tuning",
+      "chat": "main",
+      "question": "TS 38.201 clause 4.2.3 ke hisaab se transport blocks aur PBCH ki coding mein kya farq hai? Easy Hinglish mein ek analogy aur exact citation do.",
+      "passed": false,
+      "notes": [
+        "no reviewed answer: INVALID_CONTRACT",
+        "missing fact: ldpc",
+        "missing fact: polar",
+        "no citation to clause 4.2.3",
+        "answer does not read as Roman Hinglish"
+      ],
+      "status": "FAILED",
+      "outcome_kind": "INVALID_CONTRACT",
+      "stage": "B",
+      "version_selection": null,
+      "seconds": 135,
+      "run_ref": "e927bd09",
+      "released_text": "Source passages were found, but the AI response failed format/citation validation after the one allowed repair while writing the answer. No unreviewed answer was shown. You can use \"Retry this question\"; if it repeats, share the reference at the end of this message. (Ref: run e927bd09, INVALID_CONTRACT)",
+      "cited_passages": []
+    },
+    {
+      "id": "B_followup_same_chat",
+      "split": "tuning",
+      "chat": "main",
+      "question": "Doosra wala samajh nahi aaya, aur easy bata.",
+      "passed": false,
+      "notes": [
+        "no reviewed answer: WAITING_USER",
+        "missing fact: polar",
+        "no citation to clause 4.2.3"
+      ],
+      "status": "WAITING_USER",
+      "outcome_kind": null,
+      "stage": null,
+      "version_selection": null,
+      "seconds": 3,
+      "run_ref": "bacfcdd1",
+      "released_text": "Aapko transport block aur PBCH coding ke beech ka kaunsa part samajh nahi aaya? Kya aapko analogy, exact clause reference, ya dono mein se koi specific cheez chahiye?",
+      "cited_passages": []
+    }
+  ],
+  "summary": {
+    "tuning": "0/2",
+    "held_out": "0/0"
+  }
+}
