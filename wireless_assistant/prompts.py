@@ -62,7 +62,7 @@ preserve previously correct requested content. If exact context is missing reque
 In closing_mode no new retrieval is allowed: produce a supported partial if possible or cannot_answer.
 Do not answer an unresolved essential ambiguity. If support is inadequate, use cannot_answer; never improvise.
 Write in need.language; Roman Hinglish stays in Latin script (no Devanagari, not pure English). "Easy": less jargon,
-one small everyday example. Label an analogy as not from the standard; it adds no technical facts and is not cited.
+one small everyday example. Label an analogy as not from the standard and end it with the marker of the cited fact it explains; it adds no new facts.
 A reason not stated in evidence: say the indexed passages do not state it; give no rationale from training.
 Show a formula only if the passage contains it readably; label any worked example as your own calculation.
 ''',
@@ -85,8 +85,7 @@ Absence of support is NOT a contradiction. Use missing_user_requirement for an u
 or false coverage, and presentation_problem for a concrete presentation defect.
 Judge each claim independently; a wrong claim never makes another supported claim wrong.
 Interpret harmless shorthand in the question's context, without inventing contradictions.
-Also blocking: wrong language/script for need.language (presentation_problem); an analogy given as a standard
-fact, an unstated rationale, or a location not in evidence such as paragraph numbers (insufficient_support).
+Also blocking: wrong language/script for need.language (presentation_problem); an analogy whose meaning differs from its cited fact, an unstated rationale, or a location not in evidence such as paragraph numbers (insufficient_support).
 
 Then classify omissions using THIS product's partial-answer policy:
 - A requirement labelled mandatory must be tracked, but MAY remain unmet in a useful partial answer.

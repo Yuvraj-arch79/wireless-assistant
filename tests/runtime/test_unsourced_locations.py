@@ -32,3 +32,13 @@ def test_draft_with_invented_paragraph_is_repaired_not_released(client):
     items = client.get(f'/api/sessions/{sid}/messages').json()['data']['items']
     released = [m['content_text'] for m in items if m['role'] == 'assistant']
     assert released and 'paragraph' not in released[0]
+
+
+from wireless_assistant.validation import analogies_point_to_sources
+
+
+def test_analogy_must_point_to_the_cited_fact_it_explains():
+    analogies_point_to_sources('## Analogy (sirf samjhane ke liye, standard ka text nahi)\nBada parcel tukdon mein jaata hai, waise hi bada transport block code blocks mein bant jaata hai [1].')
+    analogies_point_to_sources('LDPC transport blocks ke liye hai [1].\n\nReferences\n[1] TS 38.201 v18.0.0, clause 4.2.3.')
+    with pytest.raises(AppError):
+        analogies_point_to_sources('## Misaal (standard ka text nahi)\nPolar coding ek special frequency tuning jaisi hai.')

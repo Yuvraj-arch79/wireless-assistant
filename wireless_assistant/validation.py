@@ -43,6 +43,16 @@ def unsourced_locations(answer,evidence):
         require(ok,f'"{match.group(0)}" is not in the supplied evidence. Remove it, or state the gap in limitation_statement.')
 
 
+_ANALOGY=_re.compile(r'(?i)\b(analog(?:y|ies)|misaal|misal)\b')
+
+
+def analogies_point_to_sources(answer):
+    """An analogy need not be in the source, but the meaning it explains must be cited (owner rule)."""
+    for block in _re.split(r'\n\s*\n',answer):
+        if _ANALOGY.search(block) and not block.lstrip().lower().startswith('references'):
+            require(bool(_re.search(r'\[[1-9][0-9]?\]',block)),'An analogy must end with the citation marker of the source fact it explains.')
+
+
 def validate_draft(candidate, need, evidence, previous_review):
     expected={r['req_id'] for r in need['requirements']}
     unresolved=[r['req_id'] for r in candidate['unresolved_requirements']]
@@ -61,6 +71,7 @@ def validate_draft(candidate, need, evidence, previous_review):
             require(p['spec_number'] in candidate['answer_markdown'] and p['document_version'] in candidate['answer_markdown'] and p['clause_id'] in candidate['answer_markdown'],'End references must identify specification, version and clause.')
     require(len(markers)==len(set(markers)),'Duplicate citation markers.')
     unsourced_locations(candidate['answer_markdown'],evidence)
+    analogies_point_to_sources(candidate['answer_markdown'])
     import re
     require(set(re.findall(r'\[[1-9][0-9]?\]',candidate['answer_markdown']))==set(markers),'Answer contains unbound citation markers.')
     for p in evidence:
