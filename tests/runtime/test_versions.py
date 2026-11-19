@@ -8,10 +8,11 @@ from wireless_assistant.common import canonical
 
 @pytest.mark.parametrize('text,expected', [
     ('TS 38.201 clause 4.2.3 ke hisaab se coding kya hai?', None),   # clause is not a version
-    ('38.201 v17.0.0 mein PBCH coding?', {'version': '17.0.0'}),
-    ('version 18.0.0 ke according', {'version': '18.0.0'}),
-    ('Release 17 wala batao', {'release': '17'}),
-    ('Rel-19 me kya badla?', {'release': '19'}),
+    ('38.201 v17.0.0 mein PBCH coding?', {'versions': ['17.0.0']}),
+    ('version 18.0.0 ke according', {'versions': ['18.0.0']}),
+    ('Release 17 wala batao', {'releases': ['17']}),
+    ('Rel-19 me kya badla?', {'releases': ['19']}),
+    ('v17.0.0 aur v18.0.0 mein kya badla?', {'versions': ['17.0.0', '18.0.0']}),
     ('relevant passage do', None),
 ])
 def test_requested_version_parsing(text, expected):
@@ -133,3 +134,18 @@ def test_archive_inventory_is_honest():
     assert len(inv['entries']) == 15 and all(len(e['sha256']) == 64 for e in inv['entries'])
     assert 'Exactly one' in inv['coverage_statement']
     assert inv['activation_checks'][inv['default_version']]
+
+
+def test_comparison_with_one_unindexed_version_is_not_answered_from_the_other(client):
+    sid = create_chat(client)
+    _, status = _ask(client, sid, 'v17.0.0 aur v18.10.0 mein resource block mein kya badla?')
+    assert status['outcome']['kind'] == 'VERSION_NOT_INDEXED' and client.app_script.calls == []
+    text = client.get(f'/api/sessions/{sid}/messages').json()['data']['items'][-1]['content_text']
+    assert 'v17.0.0' in text
+
+
+def test_select_keeps_every_named_indexed_version():
+    indexed = [{'version': '17.0.0', 'release': '17', 'spec_number': '38.201'}, {'version': '18.0.0', 'release': '18', 'spec_number': '38.201'}]
+    sel = versions.select('v17.0.0 aur v18.0.0 compare karo', None, indexed)
+    assert sel['status'] == 'ok' and sel['versions'] == ['17.0.0', '18.0.0']
+    assert versions.select('Rel-17 aur Rel-19', None, indexed)['status'] == 'not_indexed'
