@@ -29,6 +29,7 @@ jobs:
       WA_GROQ_FREE_TIER_CONFIRMED: ${{ vars.WA_GROQ_FREE_TIER_CONFIRMED || '1' }}
       WA_OPENROUTER_FREE_TIER_CONFIRMED: ${{ vars.WA_OPENROUTER_FREE_TIER_CONFIRMED || '1' }}
       WA_EVAL_CASES: ${{ inputs.cases || '' }}
+      WA_PUBLIC_EVAL_DIAGNOSTICS: '1'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -48,7 +49,8 @@ jobs:
         run: |
           # Optional "cases=a,b" line in .github/live-trigger selects cases (free quota is small).
           if [ -z "$WA_EVAL_CASES" ]; then export WA_EVAL_CASES="$(sed -n 's/^cases=//p' .github/live-trigger)"; fi
-          python -m evaluation.conversation_live
+          # Validation messages only (WA_PUBLIC_EVAL_DIAGNOSTICS): no keys or request bodies.
+          python -m evaluation.conversation_live 2>&1 | tee data/one-pdf/console.txt
       - name: Publish results to a throw-away branch
         if: always()
         run: |
@@ -57,6 +59,7 @@ jobs:
           cp data/one-pdf/preparation.json /tmp/results/ 2>/dev/null || true
           cp data/one-pdf/conversation-report.json /tmp/results/ 2>/dev/null || echo '{"status":"no_report"}' > /tmp/results/conversation-report.json
           cp data/one-pdf/logs/runs.jsonl /tmp/results/ 2>/dev/null || true
+          grep -E 'CONTRACT ISSUE|Traceback|Error' data/one-pdf/console.txt > /tmp/results/diagnostics.txt 2>/dev/null || true
           echo "${{ github.sha }} prepare=${{ steps.prepare.outcome }}" > /tmp/results/source-commit.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898237+github-actions[bot]@users.noreply.github.com'
