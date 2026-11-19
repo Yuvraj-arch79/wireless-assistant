@@ -7,7 +7,7 @@
 - `versions.py`: explicit version > this chat's version > indexed default; unindexed or changed versions are reported, never substituted; the answer label shows the version and why.
 - `corpus/ts38201_archive.json`: all 15 TS 38.201 archive versions with SHA-256 (18 Nov 2026); only v18.0.0 is indexed. `prepare-one` verifies sample citations before activation.
 - Prompt version abc-mixed-v2: scope by the user's actual question, follow-up resolution within the chat, labelled analogies, unsupported rationale as a limitation.
-- Live multi-turn Hinglish check (`evaluation/conversation_live.py`) with tuning/held-out split. Live end-to-end answers on 18 Nov were blocked by the Groq free daily quota (see PR).
+- Live multi-turn Hinglish check (`evaluation/conversation_live.py`) with tuning/held-out split. 19 Nov: one C-reviewed clause 4.2.3 answer verified against its passage; the same question failed in 3 of 4 runs (CONTEXT_LIMIT, B validation), so live reliability is not established.
 
 ## 2026-11-11 — Mixed provider runtime and explicit live demo
 
