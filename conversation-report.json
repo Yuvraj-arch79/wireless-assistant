@@ -1,0 +1,54 @@
+{
+  "status": "not_passed",
+  "started": "2026-11-19T11:57:33Z",
+  "scope": "Live Groq A/C + OpenRouter B + Gemini search over the indexed TS 38.201 v18.0.0; coarse checks + full answers for human review",
+  "cases": [
+    {
+      "id": "A_coding_compare",
+      "split": "tuning",
+      "chat": "main",
+      "question": "TS 38.201 clause 4.2.3 ke hisaab se transport blocks aur PBCH ki coding mein kya farq hai? Easy Hinglish mein ek analogy aur exact citation do.",
+      "passed": false,
+      "notes": [
+        "no reviewed answer: CONTEXT_LIMIT",
+        "missing fact: ldpc",
+        "missing fact: polar",
+        "no citation to clause 4.2.3",
+        "answer does not read as Roman Hinglish"
+      ],
+      "status": "FAILED",
+      "outcome_kind": "CONTEXT_LIMIT",
+      "stage": "A",
+      "version_selection": null,
+      "seconds": 68,
+      "run_ref": "b1864d28",
+      "released_text": "Some source passages were found, but the required context is too large for the configured token budget while understanding the question and searching the sources. No unreviewed answer was shown. Ask a narrower question (for example one clause or one part of the question); the same oversized request is not resent. (Ref: run b1864d28, CONTEXT_LIMIT)",
+      "cited_passages": []
+    },
+    {
+      "id": "B_followup_same_chat",
+      "split": "tuning",
+      "chat": "main",
+      "question": "Doosra wala samajh nahi aaya, aur easy bata.",
+      "passed": false,
+      "notes": [
+        "no reviewed answer: INVALID_CONTRACT",
+        "missing fact: polar",
+        "no citation to clause 4.2.3",
+        "answer does not read as Roman Hinglish"
+      ],
+      "status": "FAILED",
+      "outcome_kind": "INVALID_CONTRACT",
+      "stage": "A",
+      "version_selection": null,
+      "seconds": 129,
+      "run_ref": "d7f5d0c0",
+      "released_text": "The AI response failed format/citation validation after the one allowed repair while understanding the question and searching the sources. No unreviewed answer was shown. You can use \"Retry this question\"; if it repeats, share the reference at the end of this message. (Ref: run d7f5d0c0, INVALID_CONTRACT)",
+      "cited_passages": []
+    }
+  ],
+  "summary": {
+    "tuning": "0/2",
+    "held_out": "0/0"
+  }
+}
